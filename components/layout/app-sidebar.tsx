@@ -95,7 +95,7 @@ export function AppSidebar({
 
           <Button
             variant="ghost"
-            size="iconSm"
+            size="icon"
             aria-label="Tutup menu"
             onClick={onClose}
             className="ml-auto lg:hidden"

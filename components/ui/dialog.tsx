@@ -74,7 +74,7 @@ export function Dialog({
 
         <Button
           variant="ghost"
-          size="iconSm"
+          size="icon"
           onClick={onClose}
           aria-label="Tutup"
           className="-mr-1.5 shrink-0"

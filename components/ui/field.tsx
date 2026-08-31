@@ -1,3 +1,4 @@
+import { TINGGI_KONTROL } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
 
 /**
@@ -6,7 +7,8 @@ import { cn } from "@/lib/utils";
  * Field TIDAK PERNAH memakai bayangan. Pembeda state hanya border 1px —
  * hover, fokus, dan error dibedakan warna border, bukan glow (docs/UI.md §48-§52).
  *
- * Tinggi 40px, sama dengan tombol.
+ * Tinggi mengikuti TINGGI_KONTROL, konstanta yang sama dengan tombol:
+ * 46px di ponsel, 44px pada tablet dan desktop.
  */
 
 const controlBase = cn(
@@ -21,7 +23,10 @@ const controlBase = cn(
 
 export function Input({ className, ...props }: React.ComponentProps<"input">) {
   return (
-    <input className={cn(controlBase, "h-10 px-3", className)} {...props} />
+    <input
+      className={cn(controlBase, TINGGI_KONTROL, "px-3", className)}
+      {...props}
+    />
   );
 }
 
@@ -49,7 +54,8 @@ export function Select({
     <select
       className={cn(
         controlBase,
-        "h-10 cursor-pointer appearance-none bg-no-repeat py-0 pr-8 pl-3",
+        TINGGI_KONTROL,
+        "cursor-pointer appearance-none bg-no-repeat py-0 pr-8 pl-3",
         // Chevron sebagai data-URI: menghindari satu request aset untuk ikon
         // sekecil ini, dan mewarisi warna netral tema.
         "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")]",

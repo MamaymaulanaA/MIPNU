@@ -10,8 +10,10 @@
  *     border-border). Rebranding cukup mengubah berkas ini.
  *  2. Radius 8px untuk semua persegi-membulat. Lingkaran hanya untuk elemen
  *     yang memang bulat secara makna (avatar, titik status).
- *  3. Satu tinggi kontrol (40px). Button, input, select, dan trigger dropdown
- *     pada baris yang sama otomatis sejajar.
+ *  3. Satu tinggi kontrol, RESPONSIF: 46px di ponsel, 44px pada tablet dan
+ *     desktop. Button, input, select, dan trigger dropdown pada baris yang
+ *     sama otomatis sejajar karena semuanya membaca konstanta yang sama di
+ *     `components/ui/control.ts` — bukan karena penulisnya ingat.
  *  4. Bayangan seminimal mungkin. Card memakai border 1px, bukan shadow.
  *     Shadow hanya untuk lapisan mengambang: dropdown, popover, dialog.
  *  5. Warna status (success/warning/destructive/info) hanya dipakai untuk
@@ -160,9 +162,12 @@
   --content-padding-tablet: 20px;
   --content-padding-desktop: 24px;
 
-  --control-height: 40px;
-  --control-height-sm: 32px;
-  --control-height-lg: 44px;
+  /* Nilai acuan; sumber sebenarnya ada di components/ui/control.ts karena
+     tingginya responsif dan Tailwind yang menerapkannya. */
+  --control-height: 44px;
+  --control-height-mobile: 46px;
+  --control-height-sm: 36px;
+  --control-height-lg: 48px;
 
   /* ---- Z-index ---- */
   --z-dropdown: 40;

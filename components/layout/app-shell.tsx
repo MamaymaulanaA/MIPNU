@@ -75,7 +75,7 @@ export function AppShell({
           >
             <Button
               variant="ghost"
-              size="iconSm"
+              size="icon"
               aria-label="Buka menu"
               aria-expanded={sidebarOpen}
               onClick={() => setSidebarOpen(true)}
