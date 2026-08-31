@@ -62,3 +62,6 @@ AGENTS.md
 /.opencode/
 /.idea/
 /.agents/
+
+# internal README — local development only
+README.internal.md
