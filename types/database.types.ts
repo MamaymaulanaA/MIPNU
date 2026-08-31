@@ -2790,6 +2790,10 @@ export type Database = {
         Returns: Json
       }
       mipnu_archive_election: { Args: { p_election_id: string }; Returns: Json }
+      mipnu_bootstrap: {
+        Args: { p_preferred_organization_id?: string }
+        Returns: Json
+      }
       mipnu_budget_vs_actual: { Args: { p_budget_id: string }; Returns: Json }
       mipnu_cancel_election: {
         Args: { p_election_id: string; p_reason: string }

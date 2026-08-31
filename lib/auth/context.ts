@@ -20,6 +20,11 @@ export type AccessibleOrganization = {
   roleCode: string;
   roleName: string;
   memberId: string | null;
+  /**
+   * Nilai `members.gender` apa adanya. HANYA untuk memilih avatar bawaan.
+   * Ikut di sini supaya tidak menjadi perjalanan tersendiri ke Supabase.
+   */
+  gender: "L" | "P" | null;
 };
 
 export type AccessContext = {
@@ -52,9 +57,96 @@ type AccessContextPayload = {
  * `cache()` membuatnya dievaluasi sekali per request meski dipanggil banyak
  * component.
  */
+type BootstrapPayload = {
+  profile: {
+    id: string;
+    display_name: string;
+    avatar_path: string | null;
+    status: string;
+  } | null;
+  organizations: AccessibleOrganization[];
+  is_super_admin: boolean;
+  organization_id: string | null;
+  member_id: string | null;
+  has_membership: boolean;
+  permissions: string[] | null;
+};
+
+/**
+ * Seluruh konteks app shell dalam SATU perjalanan ke database.
+ *
+ * Sebelumnya empat perjalanan berurutan, masing-masing 110-250ms latensi:
+ * getUser -> profiles -> memberships -> access_context. Tiga yang terakhir
+ * sebenarnya tidak butuh apa pun dari aplikasi — database sudah menurunkan
+ * identitas dari `auth.uid()` sendiri. Aplikasi hanya mengambil id lalu
+ * mengirimkannya kembali, tiga kali.
+ *
+ * `getUser()` TETAP memvalidasi token ke Auth server, dan hasilnya tetap
+ * menjadi gerbang: tanpa user yang tervalidasi, fungsi ini mengembalikan
+ * NULL apa pun isi jawaban database. Ia berjalan BERSAMAAN, bukan dihapus —
+ * RPC-nya tidak membutuhkan hasilnya, jadi tidak ada alasan menunggunya.
+ *
+ * Dan andai token dipalsukan: PostgREST menolaknya sebelum fungsi berjalan,
+ * sehingga `auth.uid()` kosong dan RPC mengembalikan konteks kosong. Dua
+ * pagar, keduanya tetap berdiri.
+ */
+const getBootstrap = cache(
+  async (): Promise<{
+    payload: BootstrapPayload;
+    email: string | null;
+  } | null> => {
+    const supabase = await createClient();
+    const cookieStore = await cookies();
+    const preferred = cookieStore.get(ORGANIZATION_COOKIE)?.value;
+
+    const [userResult, rpcResult] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.rpc("mipnu_bootstrap", {
+        p_preferred_organization_id: preferred ?? undefined,
+      }),
+    ]);
+
+    const user = userResult.data.user;
+    if (!user) return null;
+
+    if (rpcResult.error) {
+      console.error("[mipnu] gagal memuat konteks", rpcResult.error.message);
+      return null;
+    }
+
+    const payload = rpcResult.data as unknown as BootstrapPayload;
+
+    // Profil non-ACTIVE diperlakukan sama seperti tidak punya akses sama sekali,
+    // konsisten dengan app_private.current_profile_id() di database.
+    if (!payload.profile || payload.profile.status !== "ACTIVE") return null;
+
+    return { payload, email: user.email ?? null };
+  },
+);
+
 export const getCurrentProfile = cache(async () => {
+  const bootstrap = await getBootstrap();
+  if (!bootstrap) return null;
+
+  return { ...bootstrap.payload.profile!, email: bootstrap.email };
+});
+
+/** Jalur lama, hanya dipakai bila konteks diminta untuk organisasi TERTENTU. */
+const getProfileLegacy = cache(async () => {
   const supabase = await createClient();
 
+  /*
+    Query profil menunggu `getUser()` selesai, dan itu memang berurutan.
+
+    Sempat dicoba memulainya lebih awal dengan id dari `getSession()` —
+    dugaannya `getSession()` hanya membaca cookie tanpa jaringan. Diukur, dan
+    hasilnya SEBALIKNYA: dashboard pengurus naik dari 954ms ke 1414ms. Di
+    `@supabase/ssr`, `getSession()` bukan operasi lokal murni; ia menambah
+    kerja alih-alih menghematnya.
+
+    Dikembalikan ke bentuk berurutan yang jujur. Dicatat di sini supaya
+    perbaikan yang sama tidak dicoba lagi tanpa mengukur.
+  */
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -107,129 +199,10 @@ export async function requireProfile() {
  */
 export const listAccessibleOrganizations = cache(
   async (): Promise<AccessibleOrganization[]> => {
-    const profile = await getCurrentProfile();
-    if (!profile) return [];
-
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-      .from("organization_memberships")
-      .select(
-        `
-        member_id,
-        organizations!inner (
-          id,
-          name,
-          short_name,
-          slug,
-          status,
-          organization_types!inner ( code ),
-          organization_levels!inner ( code )
-        ),
-        roles!inner ( code, name )
-      `,
-      )
-      .eq("profile_id", profile.id)
-      .eq("status", "ACTIVE");
-
-    if (error) {
-      console.error("[mipnu] gagal memuat organisasi", error.message);
-      return [];
-    }
-
-    type Row = {
-      member_id: string | null;
-      organizations: {
-        id: string;
-        name: string;
-        short_name: string | null;
-        slug: string;
-        status: string;
-        organization_types: { code: string };
-        organization_levels: { code: string };
-      };
-      roles: { code: string; name: string };
-    };
-
-    const fromMembership = (data as unknown as Row[])
-      .filter((row) => row.organizations.status === "ACTIVE")
-      .map((row) => ({
-        organizationId: row.organizations.id,
-        name: row.organizations.name,
-        shortName: row.organizations.short_name,
-        slug: row.organizations.slug,
-        typeCode: row.organizations.organization_types.code,
-        levelCode: row.organizations.organization_levels.code,
-        roleCode: row.roles.code,
-        roleName: row.roles.name,
-        memberId: row.member_id,
-      }));
-
-    const isSuperAdmin = await isGlobalSuperAdmin();
-    if (!isSuperAdmin) {
-      return fromMembership.sort((a, b) => a.name.localeCompare(b.name, "id"));
-    }
-
-    // RLS pada `organizations` sudah meloloskan seluruh organisasi bagi super
-    // admin; query ini hanya menampilkannya, bukan melonggarkan apa pun.
-    const { data: allOrganizations } = await supabase
-      .from("organizations")
-      .select(
-        `
-        id, name, short_name, slug,
-        organization_types!inner ( code ),
-        organization_levels!inner ( code )
-      `,
-      )
-      .eq("status", "ACTIVE")
-      .is("deleted_at", null);
-
-    type OrganizationRow = {
-      id: string;
-      name: string;
-      short_name: string | null;
-      slug: string;
-      organization_types: { code: string };
-      organization_levels: { code: string };
-    };
-
-    const membershipIds = new Set(
-      fromMembership.map((organization) => organization.organizationId),
-    );
-
-    // Membership sungguhan menang atas akses platform: kalau super admin
-    // memang pengurus di suatu organisasi, role aslinya yang ditampilkan.
-    const platformOnly = (
-      (allOrganizations as unknown as OrganizationRow[] | null) ?? []
-    )
-      .filter((organization) => !membershipIds.has(organization.id))
-      .map((organization) => ({
-        organizationId: organization.id,
-        name: organization.name,
-        shortName: organization.short_name,
-        slug: organization.slug,
-        typeCode: organization.organization_types.code,
-        levelCode: organization.organization_levels.code,
-        roleCode: "SUPER_ADMIN",
-        roleName: "Akses Platform",
-        memberId: null,
-      }));
-
-    return [...fromMembership, ...platformOnly].sort((a, b) =>
-      a.name.localeCompare(b.name, "id"),
-    );
+    const bootstrap = await getBootstrap();
+    return bootstrap?.payload.organizations ?? [];
   },
 );
-
-/** Apakah request ini berasal dari super admin global. */
-const isGlobalSuperAdmin = cache(async (): Promise<boolean> => {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.rpc("mipnu_access_context", {});
-  if (error) return false;
-
-  return (data as unknown as { is_super_admin: boolean }).is_super_admin;
-});
 
 /**
  * Menentukan organisasi aktif untuk request ini.
@@ -241,17 +214,8 @@ const isGlobalSuperAdmin = cache(async (): Promise<boolean> => {
  * (docs/AUTHORIZATION.md §17).
  */
 export const resolveOrganizationId = cache(async (): Promise<string | null> => {
-  const organizations = await listAccessibleOrganizations();
-  if (organizations.length === 0) return null;
-
-  const cookieStore = await cookies();
-  const preferred = cookieStore.get(ORGANIZATION_COOKIE)?.value;
-
-  const match = organizations.find(
-    (organization) => organization.organizationId === preferred,
-  );
-
-  return match?.organizationId ?? organizations[0]!.organizationId;
+  const bootstrap = await getBootstrap();
+  return bootstrap?.payload.organization_id ?? null;
 });
 
 /**
@@ -264,13 +228,41 @@ export const resolveOrganizationId = cache(async (): Promise<string | null> => {
  */
 export const getAccessContext = cache(
   async (organizationId?: string | null): Promise<AccessContext | null> => {
-    const profile = await getCurrentProfile();
+    /*
+      Jalur biasa — organisasi aktif, yaitu yang dipakai hampir setiap
+      halaman. Seluruh jawabannya sudah ada di dalam satu panggilan bootstrap
+      yang juga memuat profil dan daftar organisasi, jadi tidak ada perjalanan
+      tambahan sama sekali di sini.
+    */
+    if (organizationId === undefined) {
+      const bootstrap = await getBootstrap();
+      if (!bootstrap) return null;
+
+      const { payload } = bootstrap;
+      const hasOrganization =
+        payload.organization_id !== null &&
+        (payload.has_membership || payload.is_super_admin);
+
+      return {
+        profileId: payload.profile!.id,
+        displayName: payload.profile!.display_name,
+        isSuperAdmin: payload.is_super_admin,
+        organizationId: hasOrganization ? payload.organization_id : null,
+        memberId: payload.member_id,
+        permissions: new Set(payload.permissions ?? []),
+      };
+    }
+
+    /*
+      Jalur organisasi TERTENTU — dipakai `requireOrganizationPermission()`
+      ketika sebuah mutasi menyebut organisasinya secara eksplisit. Jarang,
+      dan memang harus bertanya ulang: yang ditanyakan bukan "di mana saya
+      sekarang" melainkan "apa hak saya di organisasi ini".
+    */
+    const profile = await getProfileLegacy();
     if (!profile) return null;
 
-    const targetOrganizationId =
-      organizationId === undefined
-        ? await resolveOrganizationId()
-        : organizationId;
+    const targetOrganizationId = organizationId;
 
     const supabase = await createClient();
 

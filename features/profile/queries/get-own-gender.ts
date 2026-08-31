@@ -2,8 +2,10 @@ import "server-only";
 
 import { cache } from "react";
 
-import { getAccessContext } from "@/lib/auth/context";
-import { createClient } from "@/lib/supabase/server";
+import {
+  listAccessibleOrganizations,
+  resolveOrganizationId,
+} from "@/lib/auth/context";
 
 /**
  * Jenis kelamin pada data anggota milik pengguna sendiri.
@@ -12,24 +14,25 @@ import { createClient } from "@/lib/supabase/server";
  * yang lain, dan tidak pernah ditebak — bila kolomnya kosong, hasilnya NULL
  * dan avatar netral yang dipakai (docs/UI.md §34).
  *
- * Tidak ada pelonggaran wewenang di sini: barisnya dibaca dengan client
- * ber-scope pengguna, dan policy `members_select` memang mengizinkan setiap
- * orang membaca baris anggotanya SENDIRI. Pengguna yang belum tertaut ke
- * data anggota mendapat NULL.
+ * TIDAK ADA permintaan tersendiri ke Supabase di sini.
+ *
+ * Sebelumnya berkas ini menjalankan query `members` sendiri, dan query itu
+ * harus menunggu seluruh rantai konteks selesai lebih dulu — menambah satu
+ * perjalanan penuh (diukur 114ms) ke setiap pemuatan halaman, hanya untuk
+ * memilih gambar. Sekarang nilainya ikut terbawa pada query keanggotaan yang
+ * memang sudah berjalan, dan keduanya dibaca dari cache request yang sama.
  */
 export const getOwnGender = cache(async (): Promise<"L" | "P" | null> => {
-  const context = await getAccessContext();
-  if (!context?.memberId) return null;
+  const [organizations, activeId] = await Promise.all([
+    listAccessibleOrganizations(),
+    resolveOrganizationId(),
+  ]);
 
-  const supabase = await createClient();
+  if (!activeId) return null;
 
-  const { data, error } = await supabase
-    .from("members")
-    .select("gender")
-    .eq("id", context.memberId)
-    .maybeSingle();
+  const active = organizations.find(
+    (organization) => organization.organizationId === activeId,
+  );
 
-  if (error || !data) return null;
-
-  return data.gender === "L" || data.gender === "P" ? data.gender : null;
+  return active?.gender ?? null;
 });
