@@ -1,0 +1,64 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+/dist
+
+# testing
+/coverage
+/test-results
+/playwright-report
+
+# misc
+.DS_Store
+*.pem
+Thumbs.db
+*.log
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env — never commit secrets
+.env
+.env.local
+.env*.local
+.env.development
+.env.production
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# supabase — entire directory excluded from deployment repo
+/supabase/
+
+# internal documentation — local development only
+PRD.md
+SYSTEM.md
+AGENTS.md
+/docs/
+
+# scripts & tests — local development only
+/scripts/
+/tests/
+
+# AI / editor local configs
+/.claude/
+/.cursor/
+/.opencode/
+/.idea/
+/.agents/

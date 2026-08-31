@@ -1,0 +1,129 @@
+import type { Metadata } from "next";
+import { FileClock } from "lucide-react";
+
+import { PageHeader } from "@/components/layout/page-header";
+import { EmptyState, ForbiddenState } from "@/components/feedback/states";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeaderCell,
+  TableRow,
+  TableScroll,
+} from "@/components/ui/table";
+import { can, requireAccessContext } from "@/lib/auth/context";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { formatDateTime } from "@/lib/format";
+import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Audit Log",
+};
+
+/** Aksi diterjemahkan ke bahasa manusia; kode mentah hanya untuk fallback. */
+const ACTION_LABELS: Record<string, string> = {
+  "member.created": "Menambah anggota",
+  "member.updated": "Mengubah anggota",
+  "member.status_changed": "Mengubah status anggota",
+};
+
+export default async function AuditPage() {
+  const context = await requireAccessContext();
+
+  if (!context.organizationId || !can(context, PERMISSIONS.audit.view)) {
+    return <ForbiddenState />;
+  }
+
+  const supabase = await createClient();
+
+  // Audit bersifat append-only dan tidak punya UI ubah/hapus. Halaman ini
+  // memang hanya membaca (docs/DATABASE.md §44, RLS.md §115).
+  const { data } = await supabase
+    .from("audit_logs")
+    .select(
+      `
+      id, action, resource_type, resource_id, created_at,
+      profiles ( display_name )
+    `,
+    )
+    .eq("organization_id", context.organizationId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  type Row = {
+    id: string;
+    action: string;
+    resource_type: string;
+    created_at: string;
+    profiles: { display_name: string } | null;
+  };
+
+  const logs = (data as unknown as Row[] | null) ?? [];
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title="Audit Log"
+        description="Catatan aktivitas sensitif. Bersifat append-only dan tidak dapat diubah."
+      />
+
+      <Card>
+        {logs.length === 0 ? (
+          <EmptyState
+            icon={FileClock}
+            title="Belum ada aktivitas tercatat"
+            description="Perubahan data sensitif akan tercatat di sini secara otomatis."
+          />
+        ) : (
+          <TableScroll>
+            <Table>
+              <TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHeaderCell>Aktivitas</TableHeaderCell>
+                  <TableHeaderCell className="hidden sm:table-cell">
+                    Pelaku
+                  </TableHeaderCell>
+                  <TableHeaderCell className="hidden md:table-cell">
+                    Objek
+                  </TableHeaderCell>
+                  <TableHeaderCell>Waktu</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell>
+                      <span className="font-medium text-foreground">
+                        {ACTION_LABELS[log.action] ?? log.action}
+                      </span>
+                      <span className="block text-[13px] text-muted-foreground sm:hidden">
+                        {/* Pelaku bisa NULL bila akunnya sudah dihapus —
+                            jejaknya tetap disimpan. */}
+                        {log.profiles?.display_name ?? "Sistem"}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="hidden text-muted-foreground sm:table-cell">
+                      {log.profiles?.display_name ?? "Sistem"}
+                    </TableCell>
+
+                    <TableCell className="hidden text-muted-foreground md:table-cell">
+                      {log.resource_type}
+                    </TableCell>
+
+                    <TableCell className="text-muted-foreground">
+                      {formatDateTime(log.created_at)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableScroll>
+        )}
+      </Card>
+    </div>
+  );
+}

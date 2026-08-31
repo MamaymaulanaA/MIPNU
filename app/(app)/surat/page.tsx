@@ -1,0 +1,166 @@
+import type { Metadata } from "next";
+
+import { ForbiddenState } from "@/components/feedback/states";
+import { PageHeader } from "@/components/layout/page-header";
+import { exportLetters } from "@/features/exports/actions/export-csv";
+import { ExportButton } from "@/features/exports/components/export-button";
+import {
+  LetterTabs,
+  type IncomingRow,
+  type OutgoingRow,
+} from "@/features/letters/components/letter-panels";
+import { can, requireAccessContext } from "@/lib/auth/context";
+import { PERMISSIONS } from "@/lib/auth/permissions";
+import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Surat",
+};
+
+export default async function LettersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const context = await requireAccessContext();
+
+  if (!context.organizationId || !can(context, PERMISSIONS.letters.view)) {
+    return <ForbiddenState />;
+  }
+
+  const params = await searchParams;
+  const activeTab = params.tab === "keluar" ? "keluar" : "masuk";
+
+  const supabase = await createClient();
+
+  const [incomingResult, outgoingResult, membersResult, documentsResult] =
+    await Promise.all([
+      supabase
+        .from("incoming_letters")
+        .select(
+          "id, letter_number, sender, subject, letter_date, received_date, status, document_id, notes",
+        )
+        .eq("organization_id", context.organizationId)
+        .is("deleted_at", null)
+        .order("received_date", { ascending: false }),
+
+      supabase
+        .from("outgoing_letters")
+        .select(
+          `
+          id, letter_number, recipient, subject, letter_date, signer_member_id,
+          status, document_id, notes,
+          members!outgoing_letters_signer_fk ( full_name )
+        `,
+        )
+        .eq("organization_id", context.organizationId)
+        .is("deleted_at", null)
+        .order("letter_date", { ascending: false }),
+
+      supabase
+        .from("members")
+        .select("id, full_name")
+        .eq("organization_id", context.organizationId)
+        .is("deleted_at", null)
+        .order("full_name"),
+
+      // Hanya dokumen yang benar-benar boleh dilihat pemanggil yang muncul
+      // sebagai pilihan lampiran — RLS `documents_select` yang menentukan.
+      supabase
+        .from("documents")
+        .select("id, title, category")
+        .eq("organization_id", context.organizationId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(200),
+    ]);
+
+  type OutgoingQueryRow = {
+    id: string;
+    letter_number: string;
+    recipient: string;
+    subject: string;
+    letter_date: string;
+    signer_member_id: string | null;
+    status: string;
+    document_id: string | null;
+    notes: string | null;
+    members: { full_name: string } | null;
+  };
+
+  const incoming: IncomingRow[] = (incomingResult.data ?? []).map((row) => ({
+    id: row.id,
+    letterNumber: row.letter_number,
+    sender: row.sender,
+    subject: row.subject,
+    letterDate: row.letter_date,
+    receivedDate: row.received_date,
+    status: row.status,
+    documentId: row.document_id,
+    notes: row.notes,
+  }));
+
+  const outgoing: OutgoingRow[] = (
+    (outgoingResult.data as unknown as OutgoingQueryRow[] | null) ?? []
+  ).map((row) => ({
+    id: row.id,
+    letterNumber: row.letter_number,
+    recipient: row.recipient,
+    subject: row.subject,
+    letterDate: row.letter_date,
+    signerMemberId: row.signer_member_id,
+    signerName: row.members?.full_name ?? null,
+    status: row.status,
+    documentId: row.document_id,
+    notes: row.notes,
+  }));
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        title="Surat"
+        description="Arsip surat masuk dan surat keluar organisasi."
+        actions={
+          can(context, PERMISSIONS.letters.export) ? (
+            // Ekspor mengikuti tab yang sedang dibuka: berkas "surat" yang
+            // mencampur surat masuk dan keluar dalam satu tabel tidak dapat
+            // dibaca sebagai arsip mana pun.
+            <ExportButton
+              label={
+                activeTab === "keluar"
+                  ? "Ekspor Surat Keluar"
+                  : "Ekspor Surat Masuk"
+              }
+              action={exportLetters.bind(
+                null,
+                context.organizationId,
+                activeTab === "keluar" ? "outgoing" : "incoming",
+                {},
+              )}
+            />
+          ) : null
+        }
+      />
+
+      <LetterTabs
+        organizationId={context.organizationId}
+        activeTab={activeTab}
+        incoming={incoming}
+        outgoing={outgoing}
+        memberOptions={(
+          (membersResult.data as { id: string; full_name: string }[] | null) ??
+          []
+        ).map((member) => ({ id: member.id, label: member.full_name }))}
+        documentOptions={(
+          (documentsResult.data as { id: string; title: string }[] | null) ?? []
+        ).map((document) => ({ id: document.id, label: document.title }))}
+        permissions={{
+          canCreate: can(context, PERMISSIONS.letters.create),
+          canEdit: can(context, PERMISSIONS.letters.edit),
+          canApprove: can(context, PERMISSIONS.letters.approve),
+          canDelete: can(context, PERMISSIONS.letters.delete),
+        }}
+      />
+    </div>
+  );
+}

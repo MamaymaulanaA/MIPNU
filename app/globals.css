@@ -1,0 +1,462 @@
+@import "tailwindcss";
+
+/*
+ * MIPNU — Design Tokens
+ * Source of truth: docs/UI.md
+ *
+ * Aturan yang dijaga di berkas ini:
+ *  1. Warna produk TIDAK PERNAH ditulis sebagai hex di component.
+ *     Component memakai token semantik (bg-primary, text-muted-foreground,
+ *     border-border). Rebranding cukup mengubah berkas ini.
+ *  2. Radius 8px untuk semua persegi-membulat. Lingkaran hanya untuk elemen
+ *     yang memang bulat secara makna (avatar, titik status).
+ *  3. Satu tinggi kontrol (40px). Button, input, select, dan trigger dropdown
+ *     pada baris yang sama otomatis sejajar.
+ *  4. Bayangan seminimal mungkin. Card memakai border 1px, bukan shadow.
+ *     Shadow hanya untuk lapisan mengambang: dropdown, popover, dialog.
+ *  5. Warna status (success/warning/destructive/info) hanya dipakai untuk
+ *     keadaan yang benar-benar bermakna — bukan untuk memberi variasi warna.
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ---- Semantic surface & text ----
+     Background off-white kebiruan, card putih. Hierarki datang dari
+     perbedaan itu, bukan dari shadow (UI.md, aturan 4 di atas). */
+  --background: 220 23% 97%; /* #F7F8FA */
+  --foreground: 221 39% 11%; /* #111827 */
+
+  --card: 0 0% 100%;
+  --card-foreground: 221 39% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 221 39% 11%;
+
+  /* ---- Biru institusional ----
+     Royal blue #2F6FED sebagai aksi utama; navy #1F356B disimpan terpisah
+     karena perannya berbeda — lihat --navy di bawah. */
+  --primary: 220 84% 56%; /* #2F6FED */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 220 70% 49%; /* #255ED3 */
+  --primary-active: 224 76% 48%; /* #1D4ED8 */
+  --primary-soft: 219 100% 97%; /* #EEF4FF */
+  --primary-border: 223 100% 89%; /* #C9D8FF */
+
+  /* Navy pekat. DIPAKAI TERBATAS: panel login, Live layar penuh, konteks
+     institusional yang memang menuntut bobot. Bukan latar aplikasi
+     (UI.md §83) — seluruh halaman navy membuat aplikasi terasa berat. */
+  --navy: 223 55% 27%; /* #1F356B */
+  --navy-foreground: 0 0% 100%;
+
+  --secondary: 220 23% 96%;
+  --secondary-foreground: 218 24% 27%; /* #344054 */
+
+  --muted: 220 23% 96%;
+  --muted-foreground: 221 13% 46%; /* #667085 */
+  --muted-soft: 218 15% 65%; /* #98A2B3 */
+
+  --accent: 219 100% 97%;
+  --accent-foreground: 220 70% 49%;
+
+  /* Dua biru pendukung dari palet final, untuk bidang yang menuntut biru
+     lebih pekat atau lebih tenang daripada primary. */
+  --blue-strong: 217 76% 37%; /* #174EA6 */
+  --blue-muted: 219 43% 55%; /* #5B7DBE */
+
+  --destructive: 0 72% 51%; /* #DC2626 */
+  --destructive-foreground: 0 0% 100%;
+
+  /* ---- Success TANPA hijau ----
+     Keputusan final: MIPNU tidak memakai hijau di UI. Success karenanya
+     memakai biru yang lebih DALAM daripada primary, bukan biru yang sama:
+     #1E40AF vs #2F6FED. Perbedaan kedalaman itu yang membedakan "sudah
+     final" dari "dapat ditindak", tanpa menambah warna baru.
+
+     Karena warnanya kini sekeluarga dengan primary, warna TIDAK PERNAH
+     menjadi satu-satunya sinyal. Setiap status success wajib disertai
+     label teks, dan badge menambahkan titik sebagai sinyal kedua. */
+  --success: 226 71% 40%; /* #1E40AF */
+  --success-foreground: 0 0% 100%;
+
+  --warning: 32 95% 44%; /* #D97706 */
+  --warning-foreground: 0 0% 100%;
+
+  --info: 200 98% 39%; /* #0284C7 */
+  --info-foreground: 0 0% 100%;
+
+  --border: 216 28% 90%; /* #DDE3EC */
+  --border-strong: 213 27% 84%; /* #CBD5E1 */
+  --input: 216 28% 90%;
+
+  --ring: 220 84% 56%;
+
+  /* ---- Soft status backgrounds (badge, chip ikon) ---- */
+  --success-soft: 214 100% 97%; /* #EFF6FF */
+  --success-border: 213 97% 87%; /* #BFDBFE */
+  --warning-soft: 40 92% 94%;
+  --destructive-soft: 0 86% 97%;
+  --info-soft: 200 90% 95%;
+
+  /* ---- Aksen data ----
+     Dipakai HANYA untuk membedakan kategori pada dashboard: wadah ikon
+     kartu metrik, irisan donat, dan penanda domain aktivitas. Bukan status,
+     jadi tidak boleh dipakai untuk sukses/gagal/peringatan — token semantik
+     di atas tetap satu-satunya sumber untuk itu.
+
+     Tidak ada hijau di sini, sesuai keputusan palet. Cyan berada di hue 192,
+     jauh dari wilayah hijau, dan tetap terbaca berdampingan dengan biru
+     primer karena kedalamannya berbeda. */
+  --accent-cyan: 192 91% 36%; /* #0891B2 */
+  --accent-cyan-soft: 185 96% 94%;
+  --accent-purple: 263 83% 58%; /* #7C3AED */
+  --accent-purple-soft: 251 91% 96%;
+  --accent-amber: 32 95% 44%; /* #D97706 */
+  --accent-amber-soft: 33 100% 95%;
+  --accent-rose: 347 77% 50%; /* #E11D48 */
+  --accent-rose-soft: 356 100% 97%;
+  --accent-slate: 215 16% 47%; /* #64748B */
+  --accent-slate-soft: 210 40% 96%;
+
+  /* ---- Sidebar ----
+     Token terpisah supaya sidebar dapat diubah tanpa menyentuh
+     seluruh halaman. Sengaja PUTIH, bukan navy penuh: sidebar gelap
+     membuat aplikasi harian terasa berat (UI.md §13). */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 218 24% 27%;
+  --sidebar-muted: 221 13% 46%;
+  --sidebar-accent: 219 100% 97%; /* #EEF4FF */
+  --sidebar-accent-foreground: 220 70% 49%; /* #255ED3 */
+  --sidebar-border: 216 28% 90%;
+  --sidebar-ring: 220 84% 56%;
+
+  /* ---- Identitas organisasi ----
+     Keputusan sebelumnya — hijau untuk IPNU, ungu untuk IPPNU — DIBATALKAN.
+     Aplikasi ini satu brand: MIPNU, biru.
+
+     IPNU dan IPPNU tetap dibedakan, tetapi lewat hal yang memang membedakan
+     keduanya: LABEL. Nama jenis organisasi ditulis apa adanya, bukan
+     disandikan menjadi warna yang harus dihafal pembacanya. Itu juga lebih
+     baik bagi pembaca yang tidak dapat mengandalkan warna sama sekali. */
+  --ipnu: 220 84% 56%;
+  --ippnu: 217 76% 37%;
+
+  /* ---- Bayangan ----
+     Tiga tingkat, dan hanya tiga. Border yang membentuk hierarki; shadow
+     hanya menandai lapisan yang benar-benar mengambang. */
+  --elevation-raised: 0 1px 2px rgb(15 23 42 / 0.04);
+  --elevation-floating: 0 2px 6px rgb(15 23 42 / 0.06);
+  --elevation-overlay: 0 8px 24px rgb(15 23 42 / 0.1);
+
+  /* ---- Radius ---- */
+  --radius: 0.5rem;
+
+  /* ---- Layout ---- */
+  --sidebar-width: 248px;
+  --sidebar-width-collapsed: 68px;
+  --header-height: 60px;
+
+  --content-padding-mobile: 16px;
+  --content-padding-tablet: 20px;
+  --content-padding-desktop: 24px;
+
+  --control-height: 40px;
+  --control-height-sm: 32px;
+  --control-height-lg: 44px;
+
+  /* ---- Z-index ---- */
+  --z-dropdown: 40;
+  --z-sticky: 30;
+  --z-overlay: 50;
+  --z-dialog: 60;
+  --z-toast: 70;
+}
+
+/*
+ * Dark mode disiapkan tetapi bukan prioritas MVP.
+ * Bukan sekadar inversi: primary dinaikkan luminansinya supaya tetap
+ * terbaca di atas permukaan gelap.
+ */
+.dark {
+  --background: 222 42% 8%;
+  --foreground: 213 30% 95%;
+
+  --card: 222 36% 11%;
+  --card-foreground: 213 30% 95%;
+
+  --popover: 222 36% 11%;
+  --popover-foreground: 213 30% 95%;
+
+  /* Primary dinaikkan luminansinya: #2F6FED terlalu gelap di atas
+     permukaan gelap dan gagal kontras terhadap teks putih. */
+  --primary: 217 91% 65%;
+  --primary-foreground: 222 47% 10%;
+  --primary-hover: 217 91% 72%;
+  --primary-active: 217 91% 78%;
+  --primary-soft: 220 45% 17%;
+  --primary-border: 220 40% 28%;
+
+  /* Navy nyaris menyatu dengan latar gelap, jadi dinaikkan agar panel
+     institusional tetap terbaca sebagai bidang tersendiri. */
+  --navy: 223 45% 20%;
+  --navy-foreground: 213 30% 95%;
+
+  --secondary: 217 26% 17%;
+  --secondary-foreground: 213 30% 95%;
+
+  --muted: 217 26% 17%;
+  --muted-foreground: 218 16% 65%;
+  --muted-soft: 218 14% 52%;
+
+  --accent: 220 45% 17%;
+  --accent-foreground: 217 91% 78%;
+
+  --blue-strong: 217 70% 58%;
+  --blue-muted: 219 35% 62%;
+
+  --ipnu: 217 91% 65%;
+  --ippnu: 217 70% 58%;
+
+  --destructive: 0 63% 52%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 217 85% 68%;
+  --success-foreground: 226 71% 14%;
+
+  --warning: 36 90% 58%;
+  --warning-foreground: 30 100% 8%;
+
+  --info: 200 85% 55%;
+  --info-foreground: 200 90% 10%;
+
+  --border: 217 22% 20%;
+  --border-strong: 217 20% 28%;
+  --input: 217 22% 20%;
+
+  --ring: 217 91% 65%;
+
+  --success-soft: 220 45% 16%;
+  --success-border: 220 40% 27%;
+  --warning-soft: 36 45% 15%;
+  --destructive-soft: 0 45% 15%;
+  --info-soft: 200 50% 15%;
+
+  --accent-cyan: 190 80% 55%;
+  --accent-cyan-soft: 192 45% 15%;
+  --accent-purple: 258 90% 74%;
+  --accent-purple-soft: 258 40% 18%;
+  --accent-amber: 36 90% 58%;
+  --accent-amber-soft: 36 45% 15%;
+  --accent-rose: 350 85% 66%;
+  --accent-rose-soft: 350 40% 16%;
+  --accent-slate: 215 20% 65%;
+  --accent-slate-soft: 217 26% 17%;
+
+  --sidebar: 222 36% 11%;
+  --sidebar-foreground: 213 26% 84%;
+  --sidebar-muted: 218 16% 65%;
+  --sidebar-accent: 220 45% 17%;
+  --sidebar-accent-foreground: 217 91% 78%;
+  --sidebar-border: 217 22% 20%;
+  --sidebar-ring: 217 91% 65%;
+
+  /* Bayangan pada latar gelap harus lebih pekat agar tetap terbaca. */
+  --elevation-raised: 0 1px 2px rgb(0 0 0 / 0.3);
+  --elevation-floating: 0 2px 6px rgb(0 0 0 / 0.4);
+  --elevation-overlay: 0 8px 24px rgb(0 0 0 / 0.5);
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-active: hsl(var(--primary-active));
+  --color-primary-soft: hsl(var(--primary-soft));
+  --color-primary-border: hsl(var(--primary-border));
+
+  --color-navy: hsl(var(--navy));
+  --color-navy-foreground: hsl(var(--navy-foreground));
+
+  --color-blue-strong: hsl(var(--blue-strong));
+  --color-blue-muted: hsl(var(--blue-muted));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-soft: hsl(var(--muted-soft));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-soft: hsl(var(--destructive-soft));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-soft: hsl(var(--success-soft));
+  --color-success-border: hsl(var(--success-border));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-soft: hsl(var(--warning-soft));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-info-soft: hsl(var(--info-soft));
+
+  --color-accent-cyan: hsl(var(--accent-cyan));
+  --color-accent-cyan-soft: hsl(var(--accent-cyan-soft));
+  --color-accent-purple: hsl(var(--accent-purple));
+  --color-accent-purple-soft: hsl(var(--accent-purple-soft));
+  --color-accent-amber: hsl(var(--accent-amber));
+  --color-accent-amber-soft: hsl(var(--accent-amber-soft));
+  --color-accent-rose: hsl(var(--accent-rose));
+  --color-accent-rose-soft: hsl(var(--accent-rose-soft));
+  --color-accent-slate: hsl(var(--accent-slate));
+  --color-accent-slate-soft: hsl(var(--accent-slate-soft));
+
+  --color-border: hsl(var(--border));
+  --color-border-strong: hsl(var(--border-strong));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --shadow-raised: var(--elevation-raised);
+  --shadow-floating: var(--elevation-floating);
+  --shadow-overlay: var(--elevation-overlay);
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-muted: hsl(var(--sidebar-muted));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --color-ipnu: hsl(var(--ipnu));
+  --color-ippnu: hsl(var(--ippnu));
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+
+  --font-sans: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Angka pada tabel data harus sejajar per kolom */
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Fokus keyboard: satu ring tegas, bukan glow bertumpuk. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 1px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: hsl(var(--foreground));
+    line-height: 1.25;
+    letter-spacing: -0.011em;
+    text-wrap: balance;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Scrollbar tipis untuk area yang menggulir sendiri (sidebar, dropdown). */
+  /* Scrollbar yang hampir tidak terasa ada.
+   *
+   * Dua jalur, dan pemisahannya DISENGAJA: sejak Chromium mendukung properti
+   * standar `scrollbar-width`, menyetelnya membuat seluruh pseudo-element
+   * `::-webkit-scrollbar` DIABAIKAN — dan `thin` di Chromium berarti sekitar
+   * 10px, jauh dari tipis. Karena itu properti standar hanya dipasang di
+   * peramban yang memang tidak punya pseudo-element webkit (Firefox), lewat
+   * `@supports not selector(...)`.
+   *
+   * Hasilnya: Chromium mendapat 4px yang benar-benar 4px, Firefox mendapat
+   * `thin` dengan warna yang sama halusnya. Kemampuan menggulung tidak
+   * dikurangi sedikit pun — hanya penampakannya yang mundur, karena batang
+   * gulir bukan informasi yang perlu dibaca setiap saat (docs/UI.md §14). */
+  .scroll-area {
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
+  /* Menghormati pengguna yang meminta gerak dikurangi. */
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-area {
+      scroll-behavior: auto;
+    }
+  }
+
+  .scroll-area::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll-area::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.18);
+    border-radius: 999px;
+  }
+  .scroll-area:hover::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.38);
+  }
+
+  /* Firefox: tidak punya pseudo-element di atas, jadi dipakai properti
+     standar. `thin` adalah nilai paling tipis yang tersedia di sana. */
+  @supports not selector(::-webkit-scrollbar) {
+    .scroll-area {
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--muted-foreground) / 0.18) transparent;
+    }
+    .scroll-area:hover {
+      scrollbar-color: hsl(var(--muted-foreground) / 0.38) transparent;
+    }
+  }
+}
