@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Upload, Users } from "lucide-react";
+import { Upload, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Pagination } from "@/components/data-table/pagination";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { ExportButton } from "@/features/exports/components/export-button";
 import { exportMembers } from "@/features/exports/actions/export-csv";
+import { MemberCreateDialog } from "@/features/members/components/member-form-dialog";
 import { MemberFilters } from "@/features/members/components/member-filters";
 import { listMembers } from "@/features/members/queries/list-members";
 import {
@@ -85,12 +86,11 @@ export default async function MembersPage({
               </Button>
             ) : null}
             {canCreate ? (
-              <Button asChild>
-                <Link href="/anggota/baru">
-                  <Plus size={16} aria-hidden="true" />
-                  Tambah Anggota
-                </Link>
-              </Button>
+              <MemberCreateDialog
+                organizationId={context.organizationId}
+                canEditPrivate={includePrivate}
+                canEditStatus={can(context, PERMISSIONS.members.manageStatus)}
+              />
             ) : null}
           </>
         }
@@ -115,6 +115,7 @@ export default async function MembersPage({
             params={params}
             includePrivate={includePrivate}
             canCreate={canCreate}
+            canManageStatus={can(context, PERMISSIONS.members.manageStatus)}
           />
         </Suspense>
       </Card>
@@ -127,11 +128,13 @@ async function MemberTable({
   params,
   includePrivate,
   canCreate,
+  canManageStatus,
 }: {
   organizationId: string;
   params: ReturnType<typeof memberListParamsSchema.parse>;
   includePrivate: boolean;
   canCreate: boolean;
+  canManageStatus: boolean;
 }) {
   const { rows, total, page, pageCount } = await listMembers(
     organizationId,
@@ -155,9 +158,12 @@ async function MemberTable({
         }
         action={
           !isFiltered && canCreate ? (
-            <Button size="sm" asChild>
-              <Link href="/anggota/baru">Tambah anggota pertama</Link>
-            </Button>
+            <MemberCreateDialog
+              organizationId={organizationId}
+              canEditPrivate={includePrivate}
+              canEditStatus={canManageStatus}
+              trigger="ringkas"
+            />
           ) : undefined
         }
       />

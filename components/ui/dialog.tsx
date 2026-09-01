@@ -17,6 +17,30 @@ import { cn } from "@/lib/utils";
  * mengambang di tengah layar 320px lebih sulit dijangkau ibu jari
  * (docs/UI.md §104).
  */
+/**
+ * Lebar dialog — tiga tingkat, dan hanya tiga.
+ *
+ * Sebelumnya SEMUA dialog dipatok `max-w-lg` (512px), dari konfirmasi dua
+ * kalimat sampai form empat belas field. Akibatnya keduanya salah sekaligus:
+ * konfirmasi terlihat melebar tanpa isi, sementara form manajemen terasa
+ * sesak — "Tambah Periode" berisi tiga field pun sempit karena tanggal mulai
+ * dan selesai harus berbagi 512px dikurangi padding.
+ *
+ *   sm  448  konfirmasi dan form satu-dua field
+ *   md  672  form manajemen standar — INI bawaannya
+ *   lg  768  form yang memang banyak kolom
+ *
+ * Angkanya tetap di SATU tempat. Menuliskan `max-w-[640px]` langsung di satu
+ * halaman adalah cara skala ini berhenti menjadi skala.
+ */
+export const LEBAR_DIALOG = {
+  sm: "max-w-md",
+  md: "max-w-2xl",
+  lg: "max-w-3xl",
+} as const;
+
+export type DialogSize = keyof typeof LEBAR_DIALOG;
+
 export function Dialog({
   open,
   onClose,
@@ -24,6 +48,7 @@ export function Dialog({
   description,
   children,
   footer,
+  size = "md",
 }: {
   open: boolean;
   onClose: () => void;
@@ -31,6 +56,7 @@ export function Dialog({
   description?: string;
   children?: React.ReactNode;
   footer?: React.ReactNode;
+  size?: DialogSize;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -56,10 +82,18 @@ export function Dialog({
         if (event.target === dialogRef.current) onClose();
       }}
       className={cn(
-        "w-full max-w-lg rounded-lg border border-border bg-card p-0 text-card-foreground",
+        "rounded-lg border border-border bg-card p-0 text-card-foreground",
         "shadow-overlay",
         "backdrop:bg-foreground/50",
-        "m-0 mt-auto max-h-[90dvh] sm:m-auto",
+        // Ponsel: menempel ke bawah supaya terjangkau ibu jari, tetapi TIDAK
+        // lagi rata tepi. Sisi kiri dan kanan diberi 12px sehingga dialog
+        // terbaca sebagai lembar yang mengambang, bukan sebagai halaman baru
+        // yang menempel dinding layar (docs/UI.md §104).
+        "m-3 mt-auto w-[calc(100%-1.5rem)] max-h-[calc(100dvh-1.5rem)]",
+        // Di atas 640px ia kembali menjadi kotak terpusat, dan lebarnya
+        // ditentukan varian.
+        "sm:m-auto sm:w-full sm:max-h-[90dvh]",
+        LEBAR_DIALOG[size],
       )}
     >
       <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
@@ -127,6 +161,10 @@ export function ConfirmDialog({
       onClose={onClose}
       title={title}
       description={description}
+      // Konfirmasi TIDAK selebar form. Ia memuat satu kalimat akibat dan dua
+      // tombol; selebar form manajemen ia terbaca seperti dialog yang lupa
+      // diisi.
+      size="sm"
       footer={
         <>
           <Button variant="outline" onClick={onClose} disabled={pending}>

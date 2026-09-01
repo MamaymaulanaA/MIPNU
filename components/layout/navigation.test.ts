@@ -107,7 +107,7 @@ describe("resolveActiveHref", () => {
 
   it("halaman rincian tetap menyalakan menu induknya", () => {
     expect(resolveActiveHref("/anggota/abc-123")).toBe("/anggota");
-    expect(resolveActiveHref("/anggota/abc-123/edit")).toBe("/anggota");
+    expect(resolveActiveHref("/anggota/impor")).toBe("/anggota");
     expect(resolveActiveHref("/pemilihan/abc-123/live")).toBe("/pemilihan");
     expect(resolveActiveHref("/rapat/abc-123")).toBe("/rapat");
   });

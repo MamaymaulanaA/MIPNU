@@ -4,7 +4,7 @@ import { useActionState, useEffect } from "react";
 
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, type DialogSize } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
 import type { ActionResult } from "@/lib/errors";
 
@@ -38,6 +38,7 @@ export function FormDialog<T>({
   submitLabel,
   pendingLabel,
   successMessage,
+  size,
   children,
 }: {
   open: boolean;
@@ -52,6 +53,8 @@ export function FormDialog<T>({
   submitLabel: string;
   pendingLabel?: string;
   successMessage: string;
+  /** Bawaannya `md` — lebar form manajemen standar. */
+  size?: DialogSize;
   children: (fieldErrors?: Record<string, string[]>) => React.ReactNode;
 }) {
   const { showToast } = useToast();
@@ -76,6 +79,7 @@ export function FormDialog<T>({
       onClose={onClose}
       title={title}
       description={description}
+      size={size}
     >
       <form action={formAction} className="space-y-4">
         {/*

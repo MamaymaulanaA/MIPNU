@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { ForbiddenState } from "@/components/feedback/states";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MemberEditDialog } from "@/features/members/components/member-form-dialog";
 import { MemberStatusControl } from "@/features/members/components/member-status-control";
 import {
   getMember,
@@ -77,12 +75,33 @@ export default async function MemberDetailPage({
               />
             ) : null}
             {canEdit ? (
-              <Button variant="secondary" asChild>
-                <Link href={`/anggota/${member.id}/edit`}>
-                  <Pencil size={16} aria-hidden="true" />
-                  Ubah
-                </Link>
-              </Button>
+              /* Penyuntingan terjadi di sini, di halaman yang datanya memang
+                 sudah lengkap. Daftar anggota sengaja TIDAK membawa aksi ini:
+                 query daftarnya ramping — tanpa tempat lahir, tanggal lahir,
+                 alamat, dan catatan — dan menambahkannya hanya demi mengisi
+                 dialog berarti setiap pemuatan daftar membayar untuk satu
+                 baris yang mungkin disunting (AGENTS.md §64). */
+              <MemberEditDialog
+                organizationId={context.organizationId}
+                memberId={member.id}
+                memberName={member.fullName}
+                canEditPrivate={includePrivate}
+                canEditStatus={canManageStatus}
+                variant="utama"
+                values={{
+                  fullName: member.fullName,
+                  memberNumber: member.memberNumber ?? "",
+                  gender: member.gender ?? "",
+                  birthPlace: member.birthPlace ?? "",
+                  birthDate: member.birthDate ?? "",
+                  email: member.email ?? "",
+                  phone: member.phone ?? "",
+                  address: member.address ?? "",
+                  joinDate: member.joinDate ?? "",
+                  status: member.status,
+                  notes: member.notes ?? "",
+                }}
+              />
             ) : null}
           </>
         }
