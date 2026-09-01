@@ -25,6 +25,7 @@ import {
 import type { ActionResult } from "@/lib/errors";
 import { formatNumber, formatShortDate } from "@/lib/format";
 import { programStatus } from "@/lib/status";
+import { cn } from "@/lib/utils";
 
 export type ProgramRow = {
   id: string;
@@ -54,6 +55,67 @@ export type ProgramPermissions = {
   canDelete: boolean;
 };
 
+/**
+ * Kolom kisi kartu, dipilih menurut JUMLAH kartunya.
+ *
+ * Sebelumnya tetap `lg:grid-cols-2`, berapa pun isinya. Satu program berarti
+ * satu kartu selebar setengah layar dengan separuh baris menganga di
+ * sebelahnya — ruang kosong yang bukan keputusan siapa pun, hanya akibat
+ * angka kolom yang ditulis sekali lalu tidak pernah ditinjau lagi.
+ *
+ * Satu kartu kini selebar barisnya. Itu bukan kompromi: kartu program berisi
+ * deskripsi, capaian, dan metadata: melebar justru membuatnya lebih terbaca,
+ * bukan lebih kosong.
+ */
+function KOLOM_PROGRAM(jumlah: number) {
+  if (jumlah <= 1) return "";
+  if (jumlah === 2) return "md:grid-cols-2";
+  return "md:grid-cols-2 xl:grid-cols-3";
+}
+
+/**
+ * Tombol "Tambah Program" beserta dialognya.
+ *
+ * Berdiri di kepala halaman, sebaris dengan judul — bukan melayang rata kanan
+ * di atas kisi kartu, di dalam kartu yang sama dengan daftarnya. Aksi primer
+ * halaman manajemen lain semuanya di sana.
+ */
+export function ProgramCreateDialog({
+  organizationId,
+  periodOptions,
+  positionOptions,
+  memberOptions,
+}: {
+  organizationId: string;
+  periodOptions: ProgramOption[];
+  positionOptions: ProgramOption[];
+  memberOptions: ProgramOption[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        disabled={periodOptions.length === 0}
+      >
+        <Plus size={16} aria-hidden="true" />
+        Tambah Program
+      </Button>
+
+      <ProgramDialog
+        key={open ? "program-create-open" : "program-create-closed"}
+        open={open}
+        onClose={() => setOpen(false)}
+        organizationId={organizationId}
+        periodOptions={periodOptions}
+        positionOptions={positionOptions}
+        memberOptions={memberOptions}
+      />
+    </>
+  );
+}
+
 export function ProgramManager({
   organizationId,
   programs,
@@ -70,7 +132,6 @@ export function ProgramManager({
   permissions: ProgramPermissions;
 }) {
   const { showToast } = useToast();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<ProgramRow | null>(null);
   const [deleting, setDeleting] = useState<ProgramRow | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -91,18 +152,6 @@ export function ProgramManager({
 
   return (
     <>
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button
-            onClick={() => setCreateOpen(true)}
-            disabled={periodOptions.length === 0}
-          >
-            <Plus size={16} aria-hidden="true" />
-            Tambah Program
-          </Button>
-        </div>
-      ) : null}
-
       {programs.length === 0 ? (
         <EmptyState
           icon={Target}
@@ -110,7 +159,7 @@ export function ProgramManager({
           description="Program kerja terikat pada periode kepengurusan. Buat periode lebih dulu bila belum ada."
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className={cn("grid gap-4", KOLOM_PROGRAM(programs.length))}>
           {programs.map((program) => (
             <ProgramCard
               key={program.id}
@@ -123,16 +172,6 @@ export function ProgramManager({
           ))}
         </div>
       )}
-
-      <ProgramDialog
-        key={createOpen ? "create-open" : "create-closed"}
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        organizationId={organizationId}
-        periodOptions={periodOptions}
-        positionOptions={positionOptions}
-        memberOptions={memberOptions}
-      />
 
       <ProgramDialog
         key={editing?.id ?? "edit-closed"}

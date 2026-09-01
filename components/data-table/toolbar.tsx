@@ -101,9 +101,19 @@ export function TableToolbar({
   resetKeys = [],
 }: {
   searchKey?: string;
-  searchValue: string;
-  searchPlaceholder: string;
-  searchLabel: string;
+  /**
+   * Nilai pencarian dari URL, atau `undefined` bila halaman ini memang TIDAK
+   * punya pencarian.
+   *
+   * Laporan Keuangan adalah contohnya: `mipnu_finance_summary()` menerima
+   * rentang tanggal dan akun, dan tidak menerima kata pencarian apa pun.
+   * Memasang kotak pencarian di sana hanya demi bentuk toolbar yang seragam
+   * akan menjanjikan sesuatu yang tidak pernah bekerja — dan penyaring yang
+   * tidak didukung backend adalah penyaring palsu.
+   */
+  searchValue?: string;
+  searchPlaceholder?: string;
+  searchLabel?: string;
   filters?: TableFilter[];
   dateFilters?: TableDateFilter[];
   /**
@@ -120,7 +130,8 @@ export function TableToolbar({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [search, setSearch] = useState(searchValue);
+  const adaPencarian = searchValue !== undefined;
+  const [search, setSearch] = useState(searchValue ?? "");
   const isFirstRender = useRef(true);
 
   // Debounce: menunggu pengguna berhenti mengetik supaya satu kata pencarian
@@ -130,6 +141,8 @@ export function TableToolbar({
       isFirstRender.current = false;
       return;
     }
+
+    if (!adaPencarian) return;
 
     const timer = setTimeout(() => {
       // Dibandingkan dengan URL SAAT INI, bukan dengan nilai dari closure.
@@ -177,7 +190,7 @@ export function TableToolbar({
   }
 
   const adaFilter =
-    search !== "" ||
+    (adaPencarian && search !== "") ||
     filters.some((filter) => filter.value !== "") ||
     dateFilters.some((filter) => filter.value !== "");
 
@@ -195,21 +208,23 @@ export function TableToolbar({
         sendiri, dan pencarian mendapat lebar penuh. Halaman dengan satu atau
         dua penyaring tidak berubah sama sekali: keduanya tetap muat sebaris.
       */}
-      <div className="relative min-w-0 flex-1 sm:min-w-[220px]">
-        <Search
-          size={16}
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
-        />
-        <Input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder={searchPlaceholder}
-          aria-label={searchLabel}
-          className="pl-9"
-        />
-      </div>
+      {adaPencarian ? (
+        <div className="relative min-w-0 flex-1 sm:min-w-[220px]">
+          <Search
+            size={16}
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label={searchLabel}
+            className="pl-9"
+          />
+        </div>
+      ) : null}
 
       {filters.length > 0 || dateFilters.length > 0 || adaFilter ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -261,7 +276,7 @@ export function TableToolbar({
               onClick={() => {
                 setSearch("");
                 updateParams({
-                  [searchKey]: null,
+                  ...(adaPencarian ? { [searchKey]: null } : {}),
                   page: null,
                   ...kosongkanLain(),
                   ...Object.fromEntries(

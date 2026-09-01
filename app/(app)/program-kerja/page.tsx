@@ -7,6 +7,7 @@ import { Pagination } from "@/components/data-table/pagination";
 import { TableToolbar } from "@/components/data-table/toolbar";
 import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 import {
+  ProgramCreateDialog,
   ProgramManager,
   type ProgramRow,
 } from "@/features/programs/components/program-manager";
@@ -146,11 +147,32 @@ export default async function WorkProgramsPage({
     (periodsResult.data as
       { id: string; name: string; status: string }[] | null) ?? [];
 
+  const opsiPeriode = periods.map((period) => ({
+    id: period.id,
+    label: period.status === "ACTIVE" ? `${period.name} (aktif)` : period.name,
+  }));
+  const opsiJabatan = (
+    (positionsResult.data as { id: string; name: string }[] | null) ?? []
+  ).map((position) => ({ id: position.id, label: position.name }));
+  const opsiAnggota = (
+    (membersResult.data as { id: string; full_name: string }[] | null) ?? []
+  ).map((member) => ({ id: member.id, label: member.full_name }));
+
   return (
     <div className="space-y-5">
       <PageHeader
         title="Program Kerja"
         description="Rencana kerja satu periode kepengurusan beserta capaiannya."
+        actions={
+          can(context, PERMISSIONS.programs.create) ? (
+            <ProgramCreateDialog
+              organizationId={context.organizationId}
+              periodOptions={opsiPeriode}
+              positionOptions={opsiJabatan}
+              memberOptions={opsiAnggota}
+            />
+          ) : null
+        }
       />
 
       {/* Toolbar, daftar, dan kaki halaman dalam SATU kartu. */}
@@ -185,21 +207,9 @@ export default async function WorkProgramsPage({
         <ProgramManager
           organizationId={context.organizationId}
           programs={programs}
-          periodOptions={periods.map((period) => ({
-            id: period.id,
-            label:
-              period.status === "ACTIVE"
-                ? `${period.name} (aktif)`
-                : period.name,
-          }))}
-          positionOptions={(
-            (positionsResult.data as { id: string; name: string }[] | null) ??
-            []
-          ).map((position) => ({ id: position.id, label: position.name }))}
-          memberOptions={(
-            (membersResult.data as
-              { id: string; full_name: string }[] | null) ?? []
-          ).map((member) => ({ id: member.id, label: member.full_name }))}
+          periodOptions={opsiPeriode}
+          positionOptions={opsiJabatan}
+          memberOptions={opsiAnggota}
           permissions={{
             canCreate: can(context, PERMISSIONS.programs.create),
             canEdit: can(context, PERMISSIONS.programs.edit),

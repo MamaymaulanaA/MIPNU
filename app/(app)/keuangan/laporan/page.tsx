@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 
+import { ArrowDownLeft, ArrowUpRight, Landmark, Wallet } from "lucide-react";
+
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { ForbiddenState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
 import {
   Table,
   TableBody,
@@ -55,7 +59,7 @@ type Summary = {
 export default async function FinanceReportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mulai?: string; sampai?: string; akun?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const context = await requireAccessContext();
 
@@ -66,14 +70,19 @@ export default async function FinanceReportPage({
     return <ForbiddenState />;
   }
 
-  const filters = await searchParams;
+  const params = await searchParams;
+  const satu = (nilai: string | string[] | undefined) =>
+    typeof nilai === "string" ? nilai.trim() : "";
+
+  const mulai = satu(params.mulai);
+  const sampai = satu(params.sampai);
+  const akun = satu(params.akun);
+
   const supabase = await createClient();
 
   // Rentang tanggal divalidasi di server; RPC menolaknya sekali lagi.
   const invalidRange = Boolean(
-    filters.mulai &&
-    filters.sampai &&
-    Date.parse(filters.mulai) > Date.parse(filters.sampai),
+    mulai && sampai && Date.parse(mulai) > Date.parse(sampai),
   );
 
   const [summaryResult, accountsResult] = await Promise.all([
@@ -81,9 +90,9 @@ export default async function FinanceReportPage({
       ? Promise.resolve({ data: null })
       : supabase.rpc("mipnu_finance_summary", {
           p_organization_id: context.organizationId,
-          p_start: filters.mulai || undefined,
-          p_end: filters.sampai || undefined,
-          p_account_id: filters.akun || undefined,
+          p_start: mulai || undefined,
+          p_end: sampai || undefined,
+          p_account_id: akun || undefined,
         }),
 
     supabase
@@ -99,6 +108,10 @@ export default async function FinanceReportPage({
   const income = categories.filter((line) => line.type === "INCOME");
   const expense = categories.filter((line) => line.type === "EXPENSE");
 
+  const akunOptions = (
+    (accountsResult.data as { id: string; name: string }[] | null) ?? []
+  ).map((account) => ({ value: account.id, label: account.name }));
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -108,9 +121,9 @@ export default async function FinanceReportPage({
           can(context, PERMISSIONS.finance.export) ? (
             <ExportButton
               action={exportTransactions.bind(null, context.organizationId, {
-                start: filters.mulai,
-                end: filters.sampai,
-                accountId: filters.akun,
+                start: mulai || undefined,
+                end: sampai || undefined,
+                accountId: akun || undefined,
                 status: "POSTED",
               })}
               label="Ekspor Transaksi"
@@ -119,95 +132,88 @@ export default async function FinanceReportPage({
         }
       />
 
-      <form className="flex flex-wrap items-end gap-2.5">
-        <label className="flex flex-col gap-1 text-[13px] text-muted-foreground">
-          Dari
-          <input
-            type="date"
-            name="mulai"
-            defaultValue={filters.mulai ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-        </label>
+      {/*
+        Toolbar bersama, TANPA kotak pencarian.
 
-        <label className="flex flex-col gap-1 text-[13px] text-muted-foreground">
-          Sampai
-          <input
-            type="date"
-            name="sampai"
-            defaultValue={filters.sampai ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-        </label>
+        `mipnu_finance_summary()` menerima rentang tanggal dan akun — tidak ada
+        argumen untuk kata pencarian. Memasang kotak pencarian di sini hanya
+        supaya toolbarnya berbentuk sama dengan halaman lain akan menjanjikan
+        sesuatu yang tidak pernah bekerja.
 
-        <label className="flex flex-col gap-1 text-[13px] text-muted-foreground">
-          Akun
-          <select
-            name="akun"
-            defaultValue={filters.akun ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="">Semua akun</option>
-            {(
-              (accountsResult.data as { id: string; name: string }[] | null) ??
-              []
-            ).map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <button
-          type="submit"
-          className="h-10 rounded-md border border-border px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          Terapkan
-        </button>
-      </form>
+        Yang hilang dari versi sebelumnya: tombol "Terapkan". Penyaring di
+        seluruh aplikasi ini menulis ke URL begitu diubah; halaman ini
+        satu-satunya yang menuntut klik kedua.
+      */}
+      <Card>
+        <TableToolbar
+          dateFilters={[
+            { key: "mulai", label: "Tanggal mulai", value: mulai },
+            { key: "sampai", label: "Tanggal sampai", value: sampai },
+          ]}
+          filters={[
+            {
+              key: "akun",
+              size: "sm",
+              label: "Saring menurut akun kas",
+              value: akun,
+              allLabel: "Semua akun",
+              options: akunOptions,
+            },
+          ]}
+        />
+      </Card>
 
       {invalidRange ? (
-        <Card>
-          <CardContent>
-            <p className="text-[13px] text-destructive">
-              Tanggal awal tidak boleh melewati tanggal akhir.
-            </p>
-          </CardContent>
+        <Card className="p-4">
+          <p className="text-[13px] text-destructive">
+            Tanggal awal tidak boleh melewati tanggal akhir.
+          </p>
         </Card>
       ) : (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Arus Kas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <dl className="divide-y divide-border">
-                <Line label="Saldo awal" value={summary?.opening ?? 0} />
-                <Line
-                  label="Pemasukan"
-                  value={summary?.income ?? 0}
-                  tone="income"
-                />
-                <Line
-                  label="Pengeluaran"
-                  value={summary?.expense ?? 0}
-                  tone="expense"
-                />
-                <Line
-                  label="Saldo akhir"
-                  value={summary?.closing ?? 0}
-                  emphasis
-                />
-              </dl>
+          {/*
+            Arus kas sebagai kartu statistik, bukan daftar definisi.
 
-              <p className="mt-3 text-[13px] text-muted-foreground">
-                {formatNumber(summary?.transaction_count ?? 0)} transaksi
-                diposting pada rentang ini. Draf dan transaksi yang dibatalkan
-                tidak ikut dihitung.
-              </p>
-            </CardContent>
-          </Card>
+            Empat angka inilah alasan halaman ini dibuka, dan sebelumnya
+            keempatnya berbaris sebagai `<dl>` setinggi satu baris masing-
+            masing di dalam satu kartu — terbaca sebagai catatan kaki, bukan
+            sebagai jawaban. Kartu statistiknya komponen yang sama dengan
+            halaman Ringkasan, jadi angka yang sama terbaca dengan cara yang
+            sama di dua tempat.
+          */}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label="Saldo Awal"
+              value={formatRupiah(summary?.opening ?? 0)}
+              context="Sebelum rentang ini"
+              icon={Landmark}
+            />
+            <StatCard
+              label="Pemasukan"
+              value={formatRupiah(summary?.income ?? 0)}
+              context="Diposting pada rentang ini"
+              icon={ArrowDownLeft}
+              tone="success"
+            />
+            <StatCard
+              label="Pengeluaran"
+              value={formatRupiah(summary?.expense ?? 0)}
+              context="Diposting pada rentang ini"
+              icon={ArrowUpRight}
+              tone="destructive"
+            />
+            <StatCard
+              label="Saldo Akhir"
+              value={formatRupiah(summary?.closing ?? 0)}
+              context={`${formatNumber(summary?.transaction_count ?? 0)} transaksi diposting`}
+              icon={Wallet}
+              tone="primary"
+            />
+          </div>
+
+          <p className="text-[13px] text-muted-foreground">
+            Draf dan transaksi yang dibatalkan tidak ikut dihitung.
+          </p>
 
           <div className="grid gap-4 lg:grid-cols-2">
             <CategoryCard
@@ -227,45 +233,6 @@ export default async function FinanceReportPage({
   );
 }
 
-function Line({
-  label,
-  value,
-  tone,
-  emphasis,
-}: {
-  label: string;
-  value: number;
-  tone?: "income" | "expense";
-  emphasis?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
-      <dt
-        className={
-          emphasis
-            ? "text-sm font-medium text-foreground"
-            : "text-[13px] text-muted-foreground"
-        }
-      >
-        {label}
-      </dt>
-      <dd
-        className={
-          tone === "income"
-            ? "text-sm font-medium text-success"
-            : tone === "expense"
-              ? "text-sm font-medium text-destructive"
-              : emphasis
-                ? "text-base font-semibold text-foreground"
-                : "text-sm font-medium text-foreground"
-        }
-      >
-        {formatRupiah(value)}
-      </dd>
-    </div>
-  );
-}
-
 function CategoryCard({
   title,
   lines,
@@ -276,51 +243,53 @@ function CategoryCard({
   emptyLabel: string;
 }) {
   return (
+    // Kepala kartu memakai garis pemisah dan padding yang sama dengan kepala
+    // toolbar di halaman daftar, bukan `CardHeader` — supaya tabel di
+    // bawahnya menempel pada kepalanya persis seperti pada halaman Transaksi.
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {lines.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground">{emptyLabel}</p>
-        ) : (
-          <TableScroll>
-            <Table>
-              <TableHead>
-                <TableRow className="hover:bg-transparent">
-                  <TableHeaderCell>Kategori</TableHeaderCell>
-                  <TableHeaderCell className="text-right">
-                    Transaksi
-                  </TableHeaderCell>
-                  <TableHeaderCell className="text-right">
-                    Total
-                  </TableHeaderCell>
+      <div className="border-b border-border px-4 py-3 sm:px-5">
+        <h2 className="text-[15px] font-semibold text-foreground">{title}</h2>
+      </div>
+
+      {lines.length === 0 ? (
+        <p className="p-4 text-[13px] text-muted-foreground sm:p-5">
+          {emptyLabel}
+        </p>
+      ) : (
+        <TableScroll bounded>
+          <Table>
+            <TableHead>
+              <TableRow className="hover:bg-transparent">
+                <TableHeaderCell>Kategori</TableHeaderCell>
+                <TableHeaderCell className="text-right">
+                  Transaksi
+                </TableHeaderCell>
+                <TableHeaderCell className="text-right">Total</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {lines.map((line) => (
+                <TableRow key={`${line.type}-${line.category_id ?? "none"}`}>
+                  <TableCell>
+                    {line.name}
+                    {line.category_id ? null : (
+                      <Badge tone="neutral" className="ml-2">
+                        {transactionType(line.type).label}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {formatNumber(line.count)}
+                  </TableCell>
+                  <TableCell className="text-right font-medium text-foreground">
+                    {formatRupiah(line.total)}
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {lines.map((line) => (
-                  <TableRow key={`${line.type}-${line.category_id ?? "none"}`}>
-                    <TableCell>
-                      {line.name}
-                      {line.category_id ? null : (
-                        <Badge tone="neutral" className="ml-2">
-                          {transactionType(line.type).label}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {formatNumber(line.count)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-foreground">
-                      {formatRupiah(line.total)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableScroll>
-        )}
-      </CardContent>
+              ))}
+            </TableBody>
+          </Table>
+        </TableScroll>
+      )}
     </Card>
   );
 }
