@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
@@ -39,6 +40,49 @@ const PERMISSION_LABEL: Record<string, string> = {
  * tidak memuat publikasi hasil — itu keputusan organisasi, bukan panitia
  * teknis (PERMISSIONS.md §57).
  */
+/**
+ * Tombol "Tugaskan Panitia" beserta dialognya.
+ *
+ * Di kepala halaman, sebaris dengan tombol ekspor tab lain. Sebelumnya ia
+ * melayang rata kanan di atas daftar panitia — dan karena tombol ekspor di tab
+ * tetangganya memakai `size="sm"`, halaman yang sama menampilkan aksi primer
+ * setinggi 44px di satu tab dan 36px di tab lain.
+ */
+export function CommitteeAssignDialog({
+  organizationId,
+  electionId,
+  committee,
+  memberOptions,
+}: {
+  organizationId: string;
+  electionId: string;
+  committee: CommitteeRow[];
+  memberOptions: CommitteeMemberOption[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  const assigned = new Set(committee.map((row) => row.memberId));
+  const available = memberOptions.filter((option) => !assigned.has(option.id));
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>
+        <UserPlus size={16} aria-hidden="true" />
+        Tugaskan Panitia
+      </Button>
+
+      <CommitteeDialog
+        key={open ? "committee-new" : "committee-new-closed"}
+        open={open}
+        onClose={() => setOpen(false)}
+        organizationId={organizationId}
+        electionId={electionId}
+        options={available}
+      />
+    </>
+  );
+}
+
 export function CommitteePanel({
   organizationId,
   electionId,
@@ -57,22 +101,28 @@ export function CommitteePanel({
 }) {
   const { showToast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [adding, setAdding] = useState(false);
   const [removing, setRemoving] = useState<CommitteeRow | null>(null);
 
-  const assigned = new Set(committee.map((row) => row.memberId));
-  const available = memberOptions.filter((option) => !assigned.has(option.id));
-
   return (
-    <div className="space-y-4">
-      {canAssign ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setAdding(true)}>
-            <UserPlus size={16} aria-hidden="true" />
-            Tugaskan Panitia
-          </Button>
-        </div>
-      ) : null}
+    /*
+      Kartu pembungkus dengan kepala bagian — bentuk yang sama dengan kedua
+      bagian pada halaman Akun Kas. Aksinya berada di kepala itu, bukan
+      melayang rata kanan di atas daftar: data panitianya diambil di dalam
+      seksi async ini, jadi menaikkannya ke kepala HALAMAN akan menuntut
+      pengambilan kedua hanya demi sebuah tombol.
+    */
+    <Card>
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
+        <h2 className="text-[15px] font-semibold text-foreground">Panitia</h2>
+        {canAssign ? (
+          <CommitteeAssignDialog
+            organizationId={organizationId}
+            electionId={electionId}
+            committee={committee}
+            memberOptions={memberOptions}
+          />
+        ) : null}
+      </div>
 
       {committee.length === 0 ? (
         <EmptyState
@@ -85,7 +135,7 @@ export function CommitteePanel({
           }
         />
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-3 p-4 sm:p-5">
           {committee.map((member) => (
             <li
               key={member.id}
@@ -139,15 +189,6 @@ export function CommitteePanel({
         </ul>
       )}
 
-      <CommitteeDialog
-        key={adding ? "committee-new" : "committee-new-closed"}
-        open={adding}
-        onClose={() => setAdding(false)}
-        organizationId={organizationId}
-        electionId={electionId}
-        options={available}
-      />
-
       <ConfirmDialog
         open={removing !== null}
         onClose={() => setRemoving(null)}
@@ -176,7 +217,7 @@ export function CommitteePanel({
         destructive
         pending={isPending}
       />
-    </div>
+    </Card>
   );
 }
 

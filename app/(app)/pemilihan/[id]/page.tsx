@@ -126,23 +126,46 @@ export default async function ElectionDetailPage({
           ELECTION_TYPE_LABEL[election.electionType as ElectionType] ??
           election.electionType
         }
+        /*
+          Aksi ekspor mengikuti tab yang sedang dibuka, dan berdiri di sini —
+          bukan sebagai baris `flex justify-end` melayang di atas isi tabnya.
+          Sebelumnya tiap seksi menaruh tombolnya sendiri di sana, dengan
+          `size="sm"` pula: 36px di DPT dan Partisipasi, 44px di Panitia, pada
+          halaman yang sama.
+        */
         actions={
-          canEdit && !locked ? (
-            <ElectionEditDialog
-              organizationId={organizationId}
-              periodOptions={await periodOptions(organizationId)}
-              election={{
-                id: election.id,
-                name: election.name,
-                description: election.description,
-                electionType: election.electionType,
-                periodId: election.periodId,
-                startAt: election.startAt,
-                endAt: election.endAt,
-                resultVisibility: election.resultVisibility,
-              }}
-            />
-          ) : null
+          <>
+            {tab === "dpt" && canManageVoters ? (
+              <ExportButton
+                label="Ekspor DPT"
+                action={exportVoters.bind(null, organizationId, id)}
+              />
+            ) : null}
+
+            {tab === "partisipasi" ? (
+              <ExportButton
+                label="Ekspor Partisipasi"
+                action={exportParticipation.bind(null, organizationId, id)}
+              />
+            ) : null}
+
+            {canEdit && !locked ? (
+              <ElectionEditDialog
+                organizationId={organizationId}
+                periodOptions={await periodOptions(organizationId)}
+                election={{
+                  id: election.id,
+                  name: election.name,
+                  description: election.description,
+                  electionType: election.electionType,
+                  periodId: election.periodId,
+                  startAt: election.startAt,
+                  endAt: election.endAt,
+                  resultVisibility: election.resultVisibility,
+                }}
+              />
+            ) : null}
+          </>
         }
       />
 
@@ -206,11 +229,7 @@ export default async function ElectionDetailPage({
       ) : null}
 
       {tab === "partisipasi" ? (
-        <ParticipationSection
-          organizationId={organizationId}
-          electionId={id}
-          live={votingOpen}
-        />
+        <ParticipationSection electionId={id} live={votingOpen} />
       ) : null}
 
       {tab === "hasil" ? (
@@ -455,14 +474,6 @@ async function VoterPanelSection({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <ExportButton
-          label="Ekspor DPT"
-          size="sm"
-          action={exportVoters.bind(null, organizationId, electionId)}
-        />
-      </div>
-
       <VoterPanel
         organizationId={organizationId}
         electionId={electionId}
@@ -508,11 +519,9 @@ async function CommitteeSection({
 }
 
 async function ParticipationSection({
-  organizationId,
   electionId,
   live,
 }: {
-  organizationId: string;
   electionId: string;
   live: boolean;
 }) {
@@ -530,14 +539,6 @@ async function ParticipationSection({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <ExportButton
-          label="Ekspor Partisipasi"
-          size="sm"
-          action={exportParticipation.bind(null, organizationId, electionId)}
-        />
-      </div>
-
       <Card>
         <CardContent>
           <ParticipationView
@@ -566,10 +567,18 @@ async function ResultSection({
           Menawarkannya lebih awal berarti menjanjikan berkas yang pasti
           ditolak server. */}
       {result ? (
+        /*
+          Ekspor hasil tetap di seksinya, bukan di kepala halaman: ia hanya
+          boleh muncul ketika hasilnya memang sudah boleh dilihat, dan
+          pengetahuan itu baru ada setelah `getElectionResult` dijawab di
+          dalam seksi ini. Menaikkannya ke kepala berarti memanggil query
+          hasil pada SETIAP tab, termasuk tab yang tidak berhak melihatnya.
+
+          Ukurannya kini sama dengan tombol lain — bukan `size="sm"`.
+        */
         <div className="flex justify-end">
           <ExportButton
             label={result.official ? "Ekspor Hasil Resmi" : "Ekspor Hasil"}
-            size="sm"
             action={exportResult.bind(null, organizationId, electionId)}
           />
         </div>
@@ -625,40 +634,44 @@ async function AuditSection({
   }
 
   return (
-    <TableScroll>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Waktu</TableHeaderCell>
-            <TableHeaderCell>Peristiwa</TableHeaderCell>
-            <TableHeaderCell className="hidden sm:table-cell">
-              Pelaku
-            </TableHeaderCell>
-            <TableHeaderCell className="hidden md:table-cell">
-              Keterangan
-            </TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell className="whitespace-nowrap text-muted-foreground">
-                {formatDateTime(row.created_at)}
-              </TableCell>
-              <TableCell className="font-medium text-foreground">
-                {row.action}
-              </TableCell>
-              <TableCell className="hidden text-muted-foreground sm:table-cell">
-                {row.profiles?.display_name ?? "Sistem"}
-              </TableCell>
-              <TableCell className="hidden text-muted-foreground md:table-cell">
-                {describeAudit(row.metadata)}
-              </TableCell>
+    // Tabel audit di dalam kartu, seperti setiap tabel lain di aplikasi ini.
+    // Sebelumnya ia berdiri telanjang di atas halaman.
+    <Card>
+      <TableScroll bounded>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>Waktu</TableHeaderCell>
+              <TableHeaderCell>Peristiwa</TableHeaderCell>
+              <TableHeaderCell className="hidden sm:table-cell">
+                Pelaku
+              </TableHeaderCell>
+              <TableHeaderCell className="hidden md:table-cell">
+                Keterangan
+              </TableHeaderCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableScroll>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell className="whitespace-nowrap text-muted-foreground">
+                  {formatDateTime(row.created_at)}
+                </TableCell>
+                <TableCell className="font-medium text-foreground">
+                  {row.action}
+                </TableCell>
+                <TableCell className="hidden text-muted-foreground sm:table-cell">
+                  {row.profiles?.display_name ?? "Sistem"}
+                </TableCell>
+                <TableCell className="hidden text-muted-foreground md:table-cell">
+                  {describeAudit(row.metadata)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableScroll>
+    </Card>
   );
 }
 

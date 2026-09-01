@@ -85,7 +85,10 @@ export function CandidatePanel({
           }
         />
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        // Padding kisi: kartu kandidat berada DI DALAM kartu pembungkus, jadi
+        // ia butuh jarak ke tepinya. Diukur di peramban, padding kisinya 0 di
+        // keempat sisi dan kartunya menempel rata pada garis pembungkusnya.
+        <ul className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
           {candidates.map((candidate) => {
             const status = candidateStatus(candidate.status);
 

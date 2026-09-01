@@ -159,7 +159,16 @@ export function ProgramManager({
           description="Program kerja terikat pada periode kepengurusan. Buat periode lebih dulu bila belum ada."
         />
       ) : (
-        <div className={cn("grid gap-4", KOLOM_PROGRAM(programs.length))}>
+        // `p-4 sm:p-5`: kisinya berada DI DALAM kartu, jadi ia butuh jarak ke
+        // tepi kartu itu. Tanpa ini kartu program menempel rata pada garis
+        // toolbar di atasnya dan pada tepi kiri-kanan pembungkusnya — diukur
+        // di peramban, padding kisinya benar-benar 0 di keempat sisi.
+        <div
+          className={cn(
+            "grid gap-4 p-4 sm:p-5",
+            KOLOM_PROGRAM(programs.length),
+          )}
+        >
           {programs.map((program) => (
             <ProgramCard
               key={program.id}
@@ -231,9 +240,17 @@ function ProgramCard({
               {program.positionName ? ` · ${program.positionName}` : ""}
             </p>
           </div>
-          <Badge tone={status.tone} dot>
-            {status.label}
-          </Badge>
+          {/*
+            Lencana hanya untuk yang TIDAK dapat mengubah status. Yang dapat
+            mengubahnya melihat daftar pilihan di kaki kartu, dan lencana di
+            sudut atas hanya mengulang isi daftar itu — dua kontrol untuk satu
+            hal yang sama, persis seperti yang sudah dibereskan di Anggaran.
+          */}
+          {permissions.canManage ? null : (
+            <Badge tone={status.tone} dot>
+              {status.label}
+            </Badge>
+          )}
         </div>
 
         {program.description ? (
@@ -335,7 +352,7 @@ function ProgramCard({
               aria-label={`Status ${program.name}`}
               value={program.status}
               disabled={isPending}
-              className="h-8 w-auto min-w-36 text-[13px]"
+              className="h-9 w-auto text-[13px]"
               onChange={(event) => {
                 const next = event.target.value as ProgramStatus;
 

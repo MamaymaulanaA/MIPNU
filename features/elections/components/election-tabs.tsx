@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 
+import { TINGGI_KONTROL } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
 
 export const ELECTION_TABS = [
@@ -69,7 +70,11 @@ export function ElectionTabs({
                 }
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "-mb-px inline-flex h-10 items-center border-b-2 px-3 text-[13px] font-medium transition-colors",
+                  // Tinggi dari konstanta bersama: 40px yang ditulis sendiri
+                  // membuat deretan tab ini satu-satunya kontrol di halaman
+                  // yang tidak sejajar dengan tombol di sebelahnya.
+                  TINGGI_KONTROL,
+                  "-mb-px inline-flex items-center border-b-2 px-3 text-[13px] font-medium transition-colors",
                   isActive
                     ? "border-primary text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
