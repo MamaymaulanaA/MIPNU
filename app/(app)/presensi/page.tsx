@@ -3,6 +3,10 @@ import Link from "next/link";
 import { ClipboardCheck } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
+import { SESSION_STATUS_OPTIONS } from "@/features/attendance/schemas/attendance.schema";
+import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 import { EmptyState, ForbiddenState } from "@/components/feedback/states";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -31,12 +35,25 @@ const SESSION_STATUS = {
   CLOSED: { label: "Ditutup", tone: "neutral" },
 } as const;
 
-export default async function AttendancePage() {
+const UKURAN_HALAMAN = 20;
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function AttendancePage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const context = await requireAccessContext();
 
   if (!context.organizationId || !can(context, PERMISSIONS.attendance.view)) {
     return <ForbiddenState />;
   }
+
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["status"],
+  });
 
   const supabase = await createClient();
   const canCreateSession = can(context, PERMISSIONS.attendance.createSession);
@@ -57,7 +74,9 @@ export default async function AttendancePage() {
     label: `${event.name} · ${formatShortDate(event.start_at)}`,
   }));
 
-  const { data } = await supabase
+  // Pencarian dan penyaringan di database, dengan `.range()` — bukan
+  // `.limit(50)` yang menyembunyikan sesi lama tanpa cara menjangkaunya.
+  let sesiQuery = supabase
     .from("attendance_sessions")
     .select(
       `
@@ -65,10 +84,18 @@ export default async function AttendancePage() {
       events!inner ( name ),
       attendance_records ( count )
     `,
+      { count: "exact" },
     )
-    .eq("organization_id", context.organizationId)
+    .eq("organization_id", context.organizationId);
+
+  if (daftar.saring.status)
+    sesiQuery = sesiQuery.eq("status", daftar.saring.status);
+  if (daftar.cari) sesiQuery = sesiQuery.ilike("name", polaCari(daftar.cari));
+
+  const { data, count } = await sesiQuery
     .order("created_at", { ascending: false })
-    .limit(50);
+    .order("id", { ascending: true })
+    .range(daftar.dari, daftar.sampai);
 
   type Row = {
     id: string;
@@ -98,13 +125,36 @@ export default async function AttendancePage() {
       />
 
       <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari sesi presensi…"
+          searchLabel="Cari sesi presensi"
+          filters={[
+            {
+              key: "status",
+              label: "Saring menurut status",
+              value: daftar.saring.status,
+              allLabel: "Semua status",
+              options: [...SESSION_STATUS_OPTIONS],
+            },
+          ]}
+        />
+
         {sessions.length === 0 ? (
           <EmptyState
             icon={ClipboardCheck}
-            title="Belum ada sesi presensi"
-            description="Sesi presensi dibuat dari sebuah event, lalu dibuka saat kegiatan berlangsung."
+            title={
+              daftar.cari || daftar.saring.status
+                ? "Tidak ada sesi yang cocok"
+                : "Belum ada sesi presensi"
+            }
+            description={
+              daftar.cari || daftar.saring.status
+                ? "Coba ubah kata kunci atau saringan status."
+                : "Sesi presensi dibuat dari sebuah event, lalu dibuka saat kegiatan berlangsung."
+            }
             action={
-              canCreateSession ? (
+              !daftar.cari && !daftar.saring.status && canCreateSession ? (
                 <SessionFormDialog
                   organizationId={context.organizationId}
                   events={eventOptions}
@@ -176,6 +226,12 @@ export default async function AttendancePage() {
             </Table>
           </TableScroll>
         )}
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(1, Math.ceil((count ?? 0) / UKURAN_HALAMAN))}
+          total={count ?? 0}
+          pageSize={UKURAN_HALAMAN}
+        />
       </Card>
     </div>
   );

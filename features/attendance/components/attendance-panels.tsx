@@ -26,6 +26,7 @@ import {
 } from "@/features/attendance/actions/manage-attendance";
 import {
   ATTENDANCE_STATUSES,
+  SESSION_STATUS_OPTIONS,
   type AttendanceStatus,
 } from "@/features/attendance/schemas/attendance.schema";
 import type { ActionResult } from "@/lib/errors";
@@ -52,11 +53,8 @@ export type AttendanceMemberRow = {
   checkInAt: string | null;
 };
 
-const SESSION_STATUSES = [
-  { value: "DRAFT", label: "Draf" },
-  { value: "OPEN", label: "Dibuka" },
-  { value: "CLOSED", label: "Ditutup" },
-] as const;
+/** Label status sesi berasal dari berkas skema — satu daftar untuk semua. */
+const SESSION_STATUSES = SESSION_STATUS_OPTIONS;
 
 /* ========================================================================== */
 

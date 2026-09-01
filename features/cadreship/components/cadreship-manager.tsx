@@ -4,6 +4,10 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { BadgeCheck, GraduationCap, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/states";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +60,18 @@ export type CadreshipPermissions = {
   canDelete: boolean;
 };
 
+/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
+export type KeadaanDaftar = {
+  cari: string;
+  jenjang: string;
+  status: string;
+  jenjangOptions: { value: string; label: string }[];
+  statusOptions: { value: string; label: string }[];
+  halaman: number;
+  total: number;
+  ukuranHalaman: number;
+};
+
 export function CadreshipManager({
   organizationId,
   records,
@@ -63,6 +79,8 @@ export function CadreshipManager({
   typeOptions,
   permissions,
   ownOnly,
+  daftar,
+  aksiTambahan,
 }: {
   organizationId: string;
   records: CadreshipRow[];
@@ -71,6 +89,9 @@ export function CadreshipManager({
   permissions: CadreshipPermissions;
   /** Halaman sedang menampilkan riwayat milik pengguna sendiri. */
   ownOnly: boolean;
+  daftar: KeadaanDaftar;
+  /** Tombol Ekspor, dibangun di server beserta pemeriksaan permission-nya. */
+  aksiTambahan?: React.ReactNode;
 }) {
   const { showToast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
@@ -112,188 +133,241 @@ export function CadreshipManager({
   const hasActions =
     permissions.canEdit || permissions.canVerify || permissions.canDelete;
 
+  const disaring =
+    daftar.cari !== "" || daftar.jenjang !== "" || daftar.status !== "";
+
   return (
-    <>
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button
-            onClick={() => setCreateOpen(true)}
-            disabled={memberOptions.length === 0 || typeOptions.length === 0}
-          >
-            <Plus size={16} aria-hidden="true" />
-            Tambah Riwayat
-          </Button>
-        </div>
-      ) : null}
+    <div className="space-y-5">
+      <PageHeader
+        title="Kaderisasi"
+        description={
+          ownOnly
+            ? "Riwayat penempuhan jenjang kaderisasi Anda."
+            : "Riwayat penempuhan jenjang kaderisasi anggota."
+        }
+        actions={
+          <>
+            {aksiTambahan}
+            {permissions.canCreate ? (
+              <Button
+                onClick={() => setCreateOpen(true)}
+                disabled={
+                  memberOptions.length === 0 || typeOptions.length === 0
+                }
+              >
+                <Plus size={16} aria-hidden="true" />
+                Tambah Riwayat
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
-      {records.length === 0 ? (
-        <EmptyState
-          icon={GraduationCap}
-          title={
-            ownOnly
-              ? "Belum ada riwayat kaderisasi"
-              : "Belum ada data kaderisasi"
-          }
-          description={
-            ownOnly
-              ? "Riwayat kaderisasi Anda akan tampil di sini setelah dicatat pengurus."
-              : "Catat penempuhan MAKESTA, LAKMUD, atau LAKUT anggota di sini."
-          }
+      <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari nama kegiatan…"
+          searchLabel="Cari data kaderisasi"
+          filters={[
+            {
+              key: "jenjang",
+              label: "Saring menurut jenjang",
+              value: daftar.jenjang,
+              allLabel: "Semua jenjang",
+              options: daftar.jenjangOptions,
+            },
+            {
+              key: "status",
+              label: "Saring menurut status",
+              value: daftar.status,
+              allLabel: "Semua status",
+              options: daftar.statusOptions,
+            },
+          ]}
         />
-      ) : (
-        <TableScroll bounded>
-          <Table>
-            <TableHead>
-              <TableRow className="hover:bg-transparent">
-                {ownOnly ? null : <TableHeaderCell>Anggota</TableHeaderCell>}
-                <TableHeaderCell>Jenjang</TableHeaderCell>
-                <TableHeaderCell className="hidden md:table-cell">
-                  Kegiatan
-                </TableHeaderCell>
-                <TableHeaderCell className="hidden lg:table-cell">
-                  Tanggal
-                </TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                {hasActions ? (
-                  <TableHeaderCell className="text-right">Aksi</TableHeaderCell>
-                ) : null}
-              </TableRow>
-            </TableHead>
 
-            <TableBody>
-              {records.map((row) => {
-                const status = cadreshipStatus(row.status);
+        {records.length === 0 ? (
+          <EmptyState
+            icon={GraduationCap}
+            title={
+              ownOnly
+                ? "Belum ada riwayat kaderisasi"
+                : "Belum ada data kaderisasi"
+            }
+            description={
+              disaring
+                ? "Coba ubah kata kunci atau saringannya."
+                : ownOnly
+                  ? "Riwayat kaderisasi Anda akan tampil di sini setelah dicatat pengurus."
+                  : "Catat penempuhan MAKESTA, LAKMUD, atau LAKUT anggota di sini."
+            }
+          />
+        ) : (
+          <TableScroll bounded>
+            <Table>
+              <TableHead>
+                <TableRow className="hover:bg-transparent">
+                  {ownOnly ? null : <TableHeaderCell>Anggota</TableHeaderCell>}
+                  <TableHeaderCell>Jenjang</TableHeaderCell>
+                  <TableHeaderCell className="hidden md:table-cell">
+                    Kegiatan
+                  </TableHeaderCell>
+                  <TableHeaderCell className="hidden lg:table-cell">
+                    Tanggal
+                  </TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  {hasActions ? (
+                    <TableHeaderCell className="text-right">
+                      Aksi
+                    </TableHeaderCell>
+                  ) : null}
+                </TableRow>
+              </TableHead>
 
-                return (
-                  <TableRow key={row.id}>
-                    {ownOnly ? null : (
-                      <TableCell>
-                        <span className="font-medium text-foreground">
-                          {row.memberName}
-                        </span>
-                        {row.memberNumber ? (
-                          <span className="block text-[13px] text-muted-foreground">
-                            {row.memberNumber}
+              <TableBody>
+                {records.map((row) => {
+                  const status = cadreshipStatus(row.status);
+
+                  return (
+                    <TableRow key={row.id}>
+                      {ownOnly ? null : (
+                        <TableCell>
+                          <span className="font-medium text-foreground">
+                            {row.memberName}
+                          </span>
+                          {row.memberNumber ? (
+                            <span className="block text-[13px] text-muted-foreground">
+                              {row.memberNumber}
+                            </span>
+                          ) : null}
+                        </TableCell>
+                      )}
+
+                      <TableCell className="font-medium text-foreground">
+                        {row.typeName}
+                      </TableCell>
+
+                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                        {row.activityName}
+                        {row.organizer ? (
+                          <span className="block text-[13px]">
+                            {row.organizer}
                           </span>
                         ) : null}
                       </TableCell>
-                    )}
 
-                    <TableCell className="font-medium text-foreground">
-                      {row.typeName}
-                    </TableCell>
-
-                    <TableCell className="hidden text-muted-foreground md:table-cell">
-                      {row.activityName}
-                      {row.organizer ? (
-                        <span className="block text-[13px]">
-                          {row.organizer}
-                        </span>
-                      ) : null}
-                    </TableCell>
-
-                    <TableCell className="hidden text-muted-foreground lg:table-cell">
-                      {row.startDate ? formatShortDate(row.startDate) : "—"}
-                    </TableCell>
-
-                    <TableCell>
-                      <Badge tone={status.tone} dot>
-                        {status.label}
-                      </Badge>
-                      {row.certificateNumber ? (
-                        <span className="block text-[13px] text-muted-foreground">
-                          {row.certificateNumber}
-                        </span>
-                      ) : null}
-                    </TableCell>
-
-                    {hasActions ? (
-                      <TableCell>
-                        <div className="flex flex-wrap items-center justify-end gap-1.5">
-                          {permissions.canEdit ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditing(row)}
-                            >
-                              <Pencil size={14} aria-hidden="true" />
-                              Ubah
-                            </Button>
-                          ) : null}
-
-                          {permissions.canVerify &&
-                          row.status !== "VERIFIED" ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setVerifying(row)}
-                            >
-                              <BadgeCheck size={14} aria-hidden="true" />
-                              Verifikasi
-                            </Button>
-                          ) : null}
-
-                          {permissions.canDelete ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleting(row)}
-                            >
-                              <Trash2 size={14} aria-hidden="true" />
-                              Hapus
-                            </Button>
-                          ) : null}
-                        </div>
+                      <TableCell className="hidden text-muted-foreground lg:table-cell">
+                        {row.startDate ? formatShortDate(row.startDate) : "—"}
                       </TableCell>
-                    ) : null}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableScroll>
-      )}
 
-      <CadreshipDialog
-        key={createOpen ? "create-open" : "create-closed"}
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        organizationId={organizationId}
-        memberOptions={memberOptions}
-        typeOptions={typeOptions}
-      />
+                      <TableCell>
+                        <Badge tone={status.tone} dot>
+                          {status.label}
+                        </Badge>
+                        {row.certificateNumber ? (
+                          <span className="block text-[13px] text-muted-foreground">
+                            {row.certificateNumber}
+                          </span>
+                        ) : null}
+                      </TableCell>
 
-      <CadreshipDialog
-        key={editing?.id ?? "edit-closed"}
-        open={Boolean(editing)}
-        onClose={() => setEditing(null)}
-        organizationId={organizationId}
-        memberOptions={memberOptions}
-        typeOptions={typeOptions}
-        record={editing}
-      />
+                      {hasActions ? (
+                        <TableCell>
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            {permissions.canEdit ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditing(row)}
+                              >
+                                <Pencil size={14} aria-hidden="true" />
+                                Ubah
+                              </Button>
+                            ) : null}
 
-      <ConfirmDialog
-        open={Boolean(verifying)}
-        onClose={() => setVerifying(null)}
-        onConfirm={runVerify}
-        pending={isPending}
-        confirmLabel="Verifikasi"
-        title="Verifikasi kaderisasi ini?"
-        description="Verifikasi mencatat nama Anda dan waktunya sebagai penanggung jawab keabsahan riwayat ini."
-      />
+                            {permissions.canVerify &&
+                            row.status !== "VERIFIED" ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setVerifying(row)}
+                              >
+                                <BadgeCheck size={14} aria-hidden="true" />
+                                Verifikasi
+                              </Button>
+                            ) : null}
 
-      <ConfirmDialog
-        open={Boolean(deleting)}
-        onClose={() => setDeleting(null)}
-        onConfirm={runDelete}
-        pending={isPending}
-        destructive
-        confirmLabel="Hapus"
-        title="Hapus riwayat kaderisasi ini?"
-        description="Baris disembunyikan dari daftar, tetapi tidak dihapus dari database — riwayat kaderisasi adalah bukti."
-      />
-    </>
+                            {permissions.canDelete ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleting(row)}
+                              >
+                                <Trash2 size={14} aria-hidden="true" />
+                                Hapus
+                              </Button>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      ) : null}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableScroll>
+        )}
+
+        <CadreshipDialog
+          key={createOpen ? "create-open" : "create-closed"}
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          organizationId={organizationId}
+          memberOptions={memberOptions}
+          typeOptions={typeOptions}
+        />
+
+        <CadreshipDialog
+          key={editing?.id ?? "edit-closed"}
+          open={Boolean(editing)}
+          onClose={() => setEditing(null)}
+          organizationId={organizationId}
+          memberOptions={memberOptions}
+          typeOptions={typeOptions}
+          record={editing}
+        />
+
+        <ConfirmDialog
+          open={Boolean(verifying)}
+          onClose={() => setVerifying(null)}
+          onConfirm={runVerify}
+          pending={isPending}
+          confirmLabel="Verifikasi"
+          title="Verifikasi kaderisasi ini?"
+          description="Verifikasi mencatat nama Anda dan waktunya sebagai penanggung jawab keabsahan riwayat ini."
+        />
+
+        <ConfirmDialog
+          open={Boolean(deleting)}
+          onClose={() => setDeleting(null)}
+          onConfirm={runDelete}
+          pending={isPending}
+          destructive
+          confirmLabel="Hapus"
+          title="Hapus riwayat kaderisasi ini?"
+          description="Baris disembunyikan dari daftar, tetapi tidak dihapus dari database — riwayat kaderisasi adalah bukti."
+        />
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(
+            1,
+            Math.ceil(daftar.total / daftar.ukuranHalaman),
+          )}
+          total={daftar.total}
+          pageSize={daftar.ukuranHalaman}
+        />
+      </Card>
+    </div>
   );
 }
 
