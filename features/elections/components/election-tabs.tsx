@@ -57,7 +57,7 @@ export function ElectionTabs({
       // Kepala kartu, bukan bilah mengambang. Bentuknya sama dengan
       // `TableToolbar` di atas tabel: garis bawah menjadi pemisah kepala, dan
       // padding sisinya mengikuti padding kartu.
-      className="overflow-x-auto border-b border-border px-4 sm:px-5"
+      className="scroll-none border-b border-border px-4 sm:px-5"
     >
       <ul className="flex min-w-max gap-1">
         {visible.map((tab) => {

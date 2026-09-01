@@ -39,8 +39,12 @@ export function TableScroll({
   return (
     <div
       className={cn(
-        "w-full overflow-x-auto",
-        bounded && "scroll-area max-h-[calc(100dvh-20rem)]",
+        // `scroll-area` SELALU, bukan hanya ketika dibatasi tingginya. Tabel
+        // lebar menggulir mendatar pada layar sempit, dan tanpa kelas ini
+        // batang gulirnya adalah batang bawaan sistem — 15px berlatar abu
+        // dengan tombol panah, di dalam kartu yang rapi.
+        "scroll-area w-full overflow-x-auto",
+        bounded && "max-h-[calc(100dvh-20rem)]",
         className,
       )}
       {...props}

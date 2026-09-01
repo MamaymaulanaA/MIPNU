@@ -457,6 +457,28 @@
    * `thin` dengan warna yang sama halusnya. Kemampuan menggulung tidak
    * dikurangi sedikit pun — hanya penampakannya yang mundur, karena batang
    * gulir bukan informasi yang perlu dibaca setiap saat (docs/UI.md §14). */
+  /*
+   * Menggulir tanpa batang gulir yang terlihat.
+   *
+   * Untuk deretan tab: ia navigasi, bukan data. Pada layar lebar seluruh tab
+   * muat sekaligus dan batangnya tidak pernah dibutuhkan; pada layar sempit
+   * yang menggerakkannya adalah sapuan jari, bukan batang yang ditarik.
+   *
+   * `overflow-y: hidden` bukan hiasan. Menurut spesifikasi, sumbu yang masih
+   * `visible` ikut menjadi `auto` begitu sumbu lain diberi `auto` — jadi
+   * `overflow-x: auto` diam-diam menyalakan guliran VERTIKAL juga, dan deretan
+   * tab yang tingginya meleset satu piksel memunculkan batang gulir vertikal
+   * lengkap dengan tombol panah di ujung kanannya.
+   */
+  .scroll-none {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  .scroll-none::-webkit-scrollbar {
+    display: none;
+  }
+
   .scroll-area {
     overflow-y: auto;
     scroll-behavior: smooth;

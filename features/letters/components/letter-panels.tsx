@@ -170,7 +170,7 @@ export function LetterTabs({
       <div
         role="tablist"
         aria-label="Jenis surat"
-        className="flex w-full gap-1 overflow-x-auto rounded-md border border-border bg-muted/40 p-1"
+        className="scroll-none flex w-full gap-1 rounded-md border border-border bg-muted/40 p-1"
       >
         <TabLink href="/surat?tab=masuk" active={activeTab === "masuk"}>
           Surat Masuk
