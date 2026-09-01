@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { TableToolbar } from "@/components/data-table/toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
@@ -48,6 +48,30 @@ const VISIBILITY_LABELS: Record<string, string> = {
   PENGURUS: "Pengurus saja",
   PUBLIC: "Publik",
 };
+
+/**
+ * Satu bagian berlabel di dalam kartu daftar.
+ *
+ * Judulnya memakai garis pemisah di atas, bukan `CardHeader`: kepala kartu
+ * sudah dipakai toolbar, dan dua kepala kartu di dalam satu kartu terbaca
+ * sebagai dua kartu yang gagal dipisah.
+ */
+function SeksiDaftar({
+  judul,
+  children,
+}: {
+  judul: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-t border-border first:border-t-0">
+      <p className="px-4 pt-3.5 pb-1 text-[13px] font-semibold text-muted-foreground sm:px-5">
+        {judul}
+      </p>
+      {children}
+    </div>
+  );
+}
 
 /** Keadaan toolbar — seluruhnya dari URL, disaring di server. */
 export type KeadaanDaftar = {
@@ -136,60 +160,60 @@ export function AgendaManager({
             },
           ]}
         />
+
+        {/*
+          Dua bagian berlabel DI DALAM kartu yang sama, bukan tiga kartu
+          berjajar. Agenda memang dibaca sebagai dua daftar — mendatang untuk
+          direncanakan, lampau untuk ditelusuri — tetapi keduanya disaring oleh
+          toolbar yang sama, jadi memisahkannya menjadi kartu sendiri membuat
+          toolbar itu terbaca seolah hanya berlaku bagi salah satunya.
+        */}
+        <SeksiDaftar judul="Mendatang">
+          {upcoming.length === 0 ? (
+            <EmptyState
+              icon={CalendarDays}
+              title="Belum ada agenda mendatang"
+              description="Agenda yang dijadwalkan ke depan akan tampil di sini."
+              action={
+                permissions.canCreate ? (
+                  <Button size="sm" onClick={() => setCreateOpen(true)}>
+                    Buat agenda
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <ul className="scroll-area max-h-[calc(100dvh-28rem)] divide-y divide-border">
+              {upcoming.map((item) => (
+                <AgendaRowItem
+                  key={item.id}
+                  item={item}
+                  permissions={permissions}
+                  onEdit={setEditing}
+                  onDelete={setDeleting}
+                />
+              ))}
+            </ul>
+          )}
+        </SeksiDaftar>
+
+        {past.length > 0 ? (
+          <SeksiDaftar judul="Sudah Berlalu">
+            <ul className="scroll-area max-h-[calc(100dvh-28rem)] divide-y divide-border">
+              {past.map((item) => (
+                <AgendaRowItem
+                  key={item.id}
+                  item={item}
+                  permissions={permissions}
+                  onEdit={setEditing}
+                  onDelete={setDeleting}
+                  muted
+                />
+              ))}
+            </ul>
+          </SeksiDaftar>
+        ) : null}
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Mendatang</CardTitle>
-        </CardHeader>
-
-        {upcoming.length === 0 ? (
-          <EmptyState
-            icon={CalendarDays}
-            title="Belum ada agenda mendatang"
-            description="Agenda yang dijadwalkan ke depan akan tampil di sini."
-            action={
-              permissions.canCreate ? (
-                <Button size="sm" onClick={() => setCreateOpen(true)}>
-                  Buat agenda
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : (
-          <ul className="scroll-area max-h-[calc(100dvh-24rem)] min-h-[160px] divide-y divide-border">
-            {upcoming.map((item) => (
-              <AgendaRowItem
-                key={item.id}
-                item={item}
-                permissions={permissions}
-                onEdit={setEditing}
-                onDelete={setDeleting}
-              />
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      {past.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Sudah Berlalu</CardTitle>
-          </CardHeader>
-          <ul className="scroll-area max-h-[calc(100dvh-24rem)] min-h-[160px] divide-y divide-border">
-            {past.map((item) => (
-              <AgendaRowItem
-                key={item.id}
-                item={item}
-                permissions={permissions}
-                onEdit={setEditing}
-                onDelete={setDeleting}
-                muted
-              />
-            ))}
-          </ul>
-        </Card>
-      ) : null}
 
       <AgendaDialog
         key={createOpen ? "create-open" : "create-closed"}

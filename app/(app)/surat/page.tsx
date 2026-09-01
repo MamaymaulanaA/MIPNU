@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ForbiddenState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
+import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 import { exportLetters } from "@/features/exports/actions/export-csv";
 import { ExportButton } from "@/features/exports/components/export-button";
 import {
@@ -17,10 +18,35 @@ export const metadata: Metadata = {
   title: "Surat",
 };
 
+const UKURAN_HALAMAN = 20;
+
+/**
+ * Status surat MASUK dan KELUAR memakai himpunan yang berbeda.
+ *
+ * Karena itu penyaringnya mengikuti tab yang sedang dibuka, dan hanya
+ * diterapkan pada arsip tab itu. Satu penyaring untuk keduanya akan diam-diam
+ * mengosongkan tab sebelah: "Diterima" tidak pernah ada pada surat keluar.
+ *
+ * Tautan tab sendiri sudah membuang seluruh parameter (`/surat?tab=…`), jadi
+ * berpindah tab mengembalikan penyaring ke keadaan semula.
+ */
+const STATUS_MASUK = [
+  { value: "RECEIVED", label: "Diterima" },
+  { value: "PROCESSED", label: "Diproses" },
+  { value: "ARCHIVED", label: "Diarsipkan" },
+];
+
+const STATUS_KELUAR = [
+  { value: "DRAFT", label: "Draf" },
+  { value: "APPROVED", label: "Disetujui" },
+  { value: "SENT", label: "Dikirim" },
+  { value: "ARCHIVED", label: "Diarsipkan" },
+];
+
 export default async function LettersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const context = await requireAccessContext();
 
@@ -31,31 +57,63 @@ export default async function LettersPage({
   const params = await searchParams;
   const activeTab = params.tab === "keluar" ? "keluar" : "masuk";
 
+  const daftar = bacaParamDaftar(params, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["status"],
+  });
+
   const supabase = await createClient();
 
-  const [incomingResult, outgoingResult, membersResult, documentsResult] =
-    await Promise.all([
-      supabase
-        .from("incoming_letters")
-        .select(
-          "id, letter_number, sender, subject, letter_date, received_date, status, document_id, notes",
-        )
-        .eq("organization_id", context.organizationId)
-        .is("deleted_at", null)
-        .order("received_date", { ascending: false }),
+  // Pencarian dan penyaringan berlaku untuk KEDUA arsip. Keduanya memang
+  // dimuat bersama supaya berpindah tab tidak menunggu query baru; yang
+  // membedakan hanya tab mana yang sedang digambar.
+  let masukQuery = supabase
+    .from("incoming_letters")
+    .select(
+      "id, letter_number, sender, subject, letter_date, received_date, status, document_id, notes",
+      { count: "exact" },
+    )
+    .eq("organization_id", context.organizationId)
+    .is("deleted_at", null);
 
-      supabase
-        .from("outgoing_letters")
-        .select(
-          `
+  let keluarQuery = supabase
+    .from("outgoing_letters")
+    .select(
+      `
           id, letter_number, recipient, subject, letter_date, signer_member_id,
           status, document_id, notes,
           members!outgoing_letters_signer_fk ( full_name )
         `,
-        )
-        .eq("organization_id", context.organizationId)
-        .is("deleted_at", null)
-        .order("letter_date", { ascending: false }),
+      { count: "exact" },
+    )
+    .eq("organization_id", context.organizationId)
+    .is("deleted_at", null);
+
+  if (daftar.saring.status) {
+    if (activeTab === "keluar") {
+      keluarQuery = keluarQuery.eq("status", daftar.saring.status);
+    } else {
+      masukQuery = masukQuery.eq("status", daftar.saring.status);
+    }
+  }
+
+  if (daftar.cari) {
+    const pola = polaCari(daftar.cari);
+    masukQuery = masukQuery.ilike("subject", pola);
+    keluarQuery = keluarQuery.ilike("subject", pola);
+  }
+
+  const [incomingResult, outgoingResult, membersResult, documentsResult] =
+    await Promise.all([
+      masukQuery
+        .order("received_date", { ascending: false })
+        .order("id", { ascending: true })
+        .range(daftar.dari, daftar.sampai),
+
+      keluarQuery
+        .order("letter_date", { ascending: false })
+        .order("id", { ascending: true })
+        .range(daftar.dari, daftar.sampai),
 
       supabase
         .from("members")
@@ -145,6 +203,15 @@ export default async function LettersPage({
       <LetterTabs
         organizationId={context.organizationId}
         activeTab={activeTab}
+        daftar={{
+          cari: daftar.cari,
+          status: daftar.saring.status,
+          statusOptions: activeTab === "keluar" ? STATUS_KELUAR : STATUS_MASUK,
+          halaman: daftar.halaman,
+          totalMasuk: incomingResult.count ?? 0,
+          totalKeluar: outgoingResult.count ?? 0,
+          ukuranHalaman: UKURAN_HALAMAN,
+        }}
         incoming={incoming}
         outgoing={outgoing}
         memberOptions={(

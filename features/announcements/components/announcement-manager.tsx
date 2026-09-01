@@ -99,13 +99,15 @@ export function AnnouncementManager({
       />
 
       {/*
-        Toolbar berdiri di kartunya sendiri, di ATAS daftar.
+        SATU kartu: toolbar, daftar, dan kaki halaman.
 
-        Setiap pengumuman sudah berupa kartu — judul, isi, lencana status dan
-        audiens, beserta aksinya. Membungkus toolbar bersama kartu-kartu itu ke
-        dalam satu kartu lagi menghasilkan kartu di dalam kartu, dan batas
-        luarnya justru mengaburkan batas tiap pengumuman. Anatominya sama
-        dengan Agenda, yang juga berupa daftar kartu.
+        Sempat saya pisah menjadi tiga kartu dengan alasan tiap pengumuman
+        sudah berupa kartu sendiri, sehingga membungkusnya berarti kartu di
+        dalam kartu. Alasan itu tidak berdiri: kartu luar memberi kerangka —
+        toolbar di atas, kaki di bawah — sementara kartu dalam memberi batas
+        antar-item. Keduanya menjelaskan hal yang berbeda, dan memisahkannya
+        justru membuat halaman ini satu-satunya yang berbeda dari sembilan
+        halaman manajemen lain.
       */}
       <Card>
         <TableToolbar
@@ -123,10 +125,8 @@ export function AnnouncementManager({
             },
           ]}
         />
-      </Card>
 
-      {announcements.length === 0 ? (
-        <Card>
+        {announcements.length === 0 ? (
           <EmptyState
             icon={Megaphone}
             title={
@@ -142,115 +142,108 @@ export function AnnouncementManager({
                   : "Pengumuman lahir sebagai draf dan baru terlihat anggota setelah diterbitkan."
             }
           />
-        </Card>
-      ) : (
-        /* Daftar ikut aturan data panjang: dibatasi tingginya dan menggulir di
-           dalam dirinya, memakai `.scroll-area` yang sama dengan tabel.
-           `pr-1` memberi ruang bagi batang gulir 4px supaya ia tidak menempel
-           tepi kartu terakhir. */
-        <div className="scroll-area max-h-[calc(100dvh-22rem)] space-y-3 pr-1">
-          {announcements.map((row) => {
-            const status = announcementStatus(row.status);
-            const audience = announcementAudience(row.audienceType);
+        ) : (
+          /* Daftar ikut aturan data panjang: dibatasi tingginya dan menggulir
+             di dalam kartunya, memakai `.scroll-area` yang sama dengan tabel. */
+          <div className="scroll-area max-h-[calc(100dvh-22rem)] space-y-3 p-4 sm:p-5">
+            {announcements.map((row) => {
+              const status = announcementStatus(row.status);
+              const audience = announcementAudience(row.audienceType);
 
-            return (
-              <Card key={row.id}>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground">
-                        {row.title}
-                      </p>
-                      <p className="text-[13px] text-muted-foreground">
-                        {row.publishedAt
-                          ? `Terbit ${formatDateTime(row.publishedAt)}`
-                          : "Belum diterbitkan"}
-                        {row.expiresAt
-                          ? ` · berlaku sampai ${formatDateTime(row.expiresAt)}`
-                          : ""}
-                      </p>
+              return (
+                <Card key={row.id}>
+                  <CardContent className="space-y-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground">
+                          {row.title}
+                        </p>
+                        <p className="text-[13px] text-muted-foreground">
+                          {row.publishedAt
+                            ? `Terbit ${formatDateTime(row.publishedAt)}`
+                            : "Belum diterbitkan"}
+                          {row.expiresAt
+                            ? ` · berlaku sampai ${formatDateTime(row.expiresAt)}`
+                            : ""}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge tone={audience.tone}>{audience.label}</Badge>
+                        {readOnly ? null : (
+                          <Badge tone={status.tone} dot>
+                            {status.label}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge tone={audience.tone}>{audience.label}</Badge>
-                      {readOnly ? null : (
-                        <Badge tone={status.tone} dot>
-                          {status.label}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+                    <p className="text-[13px] whitespace-pre-line text-muted-foreground">
+                      {row.content}
+                    </p>
 
-                  <p className="text-[13px] whitespace-pre-line text-muted-foreground">
-                    {row.content}
-                  </p>
+                    {readOnly ? null : (
+                      <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        {permissions.canPublish ? (
+                          <Select
+                            aria-label={`Status ${row.title}`}
+                            value={row.status}
+                            disabled={isPending}
+                            className="h-8 w-auto min-w-32 text-[13px]"
+                            onChange={(event) => {
+                              const next = event.target
+                                .value as AnnouncementStatus;
 
-                  {readOnly ? null : (
-                    <div className="flex flex-wrap items-center justify-end gap-1.5">
-                      {permissions.canPublish ? (
-                        <Select
-                          aria-label={`Status ${row.title}`}
-                          value={row.status}
-                          disabled={isPending}
-                          className="h-8 w-auto min-w-32 text-[13px]"
-                          onChange={(event) => {
-                            const next = event.target
-                              .value as AnnouncementStatus;
+                              startTransition(async () => {
+                                const result = await setAnnouncementStatus(
+                                  organizationId,
+                                  row.id,
+                                  next,
+                                );
+                                if (!result.success) {
+                                  showToast(result.error, "error");
+                                }
+                              });
+                            }}
+                          >
+                            {ANNOUNCEMENT_STATUSES.map((value) => (
+                              <option key={value} value={value}>
+                                {announcementStatus(value).label}
+                              </option>
+                            ))}
+                          </Select>
+                        ) : null}
 
-                            startTransition(async () => {
-                              const result = await setAnnouncementStatus(
-                                organizationId,
-                                row.id,
-                                next,
-                              );
-                              if (!result.success) {
-                                showToast(result.error, "error");
-                              }
-                            });
-                          }}
-                        >
-                          {ANNOUNCEMENT_STATUSES.map((value) => (
-                            <option key={value} value={value}>
-                              {announcementStatus(value).label}
-                            </option>
-                          ))}
-                        </Select>
-                      ) : null}
+                        {permissions.canEdit ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditing(row)}
+                          >
+                            <Pencil size={14} aria-hidden="true" />
+                            Ubah
+                          </Button>
+                        ) : null}
 
-                      {permissions.canEdit ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditing(row)}
-                        >
-                          <Pencil size={14} aria-hidden="true" />
-                          Ubah
-                        </Button>
-                      ) : null}
+                        {permissions.canDelete ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleting(row)}
+                          >
+                            <Trash2 size={14} aria-hidden="true" />
+                            Hapus
+                          </Button>
+                        ) : null}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
-                      {permissions.canDelete ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleting(row)}
-                        >
-                          <Trash2 size={14} aria-hidden="true" />
-                          Hapus
-                        </Button>
-                      ) : null}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Kaki daftar berdiri di kartunya sendiri, sepasang dengan kartu
-          toolbar di atas — daftarnya sendiri berupa tumpukan kartu, jadi
-          tidak ada satu kartu luar yang dapat memuatnya. */}
-      <Card>
         <Pagination
           page={daftar.halaman}
           pageCount={Math.max(

@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 
 import { ForbiddenState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
+import { Card } from "@/components/ui/card";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
+import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 import {
   ProgramManager,
   type ProgramRow,
@@ -14,10 +18,21 @@ export const metadata: Metadata = {
   title: "Program Kerja",
 };
 
+const UKURAN_HALAMAN = 20;
+
+/** Label status program. Nilainya sama dengan kolom `status`. */
+const STATUS_PROGRAM = [
+  { value: "DRAFT", label: "Draf" },
+  { value: "PLANNED", label: "Direncanakan" },
+  { value: "ONGOING", label: "Berjalan" },
+  { value: "COMPLETED", label: "Selesai" },
+  { value: "CANCELLED", label: "Dibatalkan" },
+];
+
 export default async function WorkProgramsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periode?: string; status?: string; cari?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const context = await requireAccessContext();
 
@@ -25,7 +40,13 @@ export default async function WorkProgramsPage({
     return <ForbiddenState />;
   }
 
-  const filters = await searchParams;
+  // Kunci pencarian mengikuti toolbar bersama (`search`). Sebelumnya halaman
+  // ini memakai `cari` beserta form buatan tangan setinggi 40px.
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["periode", "status"],
+  });
+
   const supabase = await createClient();
 
   let query = supabase
@@ -39,26 +60,29 @@ export default async function WorkProgramsPage({
       positions!work_programs_position_fk ( name ),
       members!work_programs_member_fk ( full_name )
     `,
+      { count: "exact" },
     )
     .eq("organization_id", context.organizationId)
     .is("deleted_at", null);
 
   // Penyaringan terjadi di database. Mengirim seluruh baris lalu menyaring di
   // browser akan tetap membocorkan yang tersaring itu.
-  if (filters.periode) {
-    query = query.eq("organization_period_id", filters.periode);
+  if (daftar.saring.periode) {
+    query = query.eq("organization_period_id", daftar.saring.periode);
   }
-  if (filters.status) {
-    query = query.eq("status", filters.status);
+  if (daftar.saring.status) {
+    query = query.eq("status", daftar.saring.status);
   }
-  if (filters.cari) {
-    const escaped = filters.cari.replace(/[%_,()\\]/g, (m) => `\\${m}`);
-    query = query.ilike("name", `%${escaped}%`);
+  if (daftar.cari) {
+    query = query.ilike("name", polaCari(daftar.cari));
   }
 
   const [programsResult, periodsResult, positionsResult, membersResult] =
     await Promise.all([
-      query.order("created_at", { ascending: false }),
+      query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(daftar.dari, daftar.sampai),
 
       supabase
         .from("organization_periods")
@@ -129,75 +153,75 @@ export default async function WorkProgramsPage({
         description="Rencana kerja satu periode kepengurusan beserta capaiannya."
       />
 
-      <form className="flex flex-wrap items-end gap-2.5">
-        <input
-          type="search"
-          name="cari"
-          placeholder="Cari nama program"
-          defaultValue={filters.cari ?? ""}
-          aria-label="Cari program kerja"
-          className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-64"
+      {/* Toolbar, daftar, dan kaki halaman dalam SATU kartu. */}
+      <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari program kerja…"
+          searchLabel="Cari program kerja"
+          filters={[
+            {
+              key: "periode",
+              size: "sm",
+              label: "Saring menurut periode",
+              value: daftar.saring.periode,
+              allLabel: "Semua periode",
+              options: periods.map((period) => ({
+                value: period.id,
+                label: period.name,
+              })),
+            },
+            {
+              key: "status",
+              size: "xs",
+              label: "Saring menurut status",
+              value: daftar.saring.status,
+              allLabel: "Semua status",
+              options: STATUS_PROGRAM,
+            },
+          ]}
         />
 
-        <select
-          name="periode"
-          defaultValue={filters.periode ?? ""}
-          aria-label="Filter periode"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">Semua periode</option>
-          {periods.map((period) => (
-            <option key={period.id} value={period.id}>
-              {period.name}
-            </option>
-          ))}
-        </select>
+        <ProgramManager
+          organizationId={context.organizationId}
+          programs={programs}
+          periodOptions={periods.map((period) => ({
+            id: period.id,
+            label:
+              period.status === "ACTIVE"
+                ? `${period.name} (aktif)`
+                : period.name,
+          }))}
+          positionOptions={(
+            (positionsResult.data as { id: string; name: string }[] | null) ??
+            []
+          ).map((position) => ({ id: position.id, label: position.name }))}
+          memberOptions={(
+            (membersResult.data as
+              { id: string; full_name: string }[] | null) ?? []
+          ).map((member) => ({ id: member.id, label: member.full_name }))}
+          permissions={{
+            canCreate: can(context, PERMISSIONS.programs.create),
+            canEdit: can(context, PERMISSIONS.programs.edit),
+            canManage: can(context, PERMISSIONS.programs.manage),
+            canUpdateProgress: can(
+              context,
+              PERMISSIONS.programs.updateProgress,
+            ),
+            canDelete: can(context, PERMISSIONS.programs.delete),
+          }}
+        />
 
-        <select
-          name="status"
-          defaultValue={filters.status ?? ""}
-          aria-label="Filter status"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">Semua status</option>
-          <option value="DRAFT">Draf</option>
-          <option value="PLANNED">Direncanakan</option>
-          <option value="ONGOING">Berjalan</option>
-          <option value="COMPLETED">Selesai</option>
-          <option value="CANCELLED">Dibatalkan</option>
-        </select>
-
-        <button
-          type="submit"
-          className="h-10 rounded-md border border-border px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          Terapkan
-        </button>
-      </form>
-
-      <ProgramManager
-        organizationId={context.organizationId}
-        programs={programs}
-        periodOptions={periods.map((period) => ({
-          id: period.id,
-          label:
-            period.status === "ACTIVE" ? `${period.name} (aktif)` : period.name,
-        }))}
-        positionOptions={(
-          (positionsResult.data as { id: string; name: string }[] | null) ?? []
-        ).map((position) => ({ id: position.id, label: position.name }))}
-        memberOptions={(
-          (membersResult.data as { id: string; full_name: string }[] | null) ??
-          []
-        ).map((member) => ({ id: member.id, label: member.full_name }))}
-        permissions={{
-          canCreate: can(context, PERMISSIONS.programs.create),
-          canEdit: can(context, PERMISSIONS.programs.edit),
-          canManage: can(context, PERMISSIONS.programs.manage),
-          canUpdateProgress: can(context, PERMISSIONS.programs.updateProgress),
-          canDelete: can(context, PERMISSIONS.programs.delete),
-        }}
-      />
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(
+            1,
+            Math.ceil((programsResult.count ?? 0) / UKURAN_HALAMAN),
+          )}
+          total={programsResult.count ?? 0}
+          pageSize={UKURAN_HALAMAN}
+        />
+      </Card>
     </div>
   );
 }

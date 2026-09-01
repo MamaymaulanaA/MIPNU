@@ -5,6 +5,10 @@ import { Users2 } from "lucide-react";
 
 import { EmptyState, ForbiddenState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
+import { MEETING_STATUSES } from "@/features/meetings/schemas/meeting.schema";
+import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -29,10 +33,12 @@ export const metadata: Metadata = {
   title: "Rapat",
 };
 
+const UKURAN_HALAMAN = 20;
+
 export default async function MeetingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const context = await requireAccessContext();
 
@@ -40,19 +46,31 @@ export default async function MeetingsPage({
     return <ForbiddenState />;
   }
 
-  const filters = await searchParams;
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["status"],
+  });
+
   const supabase = await createClient();
 
   let query = supabase
     .from("meetings")
-    .select("id, title, start_at, end_at, location, status")
+    .select("id, title, start_at, end_at, location, status", {
+      count: "exact",
+    })
     .eq("organization_id", context.organizationId)
     .is("deleted_at", null);
 
-  if (filters.status) query = query.eq("status", filters.status);
+  if (daftar.saring.status) query = query.eq("status", daftar.saring.status);
+  if (daftar.cari) query = query.ilike("title", polaCari(daftar.cari));
 
-  const { data } = await query.order("start_at", { ascending: false });
+  const { data, count } = await query
+    .order("start_at", { ascending: false })
+    .order("id", { ascending: true })
+    .range(daftar.dari, daftar.sampai);
+
   const meetings = data ?? [];
+  const disaring = daftar.cari !== "" || daftar.saring.status !== "";
 
   return (
     <div className="space-y-5">
@@ -64,7 +82,7 @@ export default async function MeetingsPage({
             {can(context, PERMISSIONS.meetings.export) ? (
               <ExportButton
                 action={exportMeetings.bind(null, context.organizationId, {
-                  status: filters.status,
+                  status: daftar.saring.status || undefined,
                 })}
               />
             ) : null}
@@ -77,14 +95,37 @@ export default async function MeetingsPage({
       />
 
       <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari rapat…"
+          searchLabel="Cari rapat"
+          filters={[
+            {
+              key: "status",
+              size: "xs",
+              label: "Saring menurut status",
+              value: daftar.saring.status,
+              allLabel: "Semua status",
+              options: MEETING_STATUSES.map((status) => ({
+                value: status,
+                label: meetingStatus(status).label,
+              })),
+            },
+          ]}
+        />
+
         {meetings.length === 0 ? (
           <EmptyState
             icon={Users2}
-            title="Belum ada rapat"
-            description="Rapat yang dijadwalkan akan tampil di sini beserta notulennya."
+            title={disaring ? "Tidak ada rapat yang cocok" : "Belum ada rapat"}
+            description={
+              disaring
+                ? "Coba ubah kata kunci atau saringan status."
+                : "Rapat yang dijadwalkan akan tampil di sini beserta notulennya."
+            }
           />
         ) : (
-          <TableScroll>
+          <TableScroll bounded>
             <Table>
               <TableHead>
                 <TableRow className="hover:bg-transparent">
@@ -134,6 +175,12 @@ export default async function MeetingsPage({
             </Table>
           </TableScroll>
         )}
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(1, Math.ceil((count ?? 0) / UKURAN_HALAMAN))}
+          total={count ?? 0}
+          pageSize={UKURAN_HALAMAN}
+        />
       </Card>
     </div>
   );

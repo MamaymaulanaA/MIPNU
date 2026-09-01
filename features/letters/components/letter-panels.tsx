@@ -4,6 +4,9 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { FileText, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/states";
+import { Card } from "@/components/ui/card";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +80,17 @@ export type LetterPermissions = {
  * halaman setelah menyimpan surat keluar harus mengembalikan pengguna ke tab
  * yang sama, dan tautan ke tab tertentu harus dapat dibagikan.
  */
+/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
+export type KeadaanDaftar = {
+  cari: string;
+  status: string;
+  statusOptions: { value: string; label: string }[];
+  halaman: number;
+  totalMasuk: number;
+  totalKeluar: number;
+  ukuranHalaman: number;
+};
+
 export function LetterTabs({
   organizationId,
   activeTab,
@@ -85,6 +99,7 @@ export function LetterTabs({
   memberOptions,
   documentOptions,
   permissions,
+  daftar,
 }: {
   organizationId: string;
   activeTab: "masuk" | "keluar";
@@ -93,6 +108,7 @@ export function LetterTabs({
   memberOptions: LetterOption[];
   documentOptions: LetterOption[];
   permissions: LetterPermissions;
+  daftar: KeadaanDaftar;
 }) {
   return (
     <div className="space-y-4">
@@ -115,6 +131,8 @@ export function LetterTabs({
           rows={incoming}
           documentOptions={documentOptions}
           permissions={permissions}
+          daftar={daftar}
+          total={daftar.totalMasuk}
         />
       ) : (
         <OutgoingPanel
@@ -123,6 +141,8 @@ export function LetterTabs({
           memberOptions={memberOptions}
           documentOptions={documentOptions}
           permissions={permissions}
+          daftar={daftar}
+          total={daftar.totalKeluar}
         />
       )}
     </div>
@@ -161,11 +181,15 @@ function IncomingPanel({
   rows,
   documentOptions,
   permissions,
+  daftar,
+  total,
 }: {
   organizationId: string;
   rows: IncomingRow[];
   documentOptions: LetterOption[];
   permissions: LetterPermissions;
+  daftar: KeadaanDaftar;
+  total: number;
 }) {
   const { showToast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
@@ -184,93 +208,129 @@ function IncomingPanel({
         </div>
       ) : null}
 
-      {rows.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="Belum ada surat masuk"
-          description="Surat yang diterima organisasi dicatat di sini beserta lampirannya."
+      {/* Toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
+      <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari perihal surat…"
+          searchLabel="Cari surat masuk"
+          filters={[
+            {
+              key: "status",
+              size: "xs",
+              label: "Saring menurut status",
+              value: daftar.status,
+              allLabel: "Semua status",
+              options: daftar.statusOptions,
+            },
+          ]}
         />
-      ) : (
-        <TableScroll>
-          <Table>
-            <TableHead>
-              <TableRow className="hover:bg-transparent">
-                <TableHeaderCell>Perihal</TableHeaderCell>
-                <TableHeaderCell className="hidden md:table-cell">
-                  Pengirim
-                </TableHeaderCell>
-                <TableHeaderCell className="hidden lg:table-cell">
-                  Diterima
-                </TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                {permissions.canEdit || permissions.canDelete ? (
-                  <TableHeaderCell className="text-right">Aksi</TableHeaderCell>
-                ) : null}
-              </TableRow>
-            </TableHead>
 
-            <TableBody>
-              {rows.map((row) => {
-                const status = incomingLetterStatus(row.status);
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title={
+              daftar.cari || daftar.status
+                ? "Tidak ada surat yang cocok"
+                : "Belum ada surat masuk"
+            }
+            description={
+              daftar.cari || daftar.status
+                ? "Coba ubah kata kunci atau saringan status."
+                : "Surat yang diterima organisasi dicatat di sini beserta lampirannya."
+            }
+          />
+        ) : (
+          <TableScroll bounded>
+            <Table>
+              <TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHeaderCell>Perihal</TableHeaderCell>
+                  <TableHeaderCell className="hidden md:table-cell">
+                    Pengirim
+                  </TableHeaderCell>
+                  <TableHeaderCell className="hidden lg:table-cell">
+                    Diterima
+                  </TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  {permissions.canEdit || permissions.canDelete ? (
+                    <TableHeaderCell className="text-right">
+                      Aksi
+                    </TableHeaderCell>
+                  ) : null}
+                </TableRow>
+              </TableHead>
 
-                return (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <span className="font-medium text-foreground">
-                        {row.subject}
-                      </span>
-                      <span className="block text-[13px] text-muted-foreground">
-                        {orDash(row.letterNumber)}
-                      </span>
-                    </TableCell>
+              <TableBody>
+                {rows.map((row) => {
+                  const status = incomingLetterStatus(row.status);
 
-                    <TableCell className="hidden text-muted-foreground md:table-cell">
-                      {row.sender}
-                    </TableCell>
-
-                    <TableCell className="hidden text-muted-foreground lg:table-cell">
-                      {formatShortDate(row.receivedDate)}
-                    </TableCell>
-
-                    <TableCell>
-                      <Badge tone={status.tone} dot>
-                        {status.label}
-                      </Badge>
-                    </TableCell>
-
-                    {permissions.canEdit || permissions.canDelete ? (
+                  return (
+                    <TableRow key={row.id}>
                       <TableCell>
-                        <div className="flex flex-wrap justify-end gap-1.5">
-                          {permissions.canEdit ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditing(row)}
-                            >
-                              <Pencil size={14} aria-hidden="true" />
-                              Ubah
-                            </Button>
-                          ) : null}
-                          {permissions.canDelete ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleting(row)}
-                            >
-                              <Trash2 size={14} aria-hidden="true" />
-                              Hapus
-                            </Button>
-                          ) : null}
-                        </div>
+                        <span className="font-medium text-foreground">
+                          {row.subject}
+                        </span>
+                        <span className="block text-[13px] text-muted-foreground">
+                          {orDash(row.letterNumber)}
+                        </span>
                       </TableCell>
-                    ) : null}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableScroll>
-      )}
+
+                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                        {row.sender}
+                      </TableCell>
+
+                      <TableCell className="hidden text-muted-foreground lg:table-cell">
+                        {formatShortDate(row.receivedDate)}
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge tone={status.tone} dot>
+                          {status.label}
+                        </Badge>
+                      </TableCell>
+
+                      {permissions.canEdit || permissions.canDelete ? (
+                        <TableCell>
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            {permissions.canEdit ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditing(row)}
+                              >
+                                <Pencil size={14} aria-hidden="true" />
+                                Ubah
+                              </Button>
+                            ) : null}
+                            {permissions.canDelete ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleting(row)}
+                              >
+                                <Trash2 size={14} aria-hidden="true" />
+                                Hapus
+                              </Button>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      ) : null}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableScroll>
+        )}
+
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(1, Math.ceil(total / daftar.ukuranHalaman))}
+          total={total}
+          pageSize={daftar.ukuranHalaman}
+        />
+      </Card>
 
       <IncomingDialog
         key={createOpen ? "in-create-open" : "in-create-closed"}
@@ -501,12 +561,16 @@ function OutgoingPanel({
   memberOptions,
   documentOptions,
   permissions,
+  daftar,
+  total,
 }: {
   organizationId: string;
   rows: OutgoingRow[];
   memberOptions: LetterOption[];
   documentOptions: LetterOption[];
   permissions: LetterPermissions;
+  daftar: KeadaanDaftar;
+  total: number;
 }) {
   const { showToast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
@@ -528,122 +592,158 @@ function OutgoingPanel({
         </div>
       ) : null}
 
-      {rows.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="Belum ada surat keluar"
-          description="Surat keluar lahir sebagai draf dan baru berubah status setelah disetujui."
+      {/* Toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
+      <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari perihal surat…"
+          searchLabel="Cari surat keluar"
+          filters={[
+            {
+              key: "status",
+              size: "xs",
+              label: "Saring menurut status",
+              value: daftar.status,
+              allLabel: "Semua status",
+              options: daftar.statusOptions,
+            },
+          ]}
         />
-      ) : (
-        <TableScroll>
-          <Table>
-            <TableHead>
-              <TableRow className="hover:bg-transparent">
-                <TableHeaderCell>Perihal</TableHeaderCell>
-                <TableHeaderCell className="hidden md:table-cell">
-                  Penerima
-                </TableHeaderCell>
-                <TableHeaderCell className="hidden lg:table-cell">
-                  Penandatangan
-                </TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                {hasActions ? (
-                  <TableHeaderCell className="text-right">Aksi</TableHeaderCell>
-                ) : null}
-              </TableRow>
-            </TableHead>
 
-            <TableBody>
-              {rows.map((row) => {
-                const status = outgoingLetterStatus(row.status);
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title={
+              daftar.cari || daftar.status
+                ? "Tidak ada surat yang cocok"
+                : "Belum ada surat keluar"
+            }
+            description={
+              daftar.cari || daftar.status
+                ? "Coba ubah kata kunci atau saringan status."
+                : "Surat keluar lahir sebagai draf dan baru berubah status setelah disetujui."
+            }
+          />
+        ) : (
+          <TableScroll bounded>
+            <Table>
+              <TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHeaderCell>Perihal</TableHeaderCell>
+                  <TableHeaderCell className="hidden md:table-cell">
+                    Penerima
+                  </TableHeaderCell>
+                  <TableHeaderCell className="hidden lg:table-cell">
+                    Penandatangan
+                  </TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  {hasActions ? (
+                    <TableHeaderCell className="text-right">
+                      Aksi
+                    </TableHeaderCell>
+                  ) : null}
+                </TableRow>
+              </TableHead>
 
-                return (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <span className="font-medium text-foreground">
-                        {row.subject}
-                      </span>
-                      <span className="block text-[13px] text-muted-foreground">
-                        {row.letterNumber} · {formatShortDate(row.letterDate)}
-                      </span>
-                    </TableCell>
+              <TableBody>
+                {rows.map((row) => {
+                  const status = outgoingLetterStatus(row.status);
 
-                    <TableCell className="hidden text-muted-foreground md:table-cell">
-                      {row.recipient}
-                    </TableCell>
-
-                    <TableCell className="hidden text-muted-foreground lg:table-cell">
-                      {orDash(row.signerName)}
-                    </TableCell>
-
-                    <TableCell>
-                      {permissions.canApprove ? (
-                        <Select
-                          aria-label={`Status surat ${row.letterNumber}`}
-                          value={row.status}
-                          disabled={isPending}
-                          className="h-8 w-auto min-w-32 text-[13px]"
-                          onChange={(event) => {
-                            const next = event.target.value as OutgoingStatus;
-
-                            startTransition(async () => {
-                              const result = await setOutgoingLetterStatus(
-                                organizationId,
-                                row.id,
-                                next,
-                              );
-                              if (!result.success) {
-                                showToast(result.error, "error");
-                              }
-                            });
-                          }}
-                        >
-                          {OUTGOING_STATUSES.map((value) => (
-                            <option key={value} value={value}>
-                              {outgoingLetterStatus(value).label}
-                            </option>
-                          ))}
-                        </Select>
-                      ) : (
-                        <Badge tone={status.tone} dot>
-                          {status.label}
-                        </Badge>
-                      )}
-                    </TableCell>
-
-                    {hasActions ? (
+                  return (
+                    <TableRow key={row.id}>
                       <TableCell>
-                        <div className="flex flex-wrap justify-end gap-1.5">
-                          {permissions.canEdit ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditing(row)}
-                            >
-                              <Pencil size={14} aria-hidden="true" />
-                              Ubah
-                            </Button>
-                          ) : null}
-                          {permissions.canDelete ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleting(row)}
-                            >
-                              <Trash2 size={14} aria-hidden="true" />
-                              Hapus
-                            </Button>
-                          ) : null}
-                        </div>
+                        <span className="font-medium text-foreground">
+                          {row.subject}
+                        </span>
+                        <span className="block text-[13px] text-muted-foreground">
+                          {row.letterNumber} · {formatShortDate(row.letterDate)}
+                        </span>
                       </TableCell>
-                    ) : null}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableScroll>
-      )}
+
+                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                        {row.recipient}
+                      </TableCell>
+
+                      <TableCell className="hidden text-muted-foreground lg:table-cell">
+                        {orDash(row.signerName)}
+                      </TableCell>
+
+                      <TableCell>
+                        {permissions.canApprove ? (
+                          <Select
+                            aria-label={`Status surat ${row.letterNumber}`}
+                            value={row.status}
+                            disabled={isPending}
+                            className="h-8 w-auto min-w-32 text-[13px]"
+                            onChange={(event) => {
+                              const next = event.target.value as OutgoingStatus;
+
+                              startTransition(async () => {
+                                const result = await setOutgoingLetterStatus(
+                                  organizationId,
+                                  row.id,
+                                  next,
+                                );
+                                if (!result.success) {
+                                  showToast(result.error, "error");
+                                }
+                              });
+                            }}
+                          >
+                            {OUTGOING_STATUSES.map((value) => (
+                              <option key={value} value={value}>
+                                {outgoingLetterStatus(value).label}
+                              </option>
+                            ))}
+                          </Select>
+                        ) : (
+                          <Badge tone={status.tone} dot>
+                            {status.label}
+                          </Badge>
+                        )}
+                      </TableCell>
+
+                      {hasActions ? (
+                        <TableCell>
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            {permissions.canEdit ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditing(row)}
+                              >
+                                <Pencil size={14} aria-hidden="true" />
+                                Ubah
+                              </Button>
+                            ) : null}
+                            {permissions.canDelete ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleting(row)}
+                              >
+                                <Trash2 size={14} aria-hidden="true" />
+                                Hapus
+                              </Button>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      ) : null}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableScroll>
+        )}
+
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(1, Math.ceil(total / daftar.ukuranHalaman))}
+          total={total}
+          pageSize={daftar.ukuranHalaman}
+        />
+      </Card>
 
       <OutgoingDialog
         key={createOpen ? "out-create-open" : "out-create-closed"}
