@@ -30,11 +30,48 @@ import { cn } from "@/lib/utils";
  *   kepala panel   px-3.5 py-2.5 (14 / 10)
  *   badan panel    px-3.5 py-3   (14 / 12)
  *   kartu metrik   p-3.5         (14)
- *   item daftar    px-2.5 py-2   (10 / 8)
+ *   item daftar    px-3 py-2.5   (12 / 10)
+ *   tinggi item    min-h-15      (60)
+ *   penanda→teks   gap-3         (12)
  *   jarak item     gap-2         (8)
  *   jarak panel    gap-4         (16)
  *   jarak baris    space-y-4     (16)
- *   wadah ikon     size-7        (28)
+ *   wadah ikon     size-8        (32)
+ *   kotak tanggal  size-9        (36)
+ *
+ * TINGGI BARIS DAN PENANDANYA — kenapa angkanya seperti itu.
+ *
+ * Penanda terbesar di dashboard adalah kotak tanggal: 36px, karena isinya tiga
+ * baris teks (8 + 13 + 8 = 29px) dan ia tetap perlu ruang di atas serta di
+ * bawahnya supaya tidak terbaca sesak. Tinggi barislah yang mengikuti angka
+ * itu, bukan sebaliknya.
+ *
+ * HITUNGANNYA MEMAKAI BORDER-BOX, dan borderlah yang mudah terlewat:
+ *
+ *   60  tinggi baris (min-h-15)
+ *   -20 padding tegak (py-2.5, dua sisi)
+ *   -2  border (1px, dua sisi)
+ *   ------
+ *   38  ruang isi — cukup untuk kotak 36px, dengan 2px sisa
+ *
+ * Percobaan pertama memakai `min-h-14` (56px) dengan alasan "56 − 2×10 = 36,
+ * pas". Itu MELUPAKAN border. Ruang isinya sebenarnya 34px, kotak 36px tidak
+ * muat, dan barisnya mengembang sendiri ke 58px — diukur di peramban pada
+ * 1440px, dua baris Jadwal berdiri 58px sementara dua belas baris lain di
+ * halaman yang sama 56px. Lantai yang tidak memperhitungkan border bukan
+ * lantai; ia saran yang diam-diam dilanggar oleh baris yang isinya paling
+ * besar.
+ *
+ * Sebelum semua ini, barisnya 48px dengan padding 8px dan kotak tanggalnya
+ * dipatok `size-7` (28px) demi seukuran wadah ikon. Isinya menuntut 31px di
+ * dalam 28px, jadi LUBER 3px dan dipotong diam-diam oleh `overflow-hidden`:
+ * tahun pada baris ketiga kehilangan kaki hurufnya, dan kotaknya berdiri tanpa
+ * satu piksel pun padding.
+ *
+ * Wadah ikon dan kotak tanggal SENGAJA tidak lagi dipaksa seukuran (32 vs 36).
+ * Yang harus sama antar panel adalah TINGGI BARISNYA, bukan ukuran penandanya
+ * — dan itu sudah dijamin `min-h-15`. Menyamakan ukuran penanda justru yang
+ * dulu memaksa tiga baris teks masuk ke kotak setinggi satu ikon.
  *
  * SKALA SUDUT — dua tingkat, dan hanya dua:
  *
@@ -71,17 +108,19 @@ import { cn } from "@/lib/utils";
 /* ------------------------------------------------------- wadah ikon */
 
 /**
- * Wadah ikon, 28px di seluruh dashboard.
+ * Wadah ikon, 32px di seluruh dashboard.
  *
- * Satu ukuran, bukan skala: kartu metrik dan kartu kecil berdiri berdekatan
- * pada halaman yang sama, dan dua ukuran wadah membuat keduanya terbaca
- * sebagai dua sistem alih-alih satu bahasa.
+ * Satu ukuran untuk SEMUA wadah ikon: kartu metrik dan kartu kecil berdiri
+ * berdekatan pada halaman yang sama, dan dua ukuran wadah membuat keduanya
+ * terbaca sebagai dua sistem alih-alih satu bahasa.
  *
- * Diturunkan dari 32px. Diukur di peramban pada 1440px: wadah 32px di dalam
- * baris setinggi 50px memakan 64% tinggi barisnya, dan ikon sebesar itu
- * menarik mata lebih dulu daripada teks yang seharusnya dibaca. Pada 28px
- * proporsinya turun ke 60% dari baris yang juga ikut mengecil, dan ikonnya
- * kembali menjadi penanda — bukan subjek.
+ * Angkanya mengikuti tinggi barisnya. Pada baris 48px, wadah 28px memakai 58%
+ * tinggi baris; ketika barisnya naik ke 56px, wadah yang sama tinggal 50% dan
+ * ikonnya mulai terlihat hanyut di tengah ruang kosong. Pada 32px proporsinya
+ * kembali ke 57% — ikon tetap penanda, bukan subjek, dan tidak pula tenggelam.
+ *
+ * Ukuran ini TIDAK mengikat kotak tanggal. Lihat catatan skala di atas: yang
+ * wajib seragam antar panel adalah tinggi barisnya.
  */
 export function IconBox({
   icon: Icon,
@@ -94,11 +133,11 @@ export function IconBox({
     <span
       aria-hidden="true"
       className={cn(
-        "grid size-7 shrink-0 place-items-center rounded-sm",
+        "grid size-8 shrink-0 place-items-center rounded-sm",
         WADAH[tone],
       )}
     >
-      <Icon size={15} strokeWidth={1.9} />
+      <Icon size={16} strokeWidth={1.9} />
     </span>
   );
 }
@@ -366,20 +405,35 @@ export function ListItem({
     </>
   );
 
-  // `min-h-12` (48px) menyamakan tinggi baris yang PUNYA keterangan dengan
-  // yang tidak. Tanpa itu baris tanpa `meta` berhenti di 46px sementara
-  // tetangganya 48px — diukur di peramban pada 1440px, panel Ringkasan
-  // Organisasi melawan panel di sebelahnya dengan selisih dua piksel yang
-  // tidak berasal dari padding mana pun, melainkan dari ada-tidaknya satu
-  // baris teks. Tinggi baris daftar tidak boleh ditentukan oleh isinya.
+  // `min-h-15` (60px) menyamakan tinggi baris yang PUNYA keterangan dengan
+  // yang tidak. Tanpa itu tinggi baris ditentukan oleh ada-tidaknya satu baris
+  // teks, dan dua panel bersebelahan berbeda beberapa piksel tanpa satu pun
+  // padding yang berbeda. Tinggi baris daftar tidak boleh ditentukan isinya.
+  //
+  // Angkanya sekaligus menyediakan ruang bagi penanda terbesar — kotak tanggal
+  // 36px. Lihat hitungan border-box di kepala berkas: padding DAN border sama-
+  // sama dipotong dari 60px, menyisakan 38px.
   const kelas = cn(
-    "flex min-h-12 items-center gap-2.5 rounded-sm border border-border px-2.5 py-2",
+    "flex min-h-15 items-center gap-3 rounded-sm border border-border px-3 py-2.5",
     href &&
       "transition-colors hover:border-primary-border hover:bg-primary-soft",
   );
 
   return (
-    <li className="min-w-0">
+    // `list-none` DI SINI, bukan hanya di `ItemList`.
+    //
+    // Preflight Tailwind mematikan penanda lewat `ol, ul, menu { list-style:
+    // none }` — pada WADAHNYA. `list-style-type` memang sifat warisan, jadi
+    // selama `<li>` ini berada di dalam `<ul>` miliknya, penandanya padam.
+    // Begitu seseorang menaruhnya di dalam `<div>`, tidak ada lagi yang
+    // mewariskan apa pun: `li` kembali ke nilai awal `disc` dan sebuah titik
+    // muncul di kiri baris.
+    //
+    // Itu bukan kemungkinan teoretis — persis itulah yang terjadi pada panel
+    // Pemilihan, dan titiknya bertahan sampai ada yang melaporkannya. Baris
+    // daftar yang penampilannya bergantung pada tag pembungkusnya adalah
+    // baris yang menunggu giliran untuk rusak lagi.
+    <li className="min-w-0 list-none">
       {href ? (
         <Link href={href} className={kelas}>
           {isi}
@@ -456,12 +510,16 @@ export const SLOT_KONTEN = "grid";
  * belum punya isi tetap sejajar dengan tetangganya — tanpa baris palsu, dan
  * tanpa kartu yang menciut sampai tinggal judulnya.
  *
- * `min-h-[104px]` menggantikan lantai yang dulu dipegang `SLOT_KONTEN`, dan
+ * `min-h-[128px]` menggantikan lantai yang dulu dipegang `SLOT_KONTEN`, dan
  * hanya di sini. Inilah satu-satunya keadaan yang memang perlu lantai:
  * panel tanpa isi tidak punya apa pun untuk menentukan tingginya, dan tanpa
  * angka ini ia menciut sampai tinggal judul lalu terbaca sebagai kartu yang
- * rusak. Angkanya setara dua baris item — cukup untuk berdiri, tidak cukup
- * untuk menjadi lubang.
+ * rusak.
+ *
+ * Angkanya TURUNAN, bukan pilihan: dua baris item beserta jarak di antaranya,
+ * 2×60 + 8 = 128. Ia ikut ketika tinggi baris berubah — dulu 104 ketika
+ * barisnya 48px. Lantai yang dipatok lepas dari tinggi baris akan meleset
+ * diam-diam pada penyetelan berikutnya.
  */
 export function EmptyNote({
   icon: Icon,
@@ -471,10 +529,10 @@ export function EmptyNote({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-[104px] flex-col items-center justify-center gap-2 py-4 text-center">
+    <div className="flex min-h-[128px] flex-col items-center justify-center gap-2 py-4 text-center">
       <span
         aria-hidden="true"
-        className="grid size-7 shrink-0 place-items-center rounded-sm bg-muted text-muted-soft"
+        className="grid size-8 shrink-0 place-items-center rounded-sm bg-muted text-muted-soft"
       >
         <Icon size={16} strokeWidth={1.9} />
       </span>
@@ -540,7 +598,7 @@ export function ProgressRow({
     // Kotak, jarak, dan huruf yang sama persis dengan `ListItem`: batang ini
     // berdiri tepat di bawah baris daftar, dan dua kotak bersebelahan dengan
     // padding berbeda terbaca sebagai dua komponen yang tidak sengaja bertemu.
-    <div className="rounded-sm border border-border px-2.5 py-2">
+    <div className="rounded-sm border border-border px-3 py-2.5">
       <div className="flex items-baseline justify-between gap-2">
         <p className="truncate text-[12px] leading-tight font-medium text-foreground">
           {label}

@@ -447,22 +447,35 @@ const JADWAL_RUPA: Record<ScheduleKind, { label: string; tone: BadgeTone }> = {
  * tepatnya", dan tahun menjaga agar jadwal yang jatuh tahun depan tidak
  * terbaca seperti minggu ini.
  *
- * Ukurannya DIKUNCI ke `size-7`, sama persis dengan `IconBox`.
+ * UKURANNYA 36px (`size-9`), dan TIDAK lagi dikunci ke `IconBox`.
  *
- * Sebelumnya kotaknya memakai `w-9` dengan padding sendiri dan berakhir 36px
- * lebar, 35px tinggi — diukur di peramban pada 1440px. Akibatnya baris Jadwal
- * setinggi 53px sementara baris Pengumuman di sebelahnya 50px, dan dua daftar
- * yang berdampingan terbaca sebagai dua kerapatan yang berbeda.
+ * Sebelumnya ia dipatok `size-7` (28px) supaya persis seukuran wadah ikon.
+ * Niatnya benar — dua panel bersebelahan tidak boleh berbeda kerapatan —
+ * tetapi yang disamakan adalah hal yang salah. Diukur di peramban pada
+ * 1440px: tiga baris isinya menuntut 31px di dalam kotak 28px, jadi LUBER 3px
+ * dan dipotong diam-diam oleh `overflow-hidden`. Tahunnya kehilangan kaki
+ * huruf, dan kotaknya berdiri tanpa satu piksel pun padding.
  *
- * Tiga baris isinya berjumlah 29px (8 + 13 + 8), jadi muat di dalam 32px tanpa
- * padding tambahan. Yang dihapus memang paddingnya: sebuah penanda yang harus
- * sejajar dengan penanda lain tidak boleh menentukan ukurannya sendiri.
+ * Yang harus seragam antar panel adalah TINGGI BARISNYA, dan itu sudah dijaga
+ * `min-h-14` pada `ListItem` — bukan ukuran penandanya. Sebuah kotak berisi
+ * tiga baris teks dan sebuah kotak berisi satu glif memang tidak sama besar;
+ * memaksanya sama persis adalah yang tadi memotong tahunnya.
+ *
+ * Pada 36px isinya (29px) duduk dengan sisa 3,5px di atas dan di bawah, dan
+ * kotaknya muat di dalam 38px ruang isi yang disediakan baris 60px — lega,
+ * tanpa membuat baris Jadwal lebih tinggi daripada tetangganya. Hitungan
+ * lengkapnya, berikut border yang mudah terlewat, ada di kepala `cards.tsx`.
+ *
+ * `overflow-hidden` DIHAPUS, bukan dipertahankan sebagai jaring pengaman.
+ * Justru itu yang membuat cacatnya tidak terlihat selama ini: isi yang tidak
+ * muat lebih baik terlihat menonjol keluar dan segera diperbaiki daripada
+ * dipotong rapi dan lolos berbulan-bulan.
  */
 function DateTile({ date }: { date: Date }) {
   return (
     <span
       aria-hidden="true"
-      className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-sm border border-primary-border bg-primary-soft leading-none"
+      className="grid size-9 shrink-0 place-items-center rounded-sm border border-primary-border bg-primary-soft leading-none"
     >
       <span className="text-[8px] font-semibold tracking-wide text-primary uppercase">
         {BULAN_SINGKAT[date.getMonth()]}
@@ -785,32 +798,52 @@ function ElectionPanel({ summary }: { summary: ElectionSummary }) {
           Batasnya sama dengan seluruh dashboard (3), dan kelebihannya
           diserahkan ke "Lihat semua" yang sudah ada di kepala panel.
         */}
-        {daftar.map((row) => (
-          <ListItem
-            key={row.id}
-            leading={<IconBox icon={Vote} tone="purple" />}
-            title={row.name}
-            meta={rentangPemilihan(row.startAt, row.endAt)}
-            trailing={
-              <Badge
-                tone={electionStatus(row.status).tone}
-                className={LENCANA_RINGKAS}
-              >
-                {electionStatus(row.status).label}
-              </Badge>
-            }
-          />
-        ))}
+        {/*
+          `ItemList`, BUKAN baris telanjang di dalam `div` pembungkus di atas.
+
+          Sebelumnya `ListItem` dipanggil langsung sebagai anak `div` itu.
+          `ListItem` merender `<li>`, dan sebuah `<li>` yang tidak berada di
+          dalam `<ul>` tidak mewarisi `list-style: none` dari mana pun —
+          Preflight Tailwind memasangnya pada wadahnya, bukan pada `li`. Maka
+          setiap baris pemilihan tumbuh titik hitam di kirinya, sementara
+          keenam daftar lain di dashboard yang sama bersih.
+
+          Titiknya kini padam dua kali: `ListItem` membawa `list-none` sendiri,
+          dan barisnya berada di dalam `<ul>` tempatnya memang seharusnya.
+          Yang kedua bukan pengulangan yang pertama — ia yang membuat
+          strukturnya benar bagi pembaca layar, yang mengumumkan "daftar,
+          3 butir" hanya bila daftarnya memang sebuah daftar.
+        */}
+        {daftar.length > 0 ? (
+          <ItemList>
+            {daftar.map((row) => (
+              <ListItem
+                key={row.id}
+                leading={<IconBox icon={Vote} tone="purple" />}
+                title={row.name}
+                meta={rentangPemilihan(row.startAt, row.endAt)}
+                trailing={
+                  <Badge
+                    tone={electionStatus(row.status).tone}
+                    className={LENCANA_RINGKAS}
+                  >
+                    {electionStatus(row.status).label}
+                  </Badge>
+                }
+              />
+            ))}
+          </ItemList>
+        ) : null}
 
         {/*
           Partisipasi saja — pembilang dan penyebutnya keduanya nyata, dan
           keduanya aman ditampilkan selama pemungutan suara. TIDAK ADA
           perolehan kandidat di sini, apa pun statusnya.
 
-          Hanya muncul ketika daftarnya masih menyisakan ruang di dalam slot.
-          Dengan tiga baris, slot 160px sudah penuh; menambahkan batang progres
-          di bawahnya membuat panel ini tumbuh melewati tetangganya justru pada
-          keadaan yang paling sering terjadi.
+          Hanya muncul ketika daftarnya BELUM penuh. Dengan tiga baris —
+          batas pratinjau seluruh dashboard — panel ini sudah setinggi
+          tetangganya; menambahkan batang progres di bawahnya membuatnya
+          menjulang justru pada keadaan yang paling sering terjadi.
         */}
         {partisipasi && daftar.length < BATAS_PRATINJAU ? (
           <ProgressRow
