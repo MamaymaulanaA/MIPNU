@@ -116,6 +116,7 @@ export default async function AuditPage({
           filters={[
             {
               key: "jenis",
+              size: "sm",
               label: "Saring menurut objek",
               value: jenis,
               allLabel: "Semua objek",

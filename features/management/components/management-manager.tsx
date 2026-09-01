@@ -7,7 +7,10 @@ import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { EmptyState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import { Pagination } from "@/components/data-table/pagination";
-import { TableToolbar } from "@/components/data-table/toolbar";
+import {
+  TableToolbar,
+  type TableFilter,
+} from "@/components/data-table/toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -122,6 +125,37 @@ export function ManagementManager({
   const disaring =
     daftar.cari !== "" || daftar.periode !== "" || daftar.jabatan !== "";
 
+  /*
+    Penyaring hanya dirender bila pilihannya memang ada. Daftar periode dan
+    jabatan dimuat halaman ini untuk FORM penugasan, dan form itu hanya dimuat
+    bagi pemegang `management.assign` — jadi pemanggil tanpa hak itu menerima
+    daftar kosong, dan menampilkan dropdown kosong hanya akan menjadi kontrol
+    yang tidak dapat dipakai.
+  */
+  const filterKepengurusan: TableFilter[] = [];
+
+  if (daftar.periodeOptions.length > 0) {
+    filterKepengurusan.push({
+      key: "periode",
+      size: "sm",
+      label: "Saring menurut periode",
+      value: daftar.periode,
+      allLabel: "Semua periode",
+      options: daftar.periodeOptions,
+    });
+  }
+
+  if (daftar.jabatanOptions.length > 0) {
+    filterKepengurusan.push({
+      key: "jabatan",
+      size: "sm",
+      label: "Saring menurut jabatan",
+      value: daftar.jabatan,
+      allLabel: "Semua jabatan",
+      options: daftar.jabatanOptions,
+    });
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -155,30 +189,7 @@ export function ManagementManager({
           searchValue={daftar.cari}
           searchPlaceholder="Cari nama pengurus…"
           searchLabel="Cari pengurus"
-          filters={[
-            ...(daftar.periodeOptions.length > 0
-              ? [
-                  {
-                    key: "periode",
-                    label: "Saring menurut periode",
-                    value: daftar.periode,
-                    allLabel: "Semua periode",
-                    options: daftar.periodeOptions,
-                  },
-                ]
-              : []),
-            ...(daftar.jabatanOptions.length > 0
-              ? [
-                  {
-                    key: "jabatan",
-                    label: "Saring menurut jabatan",
-                    value: daftar.jabatan,
-                    allLabel: "Semua jabatan",
-                    options: daftar.jabatanOptions,
-                  },
-                ]
-              : []),
-          ]}
+          filters={filterKepengurusan}
         />
 
         {assignments.length === 0 ? (

@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 
 /**
  * Toolbar daftar: pencarian di kiri, penyaring di kanan.
@@ -28,6 +29,35 @@ import { Input, Select } from "@/components/ui/field";
  * komponen ini hanya menyusun query string.
  */
 
+/**
+ * Lebar penyaring — tiga tingkat, dipilih menurut LABEL TERPANJANGNYA.
+ *
+ * Sebelumnya setiap penyaring dipatok `sm:w-44` (176px), berapa pun panjang
+ * teksnya. Akibatnya "Semua status" duduk di dalam kotak yang separuhnya
+ * kosong, sementara "Operator Organisasi" nyaris menyentuh tepi — satu angka
+ * salah untuk keduanya sekaligus.
+ *
+ *   xs  136  Status, Tipe, Tahun — label pendek dan tetap
+ *   sm  168  Kategori, Periode, Jenjang
+ *   md  208  Role, nama organisasi, label yang memang panjang
+ *
+ * Bukan `w-auto`. Lebar otomatis pada `<select>` mengikuti OPSI TERPANJANG,
+ * sehingga satu opsi "Dokumentasi Kegiatan" melebarkan kotaknya jauh melewati
+ * "Semua kategori" yang biasanya terlihat — dan lebarnya berubah-ubah begitu
+ * pilihan diganti. Lebar yang dipilih di muka membuat toolbar diam.
+ *
+ * Ini HANYA untuk penyaring toolbar. Field di dalam form tetap mengikuti kisi
+ * formnya; menyempitkannya menjadi selebar isi akan membuat form terbaca
+ * seperti deretan chip.
+ */
+const LEBAR_FILTER = {
+  xs: "sm:w-34",
+  sm: "sm:w-42",
+  md: "sm:w-52",
+} as const;
+
+export type FilterSize = keyof typeof LEBAR_FILTER;
+
 export type TableFilter = {
   /** Nama parameter di URL. */
   key: string;
@@ -37,6 +67,8 @@ export type TableFilter = {
   /** Pilihan "semua" ditambahkan sendiri sebagai nilai kosong. */
   allLabel: string;
   options: { value: string; label: string }[];
+  /** Bawaannya `sm`. Pilih menurut label terpanjang yang mungkin tampil. */
+  size?: FilterSize;
 };
 
 export function TableToolbar({
@@ -139,7 +171,7 @@ export function TableToolbar({
               onChange={(event) =>
                 updateParams({ [filter.key]: event.target.value, page: null })
               }
-              className="w-full sm:w-44"
+              className={cn("w-full", LEBAR_FILTER[filter.size ?? "sm"])}
             >
               <option value="">{filter.allLabel}</option>
               {filter.options.map((option) => (

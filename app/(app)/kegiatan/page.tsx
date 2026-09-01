@@ -3,6 +3,10 @@ import Link from "next/link";
 import { CalendarRange, MapPin, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
+import { EVENT_STATUSES } from "@/features/events/schemas/event.schema";
+import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 import { EmptyState, ForbiddenState } from "@/components/feedback/states";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -17,29 +21,52 @@ export const metadata: Metadata = {
   title: "Event",
 };
 
-export default async function EventsPage() {
+const UKURAN_HALAMAN = 20;
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const context = await requireAccessContext();
 
   if (!context.organizationId || !can(context, PERMISSIONS.events.view)) {
     return <ForbiddenState />;
   }
 
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["status"],
+  });
+
   const supabase = await createClient();
 
   // Jumlah peserta dihitung database-side lewat agregat relasi, bukan dengan
   // mengambil seluruh baris peserta lalu menghitungnya di aplikasi.
-  const { data } = await supabase
+  // Pencarian dan penyaringan di database, dengan `.range()` — bukan
+  // `.limit(50)` yang menyembunyikan event lama tanpa cara menjangkaunya.
+  let eventQuery = supabase
     .from("events")
     .select(
       `
       id, name, description, start_at, end_at, location, capacity, status,
       event_participants ( count )
     `,
+      { count: "exact" },
     )
     .eq("organization_id", context.organizationId)
-    .is("deleted_at", null)
+    .is("deleted_at", null);
+
+  if (daftar.saring.status)
+    eventQuery = eventQuery.eq("status", daftar.saring.status);
+  if (daftar.cari) eventQuery = eventQuery.ilike("name", polaCari(daftar.cari));
+
+  const { data, count } = await eventQuery
     .order("start_at", { ascending: false })
-    .limit(50);
+    .order("id", { ascending: true })
+    .range(daftar.dari, daftar.sampai);
 
   type Row = {
     id: string;
@@ -53,6 +80,7 @@ export default async function EventsPage() {
   };
 
   const events = (data as unknown as Row[] | null) ?? [];
+  const disaring = daftar.cari !== "" || daftar.saring.status !== "";
 
   return (
     <div className="space-y-5">
@@ -67,19 +95,44 @@ export default async function EventsPage() {
       />
 
       <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari event…"
+          searchLabel="Cari event"
+          filters={[
+            {
+              key: "status",
+              size: "sm",
+              label: "Saring menurut status",
+              value: daftar.saring.status,
+              allLabel: "Semua status",
+              options: EVENT_STATUSES.map((status) => ({
+                value: status,
+                label: eventStatus(status).label,
+              })),
+            },
+          ]}
+        />
+
         {events.length === 0 ? (
           <EmptyState
             icon={CalendarRange}
-            title="Belum ada event"
-            description="Event yang dibuat organisasi akan tampil di sini."
+            title={disaring ? "Tidak ada event yang cocok" : "Belum ada event"}
+            description={
+              disaring
+                ? "Coba ubah kata kunci atau saringan status."
+                : "Event yang dibuat organisasi akan tampil di sini."
+            }
             action={
-              can(context, PERMISSIONS.events.create) ? (
+              !disaring && can(context, PERMISSIONS.events.create) ? (
                 <EventFormDialog organizationId={context.organizationId} />
               ) : undefined
             }
           />
         ) : (
-          <ul className="divide-y divide-border">
+          /* Daftar ikut aturan data panjang: dibatasi tingginya dan menggulir
+             di dalam kartunya, memakai `.scroll-area` yang sama dengan tabel. */
+          <ul className="scroll-area max-h-[calc(100dvh-20rem)] min-h-[220px] divide-y divide-border">
             {events.map((event) => {
               const status = eventStatus(event.status);
               const participantCount = event.event_participants[0]?.count ?? 0;
@@ -134,6 +187,13 @@ export default async function EventsPage() {
             })}
           </ul>
         )}
+
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(1, Math.ceil((count ?? 0) / UKURAN_HALAMAN))}
+          total={count ?? 0}
+          pageSize={UKURAN_HALAMAN}
+        />
       </Card>
     </div>
   );

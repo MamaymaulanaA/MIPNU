@@ -159,6 +159,7 @@ export function PeriodManager({
           filters={[
             {
               key: "status",
+              size: "xs",
               label: "Saring menurut status",
               value: daftar.status,
               allLabel: "Semua status",

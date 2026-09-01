@@ -5,6 +5,8 @@ import { CalendarDays, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { EmptyState } from "@/components/feedback/states";
+import { PageHeader } from "@/components/layout/page-header";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,16 +49,28 @@ const VISIBILITY_LABELS: Record<string, string> = {
   PUBLIC: "Publik",
 };
 
+/** Keadaan toolbar — seluruhnya dari URL, disaring di server. */
+export type KeadaanDaftar = {
+  cari: string;
+  jenis: string;
+  jenisOptions: { value: string; label: string }[];
+};
+
 export function AgendaManager({
   organizationId,
   upcoming,
   past,
   permissions,
+  daftar,
+  aksiTambahan,
 }: {
   organizationId: string;
   upcoming: AgendaRow[];
   past: AgendaRow[];
   permissions: AgendaPermissions;
+  daftar: KeadaanDaftar;
+  /** Pengalih tampilan daftar/kalender, dirender Server Component. */
+  aksiTambahan?: React.ReactNode;
 }) {
   const { showToast } = useToast();
 
@@ -80,15 +94,49 @@ export function AgendaManager({
   }
 
   return (
-    <>
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} aria-hidden="true" />
-            Tambah Agenda
-          </Button>
-        </div>
-      ) : null}
+    <div className="space-y-5">
+      <PageHeader
+        title="Agenda"
+        description="Kalender kegiatan organisasi."
+        actions={
+          <>
+            {aksiTambahan}
+            {permissions.canCreate ? (
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus size={16} aria-hidden="true" />
+                Tambah Agenda
+              </Button>
+            ) : null}
+          </>
+        }
+      />
+
+      {/*
+        Toolbar berdiri di kartunya sendiri, di ATAS kedua daftar.
+
+        Agenda sengaja dibaca sebagai dua daftar — mendatang untuk
+        direncanakan, lampau untuk ditelusuri — dan itu tidak diubah di sini.
+        Konsekuensinya satu: pencarian dan penyaringnya berlaku untuk KEDUANYA,
+        jadi ia tidak dapat duduk di dalam salah satu kartu tanpa terbaca
+        seolah hanya menyaring kartu itu.
+      */}
+      <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari agenda…"
+          searchLabel="Cari agenda"
+          filters={[
+            {
+              key: "jenis",
+              size: "sm",
+              label: "Saring menurut jenis",
+              value: daftar.jenis,
+              allLabel: "Semua jenis",
+              options: daftar.jenisOptions,
+            },
+          ]}
+        />
+      </Card>
 
       <Card>
         <CardHeader>
@@ -109,7 +157,7 @@ export function AgendaManager({
             }
           />
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="scroll-area max-h-[calc(100dvh-24rem)] min-h-[160px] divide-y divide-border">
             {upcoming.map((item) => (
               <AgendaRowItem
                 key={item.id}
@@ -128,7 +176,7 @@ export function AgendaManager({
           <CardHeader>
             <CardTitle>Sudah Berlalu</CardTitle>
           </CardHeader>
-          <ul className="divide-y divide-border">
+          <ul className="scroll-area max-h-[calc(100dvh-24rem)] min-h-[160px] divide-y divide-border">
             {past.map((item) => (
               <AgendaRowItem
                 key={item.id}
@@ -168,7 +216,7 @@ export function AgendaManager({
         title={`Hapus agenda "${deleting?.title ?? ""}"?`}
         description="Agenda tidak akan tampil lagi di kalender organisasi. Datanya tetap tersimpan sebagai riwayat, tidak dihapus permanen."
       />
-    </>
+    </div>
   );
 }
 

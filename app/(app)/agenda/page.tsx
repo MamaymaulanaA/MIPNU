@@ -13,6 +13,9 @@ import {
 } from "@/features/agenda/components/agenda-manager";
 import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { AGENDA_TYPES } from "@/features/agenda/schemas/agenda.schema";
+import { bacaParamDaftar, polaCari } from "@/lib/list-params";
+import { agendaType } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -125,40 +128,68 @@ export default async function AgendaPage({
     );
   }
 
+  const daftar = bacaParamDaftar(params, {
+    ukuranHalaman: 1,
+    kunciSaring: ["jenis"],
+  });
+
   const nowIso = new Date().toISOString();
 
   // Dua query terpisah, bukan satu daftar panjang: agenda mendatang dan
   // agenda lampau dibaca dengan cara berbeda — yang satu untuk direncanakan,
   // yang lain untuk ditelusuri.
-  const [upcoming, past] = await Promise.all([
-    supabase
-      .from("agenda_items")
-      .select(AGENDA_COLUMNS)
-      .eq("organization_id", context.organizationId)
-      .is("deleted_at", null)
-      .gte("start_at", nowIso)
-      .order("start_at", { ascending: true })
-      .limit(50),
+  // Pencarian dan penyaringan diterapkan pada KEDUANYA — bukan sekali pada
+  // gabungannya. Menggabungkan dua bacaan itu hanya demi satu penyaring akan
+  // menghapus perbedaan yang justru berguna.
+  let mendatangQuery = supabase
+    .from("agenda_items")
+    .select(AGENDA_COLUMNS)
+    .eq("organization_id", context.organizationId)
+    .is("deleted_at", null)
+    .gte("start_at", nowIso);
 
-    supabase
-      .from("agenda_items")
-      .select(AGENDA_COLUMNS)
-      .eq("organization_id", context.organizationId)
-      .is("deleted_at", null)
-      .lt("start_at", nowIso)
-      .order("start_at", { ascending: false })
-      .limit(20),
+  let lampauQuery = supabase
+    .from("agenda_items")
+    .select(AGENDA_COLUMNS)
+    .eq("organization_id", context.organizationId)
+    .is("deleted_at", null)
+    .lt("start_at", nowIso);
+
+  if (daftar.saring.jenis) {
+    mendatangQuery = mendatangQuery.eq("agenda_type", daftar.saring.jenis);
+    lampauQuery = lampauQuery.eq("agenda_type", daftar.saring.jenis);
+  }
+
+  if (daftar.cari) {
+    const pola = polaCari(daftar.cari);
+    mendatangQuery = mendatangQuery.ilike("title", pola);
+    lampauQuery = lampauQuery.ilike("title", pola);
+  }
+
+  const [upcoming, past] = await Promise.all([
+    mendatangQuery.order("start_at", { ascending: true }).limit(50),
+    lampauQuery.order("start_at", { ascending: false }).limit(20),
   ]);
 
   return (
-    <div className="space-y-5">
-      {header}
-      <AgendaManager
-        organizationId={context.organizationId}
-        upcoming={((upcoming.data as AgendaQueryRow[] | null) ?? []).map(toRow)}
-        past={((past.data as AgendaQueryRow[] | null) ?? []).map(toRow)}
-        permissions={permissions}
-      />
-    </div>
+    <AgendaManager
+      aksiTambahan={
+        <Suspense fallback={<div className="h-11 w-40" />}>
+          <AgendaViewToggle current={view} />
+        </Suspense>
+      }
+      organizationId={context.organizationId}
+      upcoming={((upcoming.data as AgendaQueryRow[] | null) ?? []).map(toRow)}
+      past={((past.data as AgendaQueryRow[] | null) ?? []).map(toRow)}
+      permissions={permissions}
+      daftar={{
+        cari: daftar.cari,
+        jenis: daftar.saring.jenis,
+        jenisOptions: AGENDA_TYPES.map((jenis) => ({
+          value: jenis,
+          label: agendaType(jenis).label,
+        })),
+      }}
+    />
   );
 }

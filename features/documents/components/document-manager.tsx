@@ -131,6 +131,7 @@ export function DocumentManager({
           filters={[
             {
               key: "kategori",
+              size: "sm",
               label: "Saring menurut kategori",
               value: daftar.kategori,
               allLabel: "Semua kategori",
