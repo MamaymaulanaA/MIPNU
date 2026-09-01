@@ -26,7 +26,17 @@
   /* ---- Semantic surface & text ----
      Background off-white kebiruan, card putih. Hierarki datang dari
      perbedaan itu, bukan dari shadow (UI.md, aturan 4 di atas). */
-  --background: 220 23% 97%; /* #F7F8FA */
+  /*
+   * Nyaris putih, dan hampir tanpa warna.
+   *
+   * Sebelumnya 23% saturasi pada hue 220 — cukup biru untuk terbaca
+   * dingin, terutama berdampingan dengan kartu putih murni. Yang
+   * diturunkan saturasinya, bukan hanya terangnya: latar yang terlalu
+   * terang membuat kartu putih kehilangan pemisahnya dan halaman
+   * terbaca rata, sementara latar yang kurang jenuh terbaca bersih
+   * tanpa mengorbankan pemisah itu.
+   */
+  --background: 220 16% 98%; /* #FAFBFC */
   --foreground: 221 39% 11%; /* #111827 */
 
   --card: 0 0% 100%;
@@ -453,17 +463,41 @@
     }
   }
 
+  /*
+   * Batang gulir HALAMAN, bukan hanya kontainer di dalamnya.
+   *
+   * `.scroll-area` sudah menata guliran sidebar, dialog, dan tabel sejak awal
+   * — tetapi batang gulir halaman itu sendiri tidak pernah ditata, jadi yang
+   * muncul adalah batang bawaan sistem: lebar, berlatar abu, lengkap dengan
+   * tombol panah di kedua ujungnya. Pada Windows ia setebal 15px dan terlihat
+   * dari peramban lain sama sekali.
+   *
+   * Sejak `scrollbar-gutter: stable` menyediakan tempatnya secara permanen,
+   * batang itu selalu terlihat — jadi menatanya bukan lagi kosmetik. Dengan
+   * lebar 4px, tempat yang dipesan pun tinggal 4px, bukan 15px.
+   */
+  html::-webkit-scrollbar,
   .scroll-area::-webkit-scrollbar {
     width: 4px;
     height: 4px;
   }
+
+  /* Tombol panah di ujung batang gulir. Tidak ada di macOS, ada di Windows,
+     dan tidak pernah menjadi bagian dari rancangan ini. */
+  html::-webkit-scrollbar-button,
+  .scroll-area::-webkit-scrollbar-button {
+    display: none;
+  }
+  html::-webkit-scrollbar-track,
   .scroll-area::-webkit-scrollbar-track {
     background: transparent;
   }
+  html::-webkit-scrollbar-thumb,
   .scroll-area::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.18);
     border-radius: 999px;
   }
+  html:hover::-webkit-scrollbar-thumb,
   .scroll-area:hover::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.38);
   }
@@ -471,6 +505,7 @@
   /* Firefox: tidak punya pseudo-element di atas, jadi dipakai properti
      standar. `thin` adalah nilai paling tipis yang tersedia di sana. */
   @supports not selector(::-webkit-scrollbar) {
+    html,
     .scroll-area {
       scrollbar-width: thin;
       scrollbar-color: hsl(var(--muted-foreground) / 0.18) transparent;
