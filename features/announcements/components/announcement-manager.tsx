@@ -4,6 +4,9 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { Megaphone, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/states";
+import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,17 +47,29 @@ export type AnnouncementPermissions = {
   canDelete: boolean;
 };
 
+/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
+export type KeadaanDaftar = {
+  cari: string;
+  status: string;
+  statusOptions: { value: string; label: string }[];
+  halaman: number;
+  total: number;
+  ukuranHalaman: number;
+};
+
 export function AnnouncementManager({
   organizationId,
   announcements,
   permissions,
   readOnly,
+  daftar,
 }: {
   organizationId: string;
   announcements: AnnouncementRow[];
   permissions: AnnouncementPermissions;
   /** Pembaca biasa: hanya menerima pengumuman yang sudah terbit untuknya. */
   readOnly: boolean;
+  daftar: KeadaanDaftar;
 }) {
   const { showToast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
@@ -62,29 +77,78 @@ export function AnnouncementManager({
   const [deleting, setDeleting] = useState<AnnouncementRow | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const disaring = daftar.cari !== "" || daftar.status !== "";
+
   return (
-    <>
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} aria-hidden="true" />
-            Tulis Pengumuman
-          </Button>
-        </div>
-      ) : null}
+    <div className="space-y-5">
+      <PageHeader
+        title="Pengumuman"
+        description={
+          readOnly
+            ? "Pengumuman yang ditujukan untuk Anda."
+            : "Pengumuman organisasi beserta draf dan arsipnya."
+        }
+        actions={
+          permissions.canCreate ? (
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus size={16} aria-hidden="true" />
+              Tulis Pengumuman
+            </Button>
+          ) : undefined
+        }
+      />
+
+      {/*
+        Toolbar berdiri di kartunya sendiri, di ATAS daftar.
+
+        Setiap pengumuman sudah berupa kartu — judul, isi, lencana status dan
+        audiens, beserta aksinya. Membungkus toolbar bersama kartu-kartu itu ke
+        dalam satu kartu lagi menghasilkan kartu di dalam kartu, dan batas
+        luarnya justru mengaburkan batas tiap pengumuman. Anatominya sama
+        dengan Agenda, yang juga berupa daftar kartu.
+      */}
+      <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari pengumuman…"
+          searchLabel="Cari pengumuman"
+          filters={[
+            {
+              key: "status",
+              size: "xs",
+              label: "Saring menurut status",
+              value: daftar.status,
+              allLabel: "Semua status",
+              options: daftar.statusOptions,
+            },
+          ]}
+        />
+      </Card>
 
       {announcements.length === 0 ? (
-        <EmptyState
-          icon={Megaphone}
-          title={readOnly ? "Belum ada pengumuman" : "Belum ada pengumuman"}
-          description={
-            readOnly
-              ? "Pengumuman yang ditujukan untuk Anda akan tampil di sini."
-              : "Pengumuman lahir sebagai draf dan baru terlihat anggota setelah diterbitkan."
-          }
-        />
+        <Card>
+          <EmptyState
+            icon={Megaphone}
+            title={
+              disaring
+                ? "Tidak ada pengumuman yang cocok"
+                : "Belum ada pengumuman"
+            }
+            description={
+              disaring
+                ? "Coba ubah kata kunci atau saringan status."
+                : readOnly
+                  ? "Pengumuman yang ditujukan untuk Anda akan tampil di sini."
+                  : "Pengumuman lahir sebagai draf dan baru terlihat anggota setelah diterbitkan."
+            }
+          />
+        </Card>
       ) : (
-        <div className="space-y-3">
+        /* Daftar ikut aturan data panjang: dibatasi tingginya dan menggulir di
+           dalam dirinya, memakai `.scroll-area` yang sama dengan tabel.
+           `pr-1` memberi ruang bagi batang gulir 4px supaya ia tidak menempel
+           tepi kartu terakhir. */
+        <div className="scroll-area max-h-[calc(100dvh-22rem)] space-y-3 pr-1">
           {announcements.map((row) => {
             const status = announcementStatus(row.status);
             const audience = announcementAudience(row.audienceType);
@@ -183,6 +247,21 @@ export function AnnouncementManager({
         </div>
       )}
 
+      {/* Kaki daftar berdiri di kartunya sendiri, sepasang dengan kartu
+          toolbar di atas — daftarnya sendiri berupa tumpukan kartu, jadi
+          tidak ada satu kartu luar yang dapat memuatnya. */}
+      <Card>
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(
+            1,
+            Math.ceil(daftar.total / daftar.ukuranHalaman),
+          )}
+          total={daftar.total}
+          pageSize={daftar.ukuranHalaman}
+        />
+      </Card>
+
       <AnnouncementDialog
         key={createOpen ? "create-open" : "create-closed"}
         open={createOpen}
@@ -222,7 +301,7 @@ export function AnnouncementManager({
         title="Hapus pengumuman ini?"
         description="Pengumuman disembunyikan dari daftar dan tidak lagi diterima anggota."
       />
-    </>
+    </div>
   );
 }
 
