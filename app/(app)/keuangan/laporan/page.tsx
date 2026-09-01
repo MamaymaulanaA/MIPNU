@@ -133,16 +133,20 @@ export default async function FinanceReportPage({
       />
 
       {/*
-        Toolbar bersama, TANPA kotak pencarian.
+        SATU kartu: penyaring, arus kas, dan catatannya.
 
-        `mipnu_finance_summary()` menerima rentang tanggal dan akun — tidak ada
-        argumen untuk kata pencarian. Memasang kotak pencarian di sini hanya
-        supaya toolbarnya berbentuk sama dengan halaman lain akan menjanjikan
-        sesuatu yang tidak pernah bekerja.
+        Sebelumnya ketiganya tiga blok terpisah — kartu penyaring setinggi 87px
+        yang isinya menumpuk di kiri dan menyisakan 790px kosong, lalu kisi
+        kartu statistik telanjang, lalu satu paragraf yang mengambang sendiri
+        di antara kartu. Diukur di peramban: lima blok tingkat atas dengan
+        satu di antaranya bukan kartu sama sekali.
 
-        Yang hilang dari versi sebelumnya: tombol "Terapkan". Penyaring di
-        seluruh aplikasi ini menulis ke URL begitu diubah; halaman ini
-        satu-satunya yang menuntut klik kedua.
+        Penyaringnya memang menyaring arus kas ini, jadi ia menempel padanya —
+        bentuk yang sama dengan toolbar di atas tabel pada halaman daftar.
+
+        TANPA kotak pencarian: `mipnu_finance_summary()` menerima rentang
+        tanggal dan akun, tidak ada argumen untuk kata pencarian, dan penyaring
+        yang tidak didukung backend adalah penyaring palsu.
       */}
       <Card>
         <TableToolbar
@@ -161,73 +165,71 @@ export default async function FinanceReportPage({
             },
           ]}
         />
-      </Card>
 
-      {invalidRange ? (
-        <Card className="p-4">
-          <p className="text-[13px] text-destructive">
+        {invalidRange ? (
+          <p className="p-4 text-[13px] text-destructive sm:p-5">
             Tanggal awal tidak boleh melewati tanggal akhir.
           </p>
-        </Card>
-      ) : (
-        <>
-          {/*
-            Arus kas sebagai kartu statistik, bukan daftar definisi.
+        ) : (
+          <div className="space-y-3 p-4 sm:p-5">
+            {/*
+              Arus kas sebagai kartu statistik, bukan daftar definisi. Empat
+              angka inilah alasan halaman ini dibuka; sebelumnya keempatnya
+              berbaris sebagai `<dl>` setinggi satu baris — terbaca sebagai
+              catatan kaki, bukan sebagai jawaban. Komponennya sama dengan
+              halaman Ringkasan, jadi angka yang sama terbaca dengan cara yang
+              sama di dua tempat.
+            */}
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <StatCard
+                label="Saldo Awal"
+                value={formatRupiah(summary?.opening ?? 0)}
+                context="Sebelum rentang ini"
+                icon={Landmark}
+              />
+              <StatCard
+                label="Pemasukan"
+                value={formatRupiah(summary?.income ?? 0)}
+                context="Diposting pada rentang ini"
+                icon={ArrowDownLeft}
+                tone="success"
+              />
+              <StatCard
+                label="Pengeluaran"
+                value={formatRupiah(summary?.expense ?? 0)}
+                context="Diposting pada rentang ini"
+                icon={ArrowUpRight}
+                tone="destructive"
+              />
+              <StatCard
+                label="Saldo Akhir"
+                value={formatRupiah(summary?.closing ?? 0)}
+                context={`${formatNumber(summary?.transaction_count ?? 0)} transaksi diposting`}
+                icon={Wallet}
+                tone="primary"
+              />
+            </div>
 
-            Empat angka inilah alasan halaman ini dibuka, dan sebelumnya
-            keempatnya berbaris sebagai `<dl>` setinggi satu baris masing-
-            masing di dalam satu kartu — terbaca sebagai catatan kaki, bukan
-            sebagai jawaban. Kartu statistiknya komponen yang sama dengan
-            halaman Ringkasan, jadi angka yang sama terbaca dengan cara yang
-            sama di dua tempat.
-          */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard
-              label="Saldo Awal"
-              value={formatRupiah(summary?.opening ?? 0)}
-              context="Sebelum rentang ini"
-              icon={Landmark}
-            />
-            <StatCard
-              label="Pemasukan"
-              value={formatRupiah(summary?.income ?? 0)}
-              context="Diposting pada rentang ini"
-              icon={ArrowDownLeft}
-              tone="success"
-            />
-            <StatCard
-              label="Pengeluaran"
-              value={formatRupiah(summary?.expense ?? 0)}
-              context="Diposting pada rentang ini"
-              icon={ArrowUpRight}
-              tone="destructive"
-            />
-            <StatCard
-              label="Saldo Akhir"
-              value={formatRupiah(summary?.closing ?? 0)}
-              context={`${formatNumber(summary?.transaction_count ?? 0)} transaksi diposting`}
-              icon={Wallet}
-              tone="primary"
-            />
+            <p className="text-[13px] text-muted-foreground">
+              Draf dan transaksi yang dibatalkan tidak ikut dihitung.
+            </p>
           </div>
+        )}
+      </Card>
 
-          <p className="text-[13px] text-muted-foreground">
-            Draf dan transaksi yang dibatalkan tidak ikut dihitung.
-          </p>
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <CategoryCard
-              title="Pemasukan per Kategori"
-              lines={income}
-              emptyLabel="Belum ada pemasukan pada rentang ini."
-            />
-            <CategoryCard
-              title="Pengeluaran per Kategori"
-              lines={expense}
-              emptyLabel="Belum ada pengeluaran pada rentang ini."
-            />
-          </div>
-        </>
+      {invalidRange ? null : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <CategoryCard
+            title="Pemasukan per Kategori"
+            lines={income}
+            emptyLabel="Belum ada pemasukan pada rentang ini."
+          />
+          <CategoryCard
+            title="Pengeluaran per Kategori"
+            lines={expense}
+            emptyLabel="Belum ada pengeluaran pada rentang ini."
+          />
+        </div>
       )}
     </div>
   );
