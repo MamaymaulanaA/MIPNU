@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import {
   Table,
@@ -60,32 +60,30 @@ export function AccountManager({
   organizationId,
   accounts,
   canManage,
+  disaring = false,
 }: {
   organizationId: string;
   accounts: AccountRow[];
   canManage: boolean;
+  /** Ada pencarian atau penyaring yang aktif — mengubah kalimat kosongnya. */
+  disaring?: boolean;
 }) {
   const { showToast } = useToast();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<AccountRow | null>(null);
+  const [mengarsip, setMengarsip] = useState<AccountRow | null>(null);
   const [isPending, startTransition] = useTransition();
 
   return (
     <>
-      {canManage ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} aria-hidden="true" />
-            Tambah Akun Kas
-          </Button>
-        </div>
-      ) : null}
-
       {accounts.length === 0 ? (
         <EmptyState
           icon={Landmark}
-          title="Belum ada akun kas"
-          description="Setiap transaksi dicatat pada sebuah akun kas. Buat minimal satu sebelum mulai mencatat."
+          title={disaring ? "Tidak ada akun yang cocok" : "Belum ada akun kas"}
+          description={
+            disaring
+              ? "Ubah kata pencarian atau saringan statusnya."
+              : "Setiap transaksi dicatat pada sebuah akun kas. Buat minimal satu sebelum mulai mencatat."
+          }
         />
       ) : (
         <TableScroll>
@@ -93,10 +91,13 @@ export function AccountManager({
             <TableHead>
               <TableRow className="hover:bg-transparent">
                 <TableHeaderCell>Akun</TableHeaderCell>
-                <TableHeaderCell className="hidden md:table-cell">
+                {/* Nominal rata kanan, sama seperti kolom Nominal pada
+                    Transaksi. Angka uang yang berpindah perataan antarhalaman
+                    memaksa mata mencari titik desimalnya dua kali. */}
+                <TableHeaderCell className="hidden text-right md:table-cell">
                   Saldo Awal
                 </TableHeaderCell>
-                <TableHeaderCell>Saldo</TableHeaderCell>
+                <TableHeaderCell className="text-right">Saldo</TableHeaderCell>
                 {canManage ? (
                   <TableHeaderCell className="text-right">Aksi</TableHeaderCell>
                 ) : null}
@@ -121,11 +122,11 @@ export function AccountManager({
                       </span>
                     </TableCell>
 
-                    <TableCell className="hidden text-muted-foreground md:table-cell">
+                    <TableCell className="hidden text-right text-muted-foreground md:table-cell">
                       {formatRupiah(row.openingBalance)}
                     </TableCell>
 
-                    <TableCell className="font-medium text-foreground">
+                    <TableCell className="text-right font-medium text-foreground">
                       {formatRupiah(row.balance)}
                     </TableCell>
 
@@ -144,19 +145,7 @@ export function AccountManager({
                           <Button
                             variant="ghost"
                             size="sm"
-                            disabled={isPending}
-                            onClick={() =>
-                              startTransition(async () => {
-                                const result = await setAccountActive(
-                                  organizationId,
-                                  row.id,
-                                  !row.isActive,
-                                );
-                                if (!result.success) {
-                                  showToast(result.error, "error");
-                                }
-                              })
-                            }
+                            onClick={() => setMengarsip(row)}
                           >
                             {row.isActive ? "Nonaktifkan" : "Aktifkan"}
                           </Button>
@@ -171,11 +160,52 @@ export function AccountManager({
         </TableScroll>
       )}
 
-      <AccountDialog
-        key={createOpen ? "acc-create-open" : "acc-create-closed"}
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        organizationId={organizationId}
+      {/*
+        Penonaktifan lewat konfirmasi.
+
+        Akun kas tidak pernah dihapus — ia dinonaktifkan supaya transaksi lama
+        tetap terbaca. Tetapi menonaktifkan akun MENGELUARKANNYA dari pilihan
+        transaksi baru, dan sebelumnya itu terjadi pada klik pertama tanpa
+        pertanyaan apa pun. Semantiknya tidak berubah; yang ditambahkan hanya
+        langkah kedua sebelum aksinya dipanggil.
+      */}
+      <ConfirmDialog
+        open={Boolean(mengarsip)}
+        onClose={() => setMengarsip(null)}
+        onConfirm={() => {
+          if (!mengarsip) return;
+          const target = mengarsip;
+
+          startTransition(async () => {
+            const result = await setAccountActive(
+              organizationId,
+              target.id,
+              !target.isActive,
+            );
+            setMengarsip(null);
+            showToast(
+              result.success
+                ? target.isActive
+                  ? "Akun kas dinonaktifkan."
+                  : "Akun kas diaktifkan."
+                : result.error,
+              result.success ? "success" : "error",
+            );
+          });
+        }}
+        pending={isPending}
+        destructive={mengarsip?.isActive ?? false}
+        confirmLabel={mengarsip?.isActive ? "Nonaktifkan" : "Aktifkan"}
+        title={
+          mengarsip?.isActive
+            ? "Nonaktifkan akun kas ini?"
+            : "Aktifkan kembali akun kas ini?"
+        }
+        description={
+          mengarsip?.isActive
+            ? "Akun tidak dihapus dan transaksi lamanya tetap terbaca, tetapi akun ini tidak lagi dapat dipilih pada transaksi baru."
+            : "Akun ini akan kembali muncul sebagai pilihan pada transaksi baru."
+        }
       />
 
       <AccountDialog
@@ -304,36 +334,91 @@ function AccountDialog({
 
 /* ============================================================== kategori */
 
+/**
+ * Tombol "Tambah Akun Kas" beserta dialognya.
+ *
+ * Sama alasannya dengan `TransactionCreateDialog`: aksi primer berdiri di
+ * kepala bagiannya, bukan melayang di atas tabel di dalam kartu.
+ */
+export function AccountCreateDialog({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <Plus size={16} aria-hidden="true" />
+        Tambah Akun
+      </Button>
+
+      <AccountDialog
+        key={open ? "acc-create-open" : "acc-create-closed"}
+        open={open}
+        onClose={() => setOpen(false)}
+        organizationId={organizationId}
+      />
+    </>
+  );
+}
+
+/** Tombol "Tambah Kategori" beserta dialognya. */
+export function CategoryCreateDialog({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <Plus size={16} aria-hidden="true" />
+        Tambah Kategori
+      </Button>
+
+      <CategoryDialog
+        key={open ? "cat-create-open" : "cat-create-closed"}
+        open={open}
+        onClose={() => setOpen(false)}
+        organizationId={organizationId}
+      />
+    </>
+  );
+}
+
 export function CategoryManager({
   organizationId,
   categories,
   canManage,
+  disaring = false,
 }: {
   organizationId: string;
   categories: CategoryRow[];
   canManage: boolean;
+  /** Ada pencarian atau penyaring yang aktif — mengubah kalimat kosongnya. */
+  disaring?: boolean;
 }) {
   const { showToast } = useToast();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<CategoryRow | null>(null);
+  const [mengarsip, setMengarsip] = useState<CategoryRow | null>(null);
   const [isPending, startTransition] = useTransition();
 
   return (
     <>
-      {canManage ? (
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} aria-hidden="true" />
-            Tambah Kategori
-          </Button>
-        </div>
-      ) : null}
-
       {categories.length === 0 ? (
         <EmptyState
           icon={Tags}
-          title="Belum ada kategori"
-          description="Kategori memisahkan pemasukan dan pengeluaran agar laporan dapat dibaca per pos."
+          title={
+            disaring ? "Tidak ada kategori yang cocok" : "Belum ada kategori"
+          }
+          description={
+            disaring
+              ? "Ubah kata pencarian atau saringan jenisnya."
+              : "Kategori memisahkan pemasukan dan pengeluaran agar laporan dapat dibaca per pos."
+          }
         />
       ) : (
         <TableScroll>
@@ -384,19 +469,7 @@ export function CategoryManager({
                           <Button
                             variant="ghost"
                             size="sm"
-                            disabled={isPending}
-                            onClick={() =>
-                              startTransition(async () => {
-                                const result = await setCategoryActive(
-                                  organizationId,
-                                  row.id,
-                                  !row.isActive,
-                                );
-                                if (!result.success) {
-                                  showToast(result.error, "error");
-                                }
-                              })
-                            }
+                            onClick={() => setMengarsip(row)}
                           >
                             {row.isActive ? "Nonaktifkan" : "Aktifkan"}
                           </Button>
@@ -411,11 +484,43 @@ export function CategoryManager({
         </TableScroll>
       )}
 
-      <CategoryDialog
-        key={createOpen ? "cat-create-open" : "cat-create-closed"}
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        organizationId={organizationId}
+      <ConfirmDialog
+        open={Boolean(mengarsip)}
+        onClose={() => setMengarsip(null)}
+        onConfirm={() => {
+          if (!mengarsip) return;
+          const target = mengarsip;
+
+          startTransition(async () => {
+            const result = await setCategoryActive(
+              organizationId,
+              target.id,
+              !target.isActive,
+            );
+            setMengarsip(null);
+            showToast(
+              result.success
+                ? target.isActive
+                  ? "Kategori dinonaktifkan."
+                  : "Kategori diaktifkan."
+                : result.error,
+              result.success ? "success" : "error",
+            );
+          });
+        }}
+        pending={isPending}
+        destructive={mengarsip?.isActive ?? false}
+        confirmLabel={mengarsip?.isActive ? "Nonaktifkan" : "Aktifkan"}
+        title={
+          mengarsip?.isActive
+            ? "Nonaktifkan kategori ini?"
+            : "Aktifkan kembali kategori ini?"
+        }
+        description={
+          mengarsip?.isActive
+            ? "Kategori tidak dihapus dan transaksi lamanya tetap tercatat pada kategori ini, tetapi ia tidak lagi dapat dipilih pada transaksi baru."
+            : "Kategori ini akan kembali muncul sebagai pilihan pada transaksi baru."
+        }
       />
 
       <CategoryDialog

@@ -77,6 +77,61 @@ export type TransactionPermissions = {
   canViewProofs: boolean;
 };
 
+/**
+ * Tombol "Catat Transaksi" beserta dialognya.
+ *
+ * Terpisah dari `TransactionManager` supaya aksi primernya dapat berdiri di
+ * KEPALA HALAMAN, sebaris dengan judul dan tombol ekspor — tempat yang sama
+ * dengan aksi primer sembilan halaman manajemen lain. Sebelumnya ia melayang
+ * sendiri di atas tabel, di dalam kartu, dan halaman Transaksi menjadi
+ * satu-satunya yang menaruhnya di sana.
+ *
+ * Bentuknya sengaja sama dengan `MeetingFormDialog` dan sejenisnya: satu
+ * komponen membawa pemicu sekaligus dialognya, jadi halaman cukup
+ * menempatkannya tanpa mengurus keadaan buka-tutup.
+ */
+export function TransactionCreateDialog({
+  organizationId,
+  accountOptions,
+  categoryOptions,
+  periodOptions,
+  documentOptions,
+  canViewProofs,
+}: {
+  organizationId: string;
+  accountOptions: FinanceOption[];
+  categoryOptions: FinanceOption[];
+  periodOptions: FinanceOption[];
+  documentOptions: FinanceOption[];
+  canViewProofs: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        disabled={accountOptions.length === 0}
+      >
+        <Plus size={16} aria-hidden="true" />
+        Catat Transaksi
+      </Button>
+
+      <TransactionDialog
+        key={open ? "trx-create-open" : "trx-create-closed"}
+        open={open}
+        onClose={() => setOpen(false)}
+        organizationId={organizationId}
+        accountOptions={accountOptions}
+        categoryOptions={categoryOptions}
+        periodOptions={periodOptions}
+        documentOptions={documentOptions}
+        canViewProofs={canViewProofs}
+      />
+    </>
+  );
+}
+
 export function TransactionManager({
   organizationId,
   transactions,
@@ -95,8 +150,8 @@ export function TransactionManager({
   permissions: TransactionPermissions;
 }) {
   const { showToast } = useToast();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionRow | null>(null);
+  const [posting, setPosting] = useState<TransactionRow | null>(null);
   const [voiding, setVoiding] = useState<TransactionRow | null>(null);
   const [deleting, setDeleting] = useState<TransactionRow | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -110,18 +165,6 @@ export function TransactionManager({
 
   return (
     <>
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button
-            onClick={() => setCreateOpen(true)}
-            disabled={accountOptions.length === 0}
-          >
-            <Plus size={16} aria-hidden="true" />
-            Catat Transaksi
-          </Button>
-        </div>
-      ) : null}
-
       {transactions.length === 0 ? (
         <EmptyState
           icon={Plus}
@@ -249,21 +292,7 @@ export function TransactionManager({
                             <Button
                               variant="ghost"
                               size="sm"
-                              disabled={isPending}
-                              onClick={() =>
-                                startTransition(async () => {
-                                  const result = await postTransaction(
-                                    organizationId,
-                                    row.id,
-                                  );
-                                  showToast(
-                                    result.success
-                                      ? "Transaksi diposting."
-                                      : result.error,
-                                    result.success ? "success" : "error",
-                                  );
-                                })
-                              }
+                              onClick={() => setPosting(row)}
                             >
                               <CheckCircle2 size={14} aria-hidden="true" />
                               Posting
@@ -303,18 +332,6 @@ export function TransactionManager({
       )}
 
       <TransactionDialog
-        key={createOpen ? "trx-create-open" : "trx-create-closed"}
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        organizationId={organizationId}
-        accountOptions={accountOptions}
-        categoryOptions={categoryOptions}
-        periodOptions={periodOptions}
-        documentOptions={documentOptions}
-        canViewProofs={permissions.canViewProofs}
-      />
-
-      <TransactionDialog
         key={editing?.id ?? "trx-edit-closed"}
         open={Boolean(editing)}
         onClose={() => setEditing(null)}
@@ -333,6 +350,41 @@ export function TransactionManager({
         onClose={() => setVoiding(null)}
         organizationId={organizationId}
         transaction={voiding}
+      />
+
+      {/*
+        Posting lewat konfirmasi, bukan sekali klik.
+
+        Sebelumnya tombol Posting memanggil `postTransaction` langsung dari
+        `onClick` — satu-satunya aksi keuangan tanpa langkah kedua, padahal
+        justru ia yang paling sulit ditarik kembali: setelah diposting,
+        transaksi masuk ledger, menggerakkan saldo, dan tidak dapat disunting
+        maupun dihapus lagi. Menghapus DRAF sudah meminta konfirmasi;
+        mengunci sebuah transaksi selamanya tidak.
+
+        Yang berubah hanya kapan aksinya dipanggil. Aturan immutability,
+        pemeriksaan permission, dan validasinya tetap di server.
+      */}
+      <ConfirmDialog
+        open={Boolean(posting)}
+        onClose={() => setPosting(null)}
+        onConfirm={() => {
+          if (!posting) return;
+          const target = posting;
+
+          startTransition(async () => {
+            const result = await postTransaction(organizationId, target.id);
+            setPosting(null);
+            showToast(
+              result.success ? "Transaksi diposting." : result.error,
+              result.success ? "success" : "error",
+            );
+          });
+        }}
+        pending={isPending}
+        confirmLabel="Posting"
+        title="Posting transaksi ini?"
+        description="Setelah diposting, transaksi masuk ke ledger dan mempengaruhi saldo. Transaksi yang sudah diposting tidak dapat disunting maupun dihapus — hanya dapat dibatalkan lewat pembatalan bernomor alasan."
       />
 
       <ConfirmDialog

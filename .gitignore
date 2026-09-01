@@ -55,6 +55,7 @@ AGENTS.md
 # scripts & tests — local development only
 /scripts/
 /tests/
+vitest.config.mts
 
 # AI / editor local configs
 /.claude/

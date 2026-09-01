@@ -1,37 +1,27 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import type { Route } from "next";
 
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { ForbiddenState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { exportTransactions } from "@/features/exports/actions/export-csv";
 import { ExportButton } from "@/features/exports/components/export-button";
 import {
+  TransactionCreateDialog,
   TransactionManager,
   type TransactionRow,
 } from "@/features/finance/components/transaction-panels";
 import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
-import { formatNumber } from "@/lib/format";
+import { bacaParamDaftar, polaCariOr } from "@/lib/list-params";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Transaksi Keuangan",
 };
 
-const PAGE_SIZE = 25;
-
-type Filters = {
-  jenis?: string;
-  akun?: string;
-  kategori?: string;
-  status?: string;
-  mulai?: string;
-  sampai?: string;
-  cari?: string;
-  hal?: string;
-};
+const UKURAN_HALAMAN = 25;
 
 /**
  * Daftar transaksi.
@@ -44,7 +34,7 @@ type Filters = {
 export default async function FinanceTransactionsPage({
   searchParams,
 }: {
-  searchParams: Promise<Filters>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const context = await requireAccessContext();
 
@@ -52,10 +42,23 @@ export default async function FinanceTransactionsPage({
     return <ForbiddenState />;
   }
 
-  const filters = await searchParams;
+  /*
+   * Parameter daftar dibaca pembaca bersama, sama seperti sembilan halaman
+   * manajemen lain — termasuk nama kuncinya: `search` dan `page`, bukan `cari`
+   * dan `hal`. Bukan soal selera penamaan: `TableToolbar` mengosongkan `page`
+   * setiap kali penyaringnya berubah, dan halaman yang memakai nama lain akan
+   * meninggalkan nomor halaman lama lalu memperlihatkan tabel kosong.
+   *
+   * `mulai` dan `sampai` ikut sebagai kunci saring biasa; keduanya tanggal,
+   * dan `bacaParamDaftar` hanya membersihkan nilainya tanpa menafsirkan.
+   */
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["jenis", "akun", "kategori", "status", "mulai", "sampai"],
+  });
+  const saring = daftar.saring;
+
   const canViewProofs = can(context, PERMISSIONS.finance.viewProofs);
-  const page = Math.max(1, Number(filters.hal ?? "1") || 1);
-  const from = (page - 1) * PAGE_SIZE;
 
   const supabase = await createClient();
 
@@ -73,16 +76,19 @@ export default async function FinanceTransactionsPage({
     )
     .eq("organization_id", context.organizationId);
 
-  if (filters.jenis) query = query.eq("transaction_type", filters.jenis);
-  if (filters.akun) query = query.eq("account_id", filters.akun);
-  if (filters.kategori) query = query.eq("category_id", filters.kategori);
-  if (filters.status) query = query.eq("status", filters.status);
-  if (filters.mulai) query = query.gte("transaction_date", filters.mulai);
-  if (filters.sampai) query = query.lte("transaction_date", filters.sampai);
-  if (filters.cari) {
-    const escaped = filters.cari.replace(/[%_,()\\]/g, (m) => `\\${m}`);
+  if (saring.jenis) query = query.eq("transaction_type", saring.jenis);
+  if (saring.akun) query = query.eq("account_id", saring.akun);
+  if (saring.kategori) query = query.eq("category_id", saring.kategori);
+  if (saring.status) query = query.eq("status", saring.status);
+  if (saring.mulai) query = query.gte("transaction_date", saring.mulai);
+  if (saring.sampai) query = query.lte("transaction_date", saring.sampai);
+  if (daftar.cari) {
+    // `polaCariOr`, bukan escaping tersendiri: koma dan kurung diurai
+    // PostgREST sebelum SQL melihatnya, jadi keduanya harus DIBUANG dan bukan
+    // di-escape. Aturan itu tinggal di satu tempat sekarang.
+    const pola = polaCariOr(daftar.cari);
     query = query.or(
-      `description.ilike.%${escaped}%,reference_number.ilike.%${escaped}%`,
+      `description.ilike.%${pola}%,reference_number.ilike.%${pola}%`,
     );
   }
 
@@ -98,7 +104,7 @@ export default async function FinanceTransactionsPage({
       // pencatatan sebagai pemecah seri.
       .order("transaction_date", { ascending: false })
       .order("created_at", { ascending: false })
-      .range(from, from + PAGE_SIZE - 1),
+      .range(daftar.dari, daftar.sampai),
 
     supabase
       .from("financial_accounts")
@@ -172,7 +178,6 @@ export default async function FinanceTransactionsPage({
   }));
 
   const total = listResult.count ?? 0;
-  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const accounts =
     (accountsResult.data as
@@ -182,14 +187,22 @@ export default async function FinanceTransactionsPage({
       | { id: string; name: string; type: string; is_active: boolean }[]
       | null) ?? [];
 
-  function pageHref(target: number) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(filters)) {
-      if (value && key !== "hal") params.set(key, value);
-    }
-    params.set("hal", String(target));
-    return `/keuangan/transaksi?${params.toString()}` as Route;
-  }
+  const opsiAkun = accounts
+    .filter((account) => account.is_active)
+    .map((account) => ({ id: account.id, label: account.name }));
+  const opsiKategori = categories
+    .filter((category) => category.is_active)
+    .map((category) => ({
+      id: category.id,
+      label: category.name,
+      type: category.type,
+    }));
+  const opsiPeriode = (
+    (periodsResult.data as { id: string; name: string }[] | null) ?? []
+  ).map((period) => ({ id: period.id, label: period.name }));
+  const opsiDokumen = (
+    (documentsResult.data as { id: string; title: string }[] | null) ?? []
+  ).map((document) => ({ id: document.id, label: document.title }));
 
   return (
     <div className="space-y-5">
@@ -197,154 +210,123 @@ export default async function FinanceTransactionsPage({
         title="Transaksi Keuangan"
         description="Draf belum mempengaruhi saldo. Transaksi yang sudah diposting tidak dapat disunting maupun dihapus."
         actions={
-          can(context, PERMISSIONS.finance.export) ? (
-            <ExportButton
-              action={exportTransactions.bind(null, context.organizationId, {
-                type: filters.jenis,
-                accountId: filters.akun,
-                categoryId: filters.kategori,
-                status: filters.status,
-                start: filters.mulai,
-                end: filters.sampai,
-                search: filters.cari,
-              })}
-            />
-          ) : null
+          <div className="flex flex-wrap items-center gap-2">
+            {can(context, PERMISSIONS.finance.export) ? (
+              <ExportButton
+                action={exportTransactions.bind(null, context.organizationId, {
+                  type: saring.jenis || undefined,
+                  accountId: saring.akun || undefined,
+                  categoryId: saring.kategori || undefined,
+                  status: saring.status || undefined,
+                  start: saring.mulai || undefined,
+                  end: saring.sampai || undefined,
+                  search: daftar.cari || undefined,
+                })}
+              />
+            ) : null}
+
+            {can(context, PERMISSIONS.finance.create) ? (
+              <TransactionCreateDialog
+                organizationId={context.organizationId}
+                accountOptions={opsiAkun}
+                categoryOptions={opsiKategori}
+                periodOptions={opsiPeriode}
+                documentOptions={opsiDokumen}
+                canViewProofs={canViewProofs}
+              />
+            ) : null}
+          </div>
         }
       />
 
-      <form className="flex flex-wrap items-end gap-2.5">
-        <input
-          type="search"
-          name="cari"
-          placeholder="Cari keterangan / referensi"
-          defaultValue={filters.cari ?? ""}
-          aria-label="Cari transaksi"
-          className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-56"
+      {/*
+        Satu kartu: toolbar, tabel, kaki halaman. Sebelumnya ketiganya tiga
+        blok terpisah — form penyaring telanjang, tabel, lalu kartu pagination
+        tersendiri — dan halaman Transaksi menjadi satu-satunya halaman daftar
+        yang tidak terbaca sebagai satu benda.
+      */}
+      <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari keterangan atau nomor referensi…"
+          searchLabel="Cari transaksi"
+          filters={[
+            {
+              key: "jenis",
+              size: "xs",
+              label: "Saring menurut jenis",
+              value: saring.jenis,
+              allLabel: "Semua jenis",
+              options: [
+                { value: "INCOME", label: "Pemasukan" },
+                { value: "EXPENSE", label: "Pengeluaran" },
+              ],
+            },
+            {
+              key: "status",
+              size: "xs",
+              label: "Saring menurut status",
+              value: saring.status,
+              allLabel: "Semua status",
+              options: [
+                { value: "DRAFT", label: "Draf" },
+                { value: "POSTED", label: "Diposting" },
+                { value: "VOID", label: "Dibatalkan" },
+              ],
+            },
+            {
+              key: "akun",
+              size: "sm",
+              label: "Saring menurut akun",
+              value: saring.akun,
+              allLabel: "Semua akun",
+              options: accounts.map((account) => ({
+                value: account.id,
+                label: account.name,
+              })),
+            },
+            {
+              key: "kategori",
+              size: "sm",
+              label: "Saring menurut kategori",
+              value: saring.kategori,
+              allLabel: "Semua kategori",
+              options: categories.map((category) => ({
+                value: category.id,
+                label: category.name,
+              })),
+            },
+          ]}
+          dateFilters={[
+            { key: "mulai", label: "Tanggal mulai", value: saring.mulai },
+            { key: "sampai", label: "Tanggal sampai", value: saring.sampai },
+          ]}
         />
 
-        <select
-          name="jenis"
-          defaultValue={filters.jenis ?? ""}
-          aria-label="Filter jenis"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">Semua jenis</option>
-          <option value="INCOME">Pemasukan</option>
-          <option value="EXPENSE">Pengeluaran</option>
-        </select>
-
-        <select
-          name="status"
-          defaultValue={filters.status ?? ""}
-          aria-label="Filter status"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">Semua status</option>
-          <option value="DRAFT">Draf</option>
-          <option value="POSTED">Diposting</option>
-          <option value="VOID">Dibatalkan</option>
-        </select>
-
-        <select
-          name="akun"
-          defaultValue={filters.akun ?? ""}
-          aria-label="Filter akun"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">Semua akun</option>
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.name}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="date"
-          name="mulai"
-          defaultValue={filters.mulai ?? ""}
-          aria-label="Tanggal mulai"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <input
-          type="date"
-          name="sampai"
-          defaultValue={filters.sampai ?? ""}
-          aria-label="Tanggal sampai"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        <TransactionManager
+          organizationId={context.organizationId}
+          transactions={transactions}
+          accountOptions={opsiAkun}
+          categoryOptions={opsiKategori}
+          periodOptions={opsiPeriode}
+          documentOptions={opsiDokumen}
+          permissions={{
+            canCreate: can(context, PERMISSIONS.finance.create),
+            canEdit: can(context, PERMISSIONS.finance.edit),
+            canPost: can(context, PERMISSIONS.finance.post),
+            canVoid: can(context, PERMISSIONS.finance.void),
+            canDelete: can(context, PERMISSIONS.finance.delete),
+            canViewProofs,
+          }}
         />
 
-        <button
-          type="submit"
-          className="h-10 rounded-md border border-border px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          Terapkan
-        </button>
-      </form>
-
-      <TransactionManager
-        organizationId={context.organizationId}
-        transactions={transactions}
-        accountOptions={accounts
-          .filter((account) => account.is_active)
-          .map((account) => ({ id: account.id, label: account.name }))}
-        categoryOptions={categories
-          .filter((category) => category.is_active)
-          .map((category) => ({
-            id: category.id,
-            label: category.name,
-            type: category.type,
-          }))}
-        periodOptions={(
-          (periodsResult.data as { id: string; name: string }[] | null) ?? []
-        ).map((period) => ({ id: period.id, label: period.name }))}
-        documentOptions={(
-          (documentsResult.data as { id: string; title: string }[] | null) ?? []
-        ).map((document) => ({ id: document.id, label: document.title }))}
-        permissions={{
-          canCreate: can(context, PERMISSIONS.finance.create),
-          canEdit: can(context, PERMISSIONS.finance.edit),
-          canPost: can(context, PERMISSIONS.finance.post),
-          canVoid: can(context, PERMISSIONS.finance.void),
-          canDelete: can(context, PERMISSIONS.finance.delete),
-          canViewProofs,
-        }}
-      />
-
-      {total > PAGE_SIZE ? (
-        <Card className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <p className="text-[13px] text-muted-foreground">
-            Menampilkan {formatNumber(from + 1)}–
-            {formatNumber(Math.min(from + PAGE_SIZE, total))} dari{" "}
-            {formatNumber(total)} transaksi
-          </p>
-
-          <div className="flex items-center gap-2">
-            {page > 1 ? (
-              <Link
-                href={pageHref(page - 1)}
-                className="h-9 rounded-md border border-border px-3 text-[13px] leading-9 font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                Sebelumnya
-              </Link>
-            ) : null}
-
-            <span className="text-[13px] text-muted-foreground">
-              {page} / {lastPage}
-            </span>
-
-            {page < lastPage ? (
-              <Link
-                href={pageHref(page + 1)}
-                className="h-9 rounded-md border border-border px-3 text-[13px] leading-9 font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                Berikutnya
-              </Link>
-            ) : null}
-          </div>
-        </Card>
-      ) : null}
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(1, Math.ceil(total / UKURAN_HALAMAN))}
+          total={total}
+          pageSize={UKURAN_HALAMAN}
+        />
+      </Card>
     </div>
   );
 }

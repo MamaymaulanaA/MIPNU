@@ -71,18 +71,40 @@ export type TableFilter = {
   size?: FilterSize;
 };
 
+/**
+ * Penyaring rentang tanggal.
+ *
+ * Terpisah dari `TableFilter` karena bentuknya memang lain: ia dua kotak
+ * tanggal, bukan satu daftar pilihan, dan tidak punya opsi "semua" — kosong
+ * berarti tak dibatasi.
+ *
+ * Ada di sini, bukan sebagai form tersendiri di halaman yang membutuhkannya,
+ * supaya ia ikut aturan yang sama: menulis ke URL, mengosongkan `page`, dan
+ * ikut terhapus oleh tombol Reset. Halaman Transaksi sempat menuliskannya
+ * sendiri lengkap dengan tombol "Terapkan" — satu-satunya penyaring di seluruh
+ * aplikasi yang menuntut klik kedua sebelum bekerja.
+ */
+export type TableDateFilter = {
+  key: string;
+  /** Untuk pembaca layar — labelnya tidak tampil. */
+  label: string;
+  value: string;
+};
+
 export function TableToolbar({
   searchKey = "search",
   searchValue,
   searchPlaceholder,
   searchLabel,
   filters = [],
+  dateFilters = [],
 }: {
   searchKey?: string;
   searchValue: string;
   searchPlaceholder: string;
   searchLabel: string;
   filters?: TableFilter[];
+  dateFilters?: TableDateFilter[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -139,7 +161,9 @@ export function TableToolbar({
   }
 
   const adaFilter =
-    search !== "" || filters.some((filter) => filter.value !== "");
+    search !== "" ||
+    filters.some((filter) => filter.value !== "") ||
+    dateFilters.some((filter) => filter.value !== "");
 
   return (
     <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:p-5">
@@ -161,7 +185,7 @@ export function TableToolbar({
         />
       </div>
 
-      {filters.length > 0 || adaFilter ? (
+      {filters.length > 0 || dateFilters.length > 0 || adaFilter ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {filters.map((filter) => (
             <Select
@@ -182,6 +206,19 @@ export function TableToolbar({
             </Select>
           ))}
 
+          {dateFilters.map((filter) => (
+            <Input
+              key={filter.key}
+              type="date"
+              value={filter.value}
+              aria-label={filter.label}
+              onChange={(event) =>
+                updateParams({ [filter.key]: event.target.value, page: null })
+              }
+              className="w-full sm:w-40"
+            />
+          ))}
+
           {adaFilter ? (
             <Button
               variant="ghost"
@@ -193,7 +230,10 @@ export function TableToolbar({
                   [searchKey]: null,
                   page: null,
                   ...Object.fromEntries(
-                    filters.map((filter) => [filter.key, null]),
+                    [...filters, ...dateFilters].map((filter) => [
+                      filter.key,
+                      null,
+                    ]),
                   ),
                 });
               }}
