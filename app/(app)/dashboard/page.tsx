@@ -168,8 +168,11 @@ export default async function DashboardPage() {
               }
               action={
                 can(context, PERMISSIONS.organization.create) ? (
+                  /* Menuju daftarnya, tempat dialog pembuatan berada.
+                     Halaman `/admin/organisasi/baru` sudah tidak ada sejak
+                     pembuatan pindah ke dialog. */
                   <Button size="sm" asChild>
-                    <Link href="/admin/organisasi/baru">Buat Organisasi</Link>
+                    <Link href="/admin/organisasi">Buat Organisasi</Link>
                   </Button>
                 ) : undefined
               }

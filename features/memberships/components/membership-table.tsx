@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { KeyRound, Link2, UserCog } from "lucide-react";
+import { KeyRound, Link2, ShieldCheck, UserCog } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/states";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +60,7 @@ export function MembershipTable({
 }) {
   const { showToast } = useToast();
   const [linking, setLinking] = useState<MembershipRow | null>(null);
+  const [changingRole, setChangingRole] = useState<MembershipRow | null>(null);
   const [ending, setEnding] = useState<MembershipRow | null>(null);
   const [invite, setInvite] = useState<{ name: string; link: string } | null>(
     null,
@@ -167,39 +168,26 @@ export function MembershipTable({
                     ) : null}
                   </TableCell>
 
+                  {/*
+                    Role SELALU tampil sebagai lencana, baik dapat diubah
+                    maupun tidak.
+
+                    Sebelumnya baris yang dapat disunting menampilkan `Select`
+                    selebar `min-w-40` — 160px tetap, berapa pun panjang
+                    rolenya. Akibatnya "Anggota" duduk di dalam kotak yang
+                    lebarnya lebih dari dua kali teksnya, dan satu kolom tabel
+                    terbaca sebagai deretan form field alih-alih deretan status
+                    (docs/UI.md §20-§21).
+
+                    Perubahannya sendiri pindah ke dialog lewat tombol di kolom
+                    Aksi. Bukan sekadar demi kerapian: menetapkan role adalah
+                    perubahan wewenang, dan sebuah `select` yang menyimpan
+                    seketika saat nilainya bergeser memberi nol kesempatan
+                    membatalkan — salah pilih satu baris langsung menjadi
+                    mutasi.
+                  */}
                   <TableCell>
-                    {editable ? (
-                      <Select
-                        aria-label={`Role ${membership.displayName}`}
-                        value={membership.roleId}
-                        disabled={isPending}
-                        className="h-8 w-auto min-w-40 text-[13px]"
-                        onChange={(event) => {
-                          const roleId = event.target.value;
-                          startTransition(async () => {
-                            const result = await changeMembershipRole(
-                              organizationId,
-                              membership.id,
-                              roleId,
-                            );
-                            showToast(
-                              result.success
-                                ? "Role diperbarui."
-                                : result.error,
-                              result.success ? "success" : "error",
-                            );
-                          });
-                        }}
-                      >
-                        {roleOptions.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.name}
-                          </option>
-                        ))}
-                      </Select>
-                    ) : (
-                      <Badge tone={role.tone}>{role.label}</Badge>
-                    )}
+                    <Badge tone={role.tone}>{role.label}</Badge>
                   </TableCell>
 
                   <TableCell className="hidden text-muted-foreground md:table-cell">
@@ -215,6 +203,15 @@ export function MembershipTable({
                       <div className="flex flex-wrap items-center justify-end gap-1.5">
                         {editable ? (
                           <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setChangingRole(membership)}
+                            >
+                              <ShieldCheck size={14} aria-hidden="true" />
+                              Role
+                            </Button>
+
                             <Button
                               variant="ghost"
                               size="sm"
@@ -257,6 +254,15 @@ export function MembershipTable({
         </Table>
       </TableScroll>
 
+      <ChangeRoleDialog
+        key={changingRole?.id ?? "role-tertutup"}
+        open={Boolean(changingRole)}
+        onClose={() => setChangingRole(null)}
+        organizationId={organizationId}
+        membership={changingRole}
+        roleOptions={roleOptions}
+      />
+
       <LinkMemberDialog
         key={linking?.id ?? "link-closed"}
         open={Boolean(linking)}
@@ -287,6 +293,90 @@ export function MembershipTable({
         description="Akun tidak lagi dapat membuka data organisasi ini. Catatan keanggotaannya tetap tersimpan sebagai riwayat, tidak dihapus."
       />
     </>
+  );
+}
+
+/**
+ * Perubahan role satu akun.
+ *
+ * Memakai `changeMembershipRole` yang sudah ada — dialog ini hanya memindahkan
+ * tempat pemicunya, bukan aturannya. Server action tetap memeriksa permission
+ * dan organisasi sebelum menyentuh basis data, dan trigger database tetap
+ * menolak pemberian role ber-scope GLOBAL dari sini.
+ */
+function ChangeRoleDialog({
+  open,
+  onClose,
+  organizationId,
+  membership,
+  roleOptions,
+}: {
+  open: boolean;
+  onClose: () => void;
+  organizationId: string;
+  membership: MembershipRow | null;
+  roleOptions: RoleOption[];
+}) {
+  const { showToast } = useToast();
+  const [roleId, setRoleId] = useState(membership?.roleId ?? "");
+  const [isPending, startTransition] = useTransition();
+
+  function submit() {
+    if (!membership) return;
+
+    startTransition(async () => {
+      const result = await changeMembershipRole(
+        organizationId,
+        membership.id,
+        roleId,
+      );
+      if (result.success) {
+        showToast("Role diperbarui.");
+        onClose();
+      } else {
+        showToast(result.error, "error");
+      }
+    });
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Ubah Role Akun"
+      description={
+        membership
+          ? `Menentukan wewenang ${membership.displayName} di organisasi ini.`
+          : undefined
+      }
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose} disabled={isPending}>
+            Batal
+          </Button>
+          <Button
+            onClick={submit}
+            disabled={isPending || roleId === membership?.roleId}
+          >
+            {isPending ? "Menyimpan…" : "Simpan"}
+          </Button>
+        </>
+      }
+    >
+      <Field label="Role" htmlFor="membership-role">
+        <Select
+          id="membership-role"
+          value={roleId}
+          onChange={(event) => setRoleId(event.target.value)}
+        >
+          {roleOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+            </option>
+          ))}
+        </Select>
+      </Field>
+    </Dialog>
   );
 }
 

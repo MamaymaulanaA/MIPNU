@@ -5,16 +5,16 @@ import { Field, Input, Textarea } from "@/components/ui/field";
 /**
  * Field profil organisasi yang dapat disunting.
  *
- * Dipakai bersama oleh dua form yang berbeda tempat: pembuatan organisasi di
- * `/admin/organisasi/baru`, dan penyuntingan profil lewat dialog di
- * `/organisasi`. Keduanya menyunting kolom yang sama persis, dan sebelum
- * berkas ini ada keduanya menuliskan sepuluh field itu sendiri-sendiri.
+ * Dipakai bersama oleh TIGA dialog: pembuatan dan penyuntingan organisasi pada
+ * daftar platform `/admin/organisasi`, serta penyuntingan profil organisasi
+ * aktif di `/organisasi`. Ketiganya menyunting kolom yang sama persis, dan
+ * sebelum berkas ini ada masing-masing menuliskan sepuluh field itu sendiri.
  *
  * Yang TIDAK ada di sini: slug, jenis, tingkat, dan induk. Keempatnya hanya
  * dapat ditentukan saat pembuatan — lihat `updateOrganizationSchema`, yang
- * memang tidak menerimanya. Form pembuatan menyisipkannya lewat
- * `identitySlot`, tepat setelah nama singkat, sehingga urutan tampilannya
- * tidak berubah.
+ * memang tidak menerimanya. Dialog pembuatan menyisipkannya lewat
+ * `identitySlot`, tepat setelah nama singkat, sehingga kedua dialog membaca
+ * dengan urutan yang sama.
  *
  * Komponen ini sengaja tidak memegang `<form>`, action, maupun state: ia hanya
  * menggambar field. Pemanggilnya yang menentukan ke mana datanya dikirim, dan

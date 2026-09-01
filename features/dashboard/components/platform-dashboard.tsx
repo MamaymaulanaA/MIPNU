@@ -16,6 +16,8 @@ import {
   Vote,
 } from "lucide-react";
 
+import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
 import type { Aksen } from "@/features/dashboard/components/accent";
 import {
   CountBadge,
@@ -231,25 +233,26 @@ export function PlatformDashboard({
 
   return (
     <div className="space-y-4">
-      {/* ----------------------------------------------------- sapaan */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-[21px] leading-tight font-semibold tracking-tight text-foreground">
-            Selamat datang, {displayName}
-          </h1>
-          <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-            Pantau kondisi dan aktivitas platform MIPNU dari satu dashboard.
-          </p>
-        </div>
-
-        <Link
-          href="/admin/organisasi"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-[12.5px] font-semibold text-primary-foreground shadow-raised transition-colors hover:bg-primary-hover"
-        >
-          <ShieldCheck size={15} aria-hidden="true" />
-          Kelola organisasi
-        </Link>
-      </header>
+      {/*
+        Kepala halaman memakai `PageHeader` yang sama dengan seluruh aplikasi.
+        Sebelumnya dashboard menuliskan kepalanya sendiri — h1 21px, keterangan
+        12,5px, dan sebuah `<Link>` yang DIGAMBAR seperti tombol lewat kelas
+        inline. Akibatnya dashboard menjadi satu-satunya halaman dengan ukuran
+        judul tersendiri, dan "tombol"-nya tidak ikut aturan tinggi kontrol
+        mana pun karena ia memang bukan `Button` (AGENTS.md §37, §54).
+      */}
+      <PageHeader
+        title={`Selamat datang, ${displayName}`}
+        description="Pantau kondisi dan aktivitas platform MIPNU dari satu dashboard."
+        actions={
+          <Button asChild>
+            <Link href="/admin/organisasi">
+              <ShieldCheck size={16} aria-hidden="true" />
+              Kelola organisasi
+            </Link>
+          </Button>
+        }
+      />
 
       {/* ------------------------------------------------ kartu metrik */}
       {/* `auto-rows-fr`: keterangan kartu boleh turun ke baris kedua, dan

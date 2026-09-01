@@ -1,27 +1,21 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useState } from "react";
 import { Pencil } from "lucide-react";
 
-import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
+import { FormDialog } from "@/components/forms/form-dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/toast";
 import {
   OrganizationFields,
   type OrganizationFieldValues,
 } from "@/features/organizations/components/organization-fields";
 import { updateOrganization } from "@/features/organizations/actions/manage-organization";
-import type { ActionResult } from "@/lib/errors";
 
 /**
- * Penyuntingan profil organisasi, di dalam dialog.
+ * Penyuntingan profil organisasi yang sedang aktif, di dalam dialog.
  *
  * Sebelumnya ini halaman tersendiri di `/organisasi/edit`. Dipindah ke dialog
- * agar sama dengan seluruh CRUD MIPNU lainnya — agenda, event, periode,
- * jabatan, program, rapat, dan sisanya semua menyunting di tempat. Profil
- * organisasi adalah satu-satunya yang masih memindahkan pengguna ke halaman
- * lain untuk mengubah sepuluh field, lalu memulangkannya.
+ * agar sama dengan seluruh CRUD MIPNU lainnya.
  *
  * TIDAK ADA MODEL OTORISASI BARU DI SINI. Tombolnya hanya dirender ketika
  * pemanggil memegang `organization.edit` — tetapi itu urusan tampilan, bukan
@@ -56,63 +50,20 @@ export function OrganizationProfileDialog({
         dibuka kembali lengkap dengan pesan error lamanya, dan field yang
         sempat diketik lalu dibatalkan tetap membawa nilai yang batal itu.
       */}
-      <EditDialog
+      <FormDialog
         key={open ? "terbuka" : "tertutup"}
         open={open}
         onClose={() => setOpen(false)}
-        organizationId={organizationId}
-        values={values}
-      />
+        title="Ubah Profil Organisasi"
+        description="Jenis, tingkat, dan slug tidak dapat diubah karena menentukan identitas organisasi."
+        action={updateOrganization.bind(null, organizationId)}
+        submitLabel="Simpan Perubahan"
+        successMessage="Perubahan profil organisasi tersimpan."
+      >
+        {(fieldErrors) => (
+          <OrganizationFields values={values} fieldErrors={fieldErrors} />
+        )}
+      </FormDialog>
     </>
-  );
-}
-
-function EditDialog({
-  open,
-  onClose,
-  organizationId,
-  values,
-}: {
-  open: boolean;
-  onClose: () => void;
-  organizationId: string;
-  values: OrganizationFieldValues;
-}) {
-  const { showToast } = useToast();
-
-  const [state, formAction] = useActionState<
-    ActionResult<void> | null,
-    FormData
-  >(updateOrganization.bind(null, organizationId), null);
-
-  useEffect(() => {
-    if (!state?.success) return;
-    showToast("Perubahan profil organisasi tersimpan.");
-    onClose();
-  }, [state, onClose, showToast]);
-
-  const failed = state && !state.success ? state : null;
-  const fieldErrors = failed?.fieldErrors;
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title="Ubah Profil Organisasi"
-      description="Jenis, tingkat, dan slug tidak dapat diubah karena menentukan identitas organisasi."
-    >
-      <form action={formAction} className="space-y-4">
-        <FormAlert message={fieldErrors ? undefined : failed?.error} />
-
-        <OrganizationFields values={values} fieldErrors={fieldErrors} />
-
-        <div className="flex justify-end gap-2 pt-1">
-          <Button variant="outline" onClick={onClose}>
-            Batal
-          </Button>
-          <SubmitButton>Simpan Perubahan</SubmitButton>
-        </div>
-      </form>
-    </Dialog>
   );
 }

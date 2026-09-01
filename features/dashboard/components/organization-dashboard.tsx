@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { PageHeader } from "@/components/layout/page-header";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import type { Aksen } from "@/features/dashboard/components/accent";
 import { ActivityChart } from "@/features/dashboard/components/activity-chart";
@@ -1070,25 +1071,24 @@ export function OrganizationDashboard({
     });
   }
 
+  /*
+    Kepala halaman memakai `PageHeader` yang sama dengan seluruh aplikasi.
+    Sebelumnya dashboard menuliskan kepalanya sendiri dengan h1 21px dan
+    keterangan 12,5px, sehingga ia menjadi satu-satunya halaman dengan ukuran
+    judul tersendiri (AGENTS.md §54).
+  */
   const sapaan = (
-    <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <h1 className="text-[21px] leading-tight font-semibold tracking-tight text-foreground">
-          Selamat datang, {displayName}
-        </h1>
-        <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">
-          {period
-            ? `Periode aktif ${formatPeriodRange(period.start_date, period.end_date)} · ${period.name}`
-            : "Belum ada periode kepengurusan yang aktif."}
-        </p>
-      </div>
-
-      {remaining ? (
-        <Badge tone="info" className="shrink-0 self-start sm:self-auto">
-          {remaining.text}
-        </Badge>
-      ) : null}
-    </header>
+    <PageHeader
+      title={`Selamat datang, ${displayName}`}
+      description={
+        period
+          ? `Periode aktif ${formatPeriodRange(period.start_date, period.end_date)} · ${period.name}`
+          : "Belum ada periode kepengurusan yang aktif."
+      }
+      actions={
+        remaining ? <Badge tone="info">{remaining.text}</Badge> : undefined
+      }
+    />
   );
 
   const kisiMetrik =

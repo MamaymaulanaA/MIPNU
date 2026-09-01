@@ -148,7 +148,11 @@ export async function updateOrganization(
       resourceId: context.organizationId,
     });
 
+    // Profil organisasi aktif, DAN daftar platform: sejak penyuntingan dapat
+    // dilakukan dari kedua tempat, keduanya harus ikut disegarkan. Layout ikut
+    // karena nama singkat organisasi tampil di sidebar dan pemilih organisasi.
     revalidatePath("/organisasi");
+    revalidatePath("/admin/organisasi");
     revalidatePath("/", "layout");
 
     return ok();
