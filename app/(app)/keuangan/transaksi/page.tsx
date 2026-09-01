@@ -318,6 +318,10 @@ export default async function FinanceTransactionsPage({
             canDelete: can(context, PERMISSIONS.finance.delete),
             canViewProofs,
           }}
+          disaring={
+            daftar.cari !== "" ||
+            Object.values(saring).some((nilai) => nilai !== "")
+          }
         />
 
         <Pagination

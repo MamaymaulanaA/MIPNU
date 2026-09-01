@@ -140,6 +140,7 @@ export function TransactionManager({
   periodOptions,
   documentOptions,
   permissions,
+  disaring = false,
 }: {
   organizationId: string;
   transactions: TransactionRow[];
@@ -148,6 +149,8 @@ export function TransactionManager({
   periodOptions: FinanceOption[];
   documentOptions: FinanceOption[];
   permissions: TransactionPermissions;
+  /** Ada pencarian atau penyaring aktif — mengubah kalimat kosongnya. */
+  disaring?: boolean;
 }) {
   const { showToast } = useToast();
   const [editing, setEditing] = useState<TransactionRow | null>(null);
@@ -168,8 +171,14 @@ export function TransactionManager({
       {transactions.length === 0 ? (
         <EmptyState
           icon={Plus}
-          title="Belum ada transaksi"
-          description="Transaksi baru tersimpan sebagai draf, dan baru mempengaruhi saldo setelah diposting."
+          title={
+            disaring ? "Tidak ada transaksi yang cocok" : "Belum ada transaksi"
+          }
+          description={
+            disaring
+              ? "Ubah kata pencarian, penyaring, atau rentang tanggalnya."
+              : "Transaksi baru tersimpan sebagai draf, dan baru mempengaruhi saldo setelah diposting."
+          }
         />
       ) : (
         <TableScroll>

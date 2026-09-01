@@ -15,6 +15,16 @@ import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { AGENDA_TYPES } from "@/features/agenda/schemas/agenda.schema";
 import { bacaParamDaftar, polaCari } from "@/lib/list-params";
+
+/**
+ * Ukuran halaman, sama untuk kedua bagian.
+ *
+ * Sepuluh, bukan lima puluh: bagian "Mendatang" dibaca untuk direncanakan —
+ * yang berguna adalah beberapa agenda terdekat, bukan seluruh kuartal — dan
+ * dua bagian setinggi lima puluh baris membuat halamannya lebih panjang
+ * daripada yang pernah dibaca siapa pun sekaligus.
+ */
+const UKURAN_HALAMAN = 10;
 import { agendaType } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
 
@@ -128,10 +138,29 @@ export default async function AgendaPage({
     );
   }
 
+  /*
+   * Dua daftar, dua nomor halaman.
+   *
+   * `bacaParamDaftar` membaca `page` untuk bagian "Mendatang"; bagian "Sudah
+   * Berlalu" memakai `pageLampau` dan dibaca terpisah. Sebelumnya berkas ini
+   * memanggil `bacaParamDaftar` dengan `ukuranHalaman: 1` sebagai penampal
+   * lalu membuang hasilnya, dan kedua query dipotong `.limit(50)` dan
+   * `.limit(20)` tanpa `count` — agenda ke-51 tidak dapat dijangkau dari URL
+   * mana pun.
+   */
   const daftar = bacaParamDaftar(params, {
-    ukuranHalaman: 1,
+    ukuranHalaman: UKURAN_HALAMAN,
     kunciSaring: ["jenis"],
   });
+
+  const halamanLampau = Math.max(
+    1,
+    Math.floor(
+      Number(typeof params.pageLampau === "string" ? params.pageLampau : "") ||
+        1,
+    ),
+  );
+  const dariLampau = (halamanLampau - 1) * UKURAN_HALAMAN;
 
   const nowIso = new Date().toISOString();
 
@@ -143,14 +172,14 @@ export default async function AgendaPage({
   // menghapus perbedaan yang justru berguna.
   let mendatangQuery = supabase
     .from("agenda_items")
-    .select(AGENDA_COLUMNS)
+    .select(AGENDA_COLUMNS, { count: "exact" })
     .eq("organization_id", context.organizationId)
     .is("deleted_at", null)
     .gte("start_at", nowIso);
 
   let lampauQuery = supabase
     .from("agenda_items")
-    .select(AGENDA_COLUMNS)
+    .select(AGENDA_COLUMNS, { count: "exact" })
     .eq("organization_id", context.organizationId)
     .is("deleted_at", null)
     .lt("start_at", nowIso);
@@ -167,8 +196,14 @@ export default async function AgendaPage({
   }
 
   const [upcoming, past] = await Promise.all([
-    mendatangQuery.order("start_at", { ascending: true }).limit(50),
-    lampauQuery.order("start_at", { ascending: false }).limit(20),
+    mendatangQuery
+      .order("start_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(daftar.dari, daftar.sampai),
+    lampauQuery
+      .order("start_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(dariLampau, dariLampau + UKURAN_HALAMAN - 1),
   ]);
 
   return (
@@ -189,6 +224,9 @@ export default async function AgendaPage({
           value: jenis,
           label: agendaType(jenis).label,
         })),
+        ukuranHalaman: UKURAN_HALAMAN,
+        mendatang: { halaman: daftar.halaman, total: upcoming.count ?? 0 },
+        lampau: { halaman: halamanLampau, total: past.count ?? 0 },
       }}
     />
   );

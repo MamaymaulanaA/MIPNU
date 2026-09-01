@@ -17,11 +17,28 @@ export function Pagination({
   pageCount,
   total,
   pageSize,
+  pageKey = "page",
+  label = "data",
 }: {
   page: number;
   pageCount: number;
   total: number;
   pageSize: number;
+  /**
+   * Nama parameter halaman di URL.
+   *
+   * Bawaannya `page`, dan hampir seluruh halaman memakainya. Yang perlu
+   * menggantinya adalah halaman berisi LEBIH DARI SATU daftar — dua daftar
+   * yang berbagi satu nomor halaman akan berpindah halaman bersama-sama,
+   * padahal panjangnya berbeda.
+   *
+   * Halaman seperti itu wajib menyebut kunci tambahannya pada `resetKeys`
+   * milik `TableToolbar`, supaya menyaring salah satu daftar tidak
+   * meninggalkan nomor halaman daftar lain pada nilai lamanya.
+   */
+  pageKey?: string;
+  /** Kata benda pada "… dari N ____". */
+  label?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,9 +51,9 @@ export function Pagination({
   function goToPage(nextPage: number) {
     const params = new URLSearchParams(searchParams.toString());
     if (nextPage <= 1) {
-      params.delete("page");
+      params.delete(pageKey);
     } else {
-      params.set("page", String(nextPage));
+      params.set(pageKey, String(nextPage));
     }
     const query = params.toString();
     router.push(query ? `?${query}` : "?");
@@ -46,7 +63,7 @@ export function Pagination({
     <div className="flex flex-col gap-3 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
       <p className="text-[13px] text-muted-foreground">
         Menampilkan {formatNumber(first)}–{formatNumber(last)} dari{" "}
-        {formatNumber(total)} data
+        {formatNumber(total)} {label}
       </p>
 
       <div className="flex items-center gap-2">

@@ -6,6 +6,7 @@ import { CalendarDays, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { EmptyState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
 import { TableToolbar } from "@/components/data-table/toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,11 @@ export type KeadaanDaftar = {
   cari: string;
   jenis: string;
   jenisOptions: { value: string; label: string }[];
+  /** Ukuran halaman yang sama untuk kedua bagian. */
+  ukuranHalaman: number;
+  /** Nomor halaman dan jumlah baris per bagian, keduanya dari server. */
+  mendatang: { halaman: number; total: number };
+  lampau: { halaman: number; total: number };
 };
 
 export function AgendaManager({
@@ -159,6 +165,10 @@ export function AgendaManager({
               options: daftar.jenisOptions,
             },
           ]}
+          // Dua daftar berarti dua nomor halaman. Tanpa ini, menyaring akan
+          // meninggalkan `pageLampau` pada nilai lamanya dan bagian "Sudah
+          // Berlalu" tampil kosong padahal hasilnya ada di halaman pertama.
+          resetKeys={["pageLampau"]}
         />
 
         {/*
@@ -195,9 +205,28 @@ export function AgendaManager({
               ))}
             </ul>
           )}
+
+          {/*
+            Kaki halaman per bagian.
+
+            Sebelumnya kedua daftar dipotong `.limit(50)` dan `.limit(20)`
+            tanpa penghitungan, jadi agenda ke-51 tidak dapat dijangkau dari
+            URL mana pun — dan tidak ada apa pun di layar yang memberi tahu
+            bahwa daftarnya terpotong.
+          */}
+          <Pagination
+            page={daftar.mendatang.halaman}
+            pageCount={Math.max(
+              1,
+              Math.ceil(daftar.mendatang.total / daftar.ukuranHalaman),
+            )}
+            total={daftar.mendatang.total}
+            pageSize={daftar.ukuranHalaman}
+            label="agenda mendatang"
+          />
         </SeksiDaftar>
 
-        {past.length > 0 ? (
+        {daftar.lampau.total > 0 ? (
           <SeksiDaftar judul="Sudah Berlalu">
             <ul className="scroll-area max-h-[calc(100dvh-28rem)] divide-y divide-border">
               {past.map((item) => (
@@ -211,6 +240,18 @@ export function AgendaManager({
                 />
               ))}
             </ul>
+
+            <Pagination
+              pageKey="pageLampau"
+              page={daftar.lampau.halaman}
+              pageCount={Math.max(
+                1,
+                Math.ceil(daftar.lampau.total / daftar.ukuranHalaman),
+              )}
+              total={daftar.lampau.total}
+              pageSize={daftar.ukuranHalaman}
+              label="agenda lampau"
+            />
           </SeksiDaftar>
         ) : null}
       </Card>

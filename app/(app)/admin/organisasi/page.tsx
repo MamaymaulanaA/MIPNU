@@ -7,6 +7,7 @@ import {
 } from "@/features/organizations/components/organization-manager";
 import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { bacaParamDaftar, polaCariOr } from "@/lib/list-params";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -40,10 +41,6 @@ const STATUS_ORGANISASI = [
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-function satuNilai(value: string | string[] | undefined): string {
-  return typeof value === "string" ? value : "";
-}
-
 export default async function AdminOrganizationsPage({
   searchParams,
 }: {
@@ -56,11 +53,16 @@ export default async function AdminOrganizationsPage({
     return <ForbiddenState />;
   }
 
-  const params = await searchParams;
-  const cari = satuNilai(params.search).trim();
-  const status = satuNilai(params.status);
-  const halaman = Math.max(1, Number(satuNilai(params.page)) || 1);
-  const dari = (halaman - 1) * UKURAN_HALAMAN;
+  // Pembaca bersama, bukan salinan lokal. Versi sebelumnya menuliskan ulang
+  // `satuNilai`, penghitungan offset, dan pembersihan pola pencariannya
+  // sendiri — tiga hal yang justru ada di `lib/list-params.ts` supaya tidak
+  // perlahan berbeda antar-halaman.
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["status"],
+  });
+  const cari = daftar.cari;
+  const status = daftar.saring.status;
 
   const supabase = await createClient();
 
@@ -80,7 +82,11 @@ export default async function AdminOrganizationsPage({
 
   if (status) daftarQuery = daftarQuery.eq("status", status);
   if (cari) {
-    const aman = cari.replace(/[%_,]/g, "");
+    // `polaCariOr`, bukan pembersih lokal. Yang lama hanya membuang `%`, `_`,
+    // dan koma — tanda kurung dan garis miring terbalik tetap lolos ke dalam
+    // string filter `.or()`, dan PostgREST mengurai keduanya sebagai sintaks
+    // sebelum SQL melihatnya.
+    const aman = polaCariOr(cari);
     if (aman)
       daftarQuery = daftarQuery.or(`name.ilike.%${aman}%,slug.ilike.%${aman}%`);
   }
@@ -89,7 +95,7 @@ export default async function AdminOrganizationsPage({
     await Promise.all([
       daftarQuery
         .order("name", { ascending: true })
-        .range(dari, dari + UKURAN_HALAMAN - 1),
+        .range(daftar.dari, daftar.sampai),
 
       supabase
         .from("organization_types")
@@ -158,7 +164,7 @@ export default async function AdminOrganizationsPage({
       cari={cari}
       status={status}
       statusOptions={STATUS_ORGANISASI}
-      halaman={halaman}
+      halaman={daftar.halaman}
       total={organizationsResult.count ?? 0}
       ukuranHalaman={UKURAN_HALAMAN}
       types={(typesResult.data ?? []).map((type) => ({

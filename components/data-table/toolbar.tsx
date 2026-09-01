@@ -98,6 +98,7 @@ export function TableToolbar({
   searchLabel,
   filters = [],
   dateFilters = [],
+  resetKeys = [],
 }: {
   searchKey?: string;
   searchValue: string;
@@ -105,6 +106,16 @@ export function TableToolbar({
   searchLabel: string;
   filters?: TableFilter[];
   dateFilters?: TableDateFilter[];
+  /**
+   * Parameter LAIN yang ikut dikosongkan setiap pencarian atau penyaring
+   * berubah — di luar `page` yang selalu dikosongkan.
+   *
+   * Dipakai halaman yang punya lebih dari satu daftar, dan karena itu lebih
+   * dari satu nomor halaman. Tanpa ini, menyaring daftar pertama meninggalkan
+   * nomor halaman daftar kedua pada nilai lamanya, dan daftar itu tampil
+   * kosong padahal hasilnya ada di halaman pertamanya.
+   */
+  resetKeys?: string[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -133,12 +144,17 @@ export function TableToolbar({
         new URLSearchParams(window.location.search).get(searchKey) ?? "";
       if (sekarang === search) return;
 
-      updateParams({ [searchKey]: search, page: null });
+      updateParams({ [searchKey]: search, page: null, ...kosongkanLain() });
     }, 350);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
+
+  /** `resetKeys` sebagai objek berisi null, siap disebar ke `updateParams`. */
+  function kosongkanLain(): Record<string, null> {
+    return Object.fromEntries(resetKeys.map((kunci) => [kunci, null]));
+  }
 
   function updateParams(updates: Record<string, string | null>) {
     // Selalu dari URL saat ini. `useSearchParams()` mencerminkan render yang
@@ -166,10 +182,20 @@ export function TableToolbar({
     dateFilters.some((filter) => filter.value !== "");
 
   return (
-    <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:p-5">
-      {/* Pencarian mengambil sisa ruang. TIDAK ada `max-w` di sini — itulah
-          yang dulu membuatnya berhenti di 320px. */}
-      <div className="relative min-w-0 flex-1">
+    <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:flex-wrap sm:items-center sm:p-5">
+      {/*
+        Pencarian mengambil sisa ruang. TIDAK ada `max-w` di sini — itulah yang
+        dulu membuatnya berhenti di 320px.
+
+        Tetapi ia juga punya batas BAWAH, dan barisnya boleh membungkus. Diukur
+        di peramban pada 1440px, halaman Transaksi dengan enam penyaring
+        (empat daftar pilihan dan dua kotak tanggal) menyisakan 122px untuk
+        kotak pencarian — sempit hanya karena tetangganya banyak. Dengan batas
+        bawah 220px, kelompok penyaring yang tidak lagi muat turun ke barisnya
+        sendiri, dan pencarian mendapat lebar penuh. Halaman dengan satu atau
+        dua penyaring tidak berubah sama sekali: keduanya tetap muat sebaris.
+      */}
+      <div className="relative min-w-0 flex-1 sm:min-w-[220px]">
         <Search
           size={16}
           aria-hidden="true"
@@ -186,14 +212,18 @@ export function TableToolbar({
       </div>
 
       {filters.length > 0 || dateFilters.length > 0 || adaFilter ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {filters.map((filter) => (
             <Select
               key={filter.key}
               value={filter.value}
               aria-label={filter.label}
               onChange={(event) =>
-                updateParams({ [filter.key]: event.target.value, page: null })
+                updateParams({
+                  [filter.key]: event.target.value,
+                  page: null,
+                  ...kosongkanLain(),
+                })
               }
               className={cn("w-full", LEBAR_FILTER[filter.size ?? "sm"])}
             >
@@ -213,7 +243,11 @@ export function TableToolbar({
               value={filter.value}
               aria-label={filter.label}
               onChange={(event) =>
-                updateParams({ [filter.key]: event.target.value, page: null })
+                updateParams({
+                  [filter.key]: event.target.value,
+                  page: null,
+                  ...kosongkanLain(),
+                })
               }
               className="w-full sm:w-40"
             />
@@ -229,6 +263,7 @@ export function TableToolbar({
                 updateParams({
                   [searchKey]: null,
                   page: null,
+                  ...kosongkanLain(),
                   ...Object.fromEntries(
                     [...filters, ...dateFilters].map((filter) => [
                       filter.key,
