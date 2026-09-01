@@ -29,20 +29,23 @@
   /*
    * Nyaris putih, dan hampir tanpa warna.
    *
-   * Sebelumnya 23% saturasi pada hue 220 — cukup biru untuk terbaca dingin,
-   * terutama berdampingan dengan kartu putih murni. Yang diturunkan lebih dulu
-   * saturasinya, bukan terangnya: warna yang mengganggu di sini birunya.
+   * Sebelumnya 23% saturasi pada hue 220 — cukup biru untuk terbaca dingin di
+   * samping kartu putih murni. Yang diturunkan lebih dulu saturasinya, bukan
+   * terangnya: warna yang mengganggu di sini birunya.
    *
-   * Terangnya berhenti di 98.5%, dan angka itu batas, bukan pilihan bebas.
-   * Kartu berada di 100%, jadi selisihnya tinggal empat tingkat rgb —
-   * rgb(251,251,252) berbanding rgb(255,255,255). Cukup untuk membuat kartu
-   * terbaca terangkat, dan itulah seluruh tugas latar ini.
+   * Terangnya kini 99%, tinggal tiga tingkat rgb dari kartu. Pada jarak
+   * sedekat itu isian latar berhenti menjadi pemisah, dan itu disengaja:
+   * yang memisahkan kartu dari halaman adalah border 1px-nya —
+   * rgb(222,228,237), cukup gelap untuk terbaca sendirian. Latar tidak lagi
+   * dituntut mengangkat kartu; ia hanya perlu berhenti terbaca abu-abu.
    *
-   * Satu langkah lagi ke 99% menyisakan tiga tingkat, dan pada layar yang
-   * tidak dikalibrasi batas antara latar dan kartu berhenti terlihat sama
-   * sekali — halaman terbaca rata, dan yang tersisa hanya border 1px.
+   * Konsekuensinya harus dijaga di tempat lain: apa pun yang menandai keadaan
+   * dengan mengisi `bg-background` di atas permukaan lain akan pudar bersama
+   * angka ini. Tab Surat dulu begitu, dan pada 98.5% penandanya sudah tinggal
+   * berselisih satu tingkat dari jalurnya sendiri. Penanda keadaan memakai
+   * `--primary`, bukan token latar.
    */
-  --background: 220 16% 98.5%; /* #FBFBFC */
+  --background: 220 14% 99%; /* #FCFCFD */
   --foreground: 221 39% 11%; /* #111827 */
 
   --card: 0 0% 100%;

@@ -5,6 +5,7 @@ import { FileText, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/states";
 import { Card } from "@/components/ui/card";
+import { PageTabs } from "@/components/ui/tabs";
 import { Pagination } from "@/components/data-table/pagination";
 import { TableToolbar } from "@/components/data-table/toolbar";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
@@ -165,23 +166,38 @@ export function LetterTabs({
   permissions: LetterPermissions;
   daftar: KeadaanDaftar;
 }) {
-  return (
-    <div className="space-y-4">
-      <div
-        role="tablist"
-        aria-label="Jenis surat"
-        className="scroll-none flex w-full gap-1 rounded-md border border-border bg-muted/40 p-1"
-      >
-        <TabLink href="/surat?tab=masuk" active={activeTab === "masuk"}>
-          Surat Masuk
-        </TabLink>
-        <TabLink href="/surat?tab=keluar" active={activeTab === "keluar"}>
-          Surat Keluar
-        </TabLink>
-      </div>
+  // Disusun DI LUAR percabangan: di dalam cabang `masuk`, TypeScript
+  // mempersempit `activeTab` menjadi `"masuk"` saja, sehingga pemeriksaan
+  // `=== "keluar"` di sana tak pernah bisa benar.
+  const tabs = (
+    <PageTabs
+      label="Jenis surat"
+      items={[
+        {
+          href: "/surat?tab=masuk",
+          label: "Surat Masuk",
+          active: activeTab === "masuk",
+        },
+        {
+          href: "/surat?tab=keluar",
+          label: "Surat Keluar",
+          active: activeTab === "keluar",
+        },
+      ]}
+    />
+  );
 
+  return (
+    /*
+      Tab dikirim ke dalam kartu panel sebagai kepalanya, bukan berdiri
+      sebagai bilah terpisah di atasnya. Bentuknya kini sama persis dengan
+      halaman Pemilihan, dan halaman ini berhenti memakai kotak pil yang
+      penanda aktifnya memudar setiap kali latar halaman dinaikkan.
+    */
+    <>
       {activeTab === "masuk" ? (
         <IncomingPanel
+          tabs={tabs}
           organizationId={organizationId}
           rows={incoming}
           documentOptions={documentOptions}
@@ -191,6 +207,7 @@ export function LetterTabs({
         />
       ) : (
         <OutgoingPanel
+          tabs={tabs}
           organizationId={organizationId}
           rows={outgoing}
           memberOptions={memberOptions}
@@ -200,32 +217,7 @@ export function LetterTabs({
           total={daftar.totalKeluar}
         />
       )}
-    </div>
-  );
-}
-
-function TabLink({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      role="tab"
-      aria-selected={active}
-      className={
-        active
-          ? "flex-1 rounded-sm bg-background px-3 py-2 text-center text-[13px] font-medium text-foreground shadow-raised"
-          : "flex-1 rounded-sm px-3 py-2 text-center text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-      }
-    >
-      {children}
-    </a>
+    </>
   );
 }
 
@@ -238,6 +230,7 @@ function IncomingPanel({
   permissions,
   daftar,
   total,
+  tabs,
 }: {
   organizationId: string;
   rows: IncomingRow[];
@@ -245,6 +238,7 @@ function IncomingPanel({
   permissions: LetterPermissions;
   daftar: KeadaanDaftar;
   total: number;
+  tabs: React.ReactNode;
 }) {
   const { showToast } = useToast();
   const [editing, setEditing] = useState<IncomingRow | null>(null);
@@ -253,8 +247,9 @@ function IncomingPanel({
 
   return (
     <div className="space-y-4">
-      {/* Toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
+      {/* Tab, toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
       <Card>
+        {tabs}
         <TableToolbar
           searchValue={daftar.cari}
           searchPlaceholder="Cari perihal surat…"
@@ -600,6 +595,7 @@ function OutgoingPanel({
   permissions,
   daftar,
   total,
+  tabs,
 }: {
   organizationId: string;
   rows: OutgoingRow[];
@@ -608,6 +604,7 @@ function OutgoingPanel({
   permissions: LetterPermissions;
   daftar: KeadaanDaftar;
   total: number;
+  tabs: React.ReactNode;
 }) {
   const { showToast } = useToast();
   const [editing, setEditing] = useState<OutgoingRow | null>(null);
@@ -619,8 +616,9 @@ function OutgoingPanel({
 
   return (
     <div className="space-y-4">
-      {/* Toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
+      {/* Tab, toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
       <Card>
+        {tabs}
         <TableToolbar
           searchValue={daftar.cari}
           searchPlaceholder="Cari perihal surat…"
