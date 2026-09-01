@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { ForbiddenState } from "@/components/feedback/states";
 import { Card } from "@/components/ui/card";
 import { MembershipTable } from "@/features/memberships/components/membership-table";
@@ -13,12 +15,38 @@ export const metadata: Metadata = {
   title: "Pengguna",
 };
 
-export default async function UsersPage() {
+/** Ukuran halaman daftar pengguna. */
+const UKURAN_HALAMAN = 20;
+
+/** Status membership yang benar-benar tersimpan pada kolomnya. */
+const STATUS_MEMBERSHIP = [
+  { value: "ACTIVE", label: "Aktif" },
+  { value: "INACTIVE", label: "Tidak aktif" },
+];
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function satuNilai(value: string | string[] | undefined): string {
+  return typeof value === "string" ? value : "";
+}
+
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const context = await requireAccessContext();
 
   if (!context.organizationId || !can(context, PERMISSIONS.users.view)) {
     return <ForbiddenState />;
   }
+
+  const params = await searchParams;
+  const cari = satuNilai(params.search).trim();
+  const peran = satuNilai(params.peran);
+  const status = satuNilai(params.status);
+  const halaman = Math.max(1, Number(satuNilai(params.page)) || 1);
+  const dari = (halaman - 1) * UKURAN_HALAMAN;
 
   const supabase = await createClient();
   const canEdit = can(context, PERMISSIONS.users.edit);
@@ -26,19 +54,37 @@ export default async function UsersPage() {
     can(context, PERMISSIONS.users.create) &&
     can(context, PERMISSIONS.users.assignOrganization);
 
-  const [membershipsResult, rolesResult, membersResult] = await Promise.all([
-    supabase
-      .from("organization_memberships")
-      .select(
-        `
+  // Pencarian, penyaringan, dan pembagian halaman seluruhnya di database.
+  // `!inner` pada `profiles` yang membuat penyaringan atas nama tampilan
+  // dapat dilakukan di sana, bukan dengan menarik seluruh baris lalu
+  // menyaringnya di aplikasi (AGENTS.md §57).
+  let daftarQuery = supabase
+    .from("organization_memberships")
+    .select(
+      `
         id, profile_id, role_id, status, joined_at, member_id,
         profiles!organization_memberships_profile_id_fkey!inner ( display_name ),
         roles!inner ( code, name ),
         members ( full_name, member_number )
       `,
-      )
-      .eq("organization_id", context.organizationId)
-      .order("joined_at", { ascending: false }),
+      { count: "exact" },
+    )
+    .eq("organization_id", context.organizationId);
+
+  if (peran) daftarQuery = daftarQuery.eq("role_id", peran);
+  if (status) daftarQuery = daftarQuery.eq("status", status);
+  if (cari) {
+    daftarQuery = daftarQuery.ilike(
+      "profiles.display_name",
+      `%${cari.replace(/[%_]/g, "\$&")}%`,
+    );
+  }
+
+  const [membershipsResult, rolesResult, membersResult] = await Promise.all([
+    daftarQuery
+      .order("joined_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(dari, dari + UKURAN_HALAMAN - 1),
 
     // Hanya role ber-scope ORGANIZATION yang dapat diberikan di sini.
     // SUPER_ADMIN ber-scope GLOBAL dan ditolak trigger database.
@@ -119,6 +165,31 @@ export default async function UsersPage() {
       />
 
       <Card>
+        <TableToolbar
+          searchValue={cari}
+          searchPlaceholder="Cari nama akun…"
+          searchLabel="Cari pengguna"
+          filters={[
+            {
+              key: "peran",
+              label: "Saring menurut role",
+              value: peran,
+              allLabel: "Semua role",
+              options: (rolesResult.data ?? []).map((role) => ({
+                value: role.id,
+                label: role.name,
+              })),
+            },
+            {
+              key: "status",
+              label: "Saring menurut status",
+              value: status,
+              allLabel: "Semua status",
+              options: STATUS_MEMBERSHIP,
+            },
+          ]}
+        />
+
         <MembershipTable
           organizationId={context.organizationId}
           memberships={memberships}
@@ -126,6 +197,16 @@ export default async function UsersPage() {
           memberOptions={memberOptions}
           currentProfileId={context.profileId}
           canEdit={canEdit}
+        />
+
+        <Pagination
+          page={halaman}
+          pageCount={Math.max(
+            1,
+            Math.ceil((membershipsResult.count ?? 0) / UKURAN_HALAMAN),
+          )}
+          total={membershipsResult.count ?? 0}
+          pageSize={UKURAN_HALAMAN}
         />
       </Card>
     </div>

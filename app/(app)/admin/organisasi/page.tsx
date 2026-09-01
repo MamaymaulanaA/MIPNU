@@ -27,7 +27,28 @@ export const metadata: Metadata = {
  * dan datanya ikut ke sini — satu kali muat untuk satu layar, bukan satu
  * perjalanan tambahan setiap kali dialog dibuka.
  */
-export default async function AdminOrganizationsPage() {
+/** Ukuran halaman daftar organisasi. */
+const UKURAN_HALAMAN = 20;
+
+/** Status organisasi yang benar-benar tersimpan pada kolomnya. */
+const STATUS_ORGANISASI = [
+  { value: "ACTIVE", label: "Aktif" },
+  { value: "INACTIVE", label: "Tidak aktif" },
+  { value: "SUSPENDED", label: "Ditangguhkan" },
+  { value: "ARCHIVED", label: "Diarsipkan" },
+];
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function satuNilai(value: string | string[] | undefined): string {
+  return typeof value === "string" ? value : "";
+}
+
+export default async function AdminOrganizationsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   // Konteks platform: permission global, tanpa organisasi aktif.
   const context = await requireAccessContext(null);
 
@@ -35,35 +56,63 @@ export default async function AdminOrganizationsPage() {
     return <ForbiddenState />;
   }
 
+  const params = await searchParams;
+  const cari = satuNilai(params.search).trim();
+  const status = satuNilai(params.status);
+  const halaman = Math.max(1, Number(satuNilai(params.page)) || 1);
+  const dari = (halaman - 1) * UKURAN_HALAMAN;
+
   const supabase = await createClient();
 
-  const [organizationsResult, typesResult, levelsResult] = await Promise.all([
-    supabase
-      .from("organizations")
-      .select(
-        `
+  let daftarQuery = supabase
+    .from("organizations")
+    .select(
+      `
         id, name, short_name, slug, status,
         address, village, district, city_regency, province,
         email, phone, description,
         organization_types!inner ( code ),
         organization_levels!inner ( code, hierarchy_rank )
       `,
-      )
-      .is("deleted_at", null)
-      .order("name", { ascending: true }),
+      { count: "exact" },
+    )
+    .is("deleted_at", null);
 
-    supabase
-      .from("organization_types")
-      .select("id, code, name")
-      .eq("is_active", true)
-      .order("code"),
+  if (status) daftarQuery = daftarQuery.eq("status", status);
+  if (cari) {
+    const aman = cari.replace(/[%_,]/g, "");
+    if (aman)
+      daftarQuery = daftarQuery.or(`name.ilike.%${aman}%,slug.ilike.%${aman}%`);
+  }
 
-    supabase
-      .from("organization_levels")
-      .select("id, code, name, hierarchy_rank")
-      .eq("is_active", true)
-      .order("hierarchy_rank"),
-  ]);
+  const [organizationsResult, typesResult, levelsResult, parentsResult] =
+    await Promise.all([
+      daftarQuery
+        .order("name", { ascending: true })
+        .range(dari, dari + UKURAN_HALAMAN - 1),
+
+      supabase
+        .from("organization_types")
+        .select("id, code, name")
+        .eq("is_active", true)
+        .order("code"),
+
+      supabase
+        .from("organization_levels")
+        .select("id, code, name, hierarchy_rank")
+        .eq("is_active", true)
+        .order("hierarchy_rank"),
+
+      // Calon induk TIDAK boleh ikut terpotong pagination: dialog pembuatan
+      // harus dapat menunjuk organisasi mana pun, bukan hanya yang kebetulan
+      // ada di halaman yang sedang dibuka. Kolomnya sengaja hanya dua.
+      supabase
+        .from("organizations")
+        .select("id, name")
+        .is("deleted_at", null)
+        .eq("status", "ACTIVE")
+        .order("name"),
+    ]);
 
   type Row = {
     id: string;
@@ -106,6 +155,12 @@ export default async function AdminOrganizationsPage() {
   return (
     <OrganizationManager
       organizations={organizations}
+      cari={cari}
+      status={status}
+      statusOptions={STATUS_ORGANISASI}
+      halaman={halaman}
+      total={organizationsResult.count ?? 0}
+      ukuranHalaman={UKURAN_HALAMAN}
       types={(typesResult.data ?? []).map((type) => ({
         id: type.id,
         label: `${type.code} — ${type.name}`,
@@ -114,14 +169,10 @@ export default async function AdminOrganizationsPage() {
         id: level.id,
         label: `${level.code} — ${level.name}`,
       }))}
-      // Calon induk diambil dari daftar yang SUDAH dimuat, bukan query
-      // keempat: halaman ini memang sudah memegang seluruh organisasi aktif.
-      parents={organizations
-        .filter((organization) => organization.status === "ACTIVE")
-        .map((organization) => ({
-          id: organization.id,
-          label: organization.name,
-        }))}
+      parents={(parentsResult.data ?? []).map((organization) => ({
+        id: organization.id,
+        label: organization.name,
+      }))}
     />
   );
 }

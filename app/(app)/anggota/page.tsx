@@ -5,6 +5,7 @@ import { Upload, Users } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import {
   EmptyState,
   ForbiddenState,
@@ -26,9 +27,9 @@ import {
 import { ExportButton } from "@/features/exports/components/export-button";
 import { exportMembers } from "@/features/exports/actions/export-csv";
 import { MemberCreateDialog } from "@/features/members/components/member-form-dialog";
-import { MemberFilters } from "@/features/members/components/member-filters";
 import { listMembers } from "@/features/members/queries/list-members";
 import {
+  MEMBER_STATUSES,
   MEMBERS_PAGE_SIZE,
   memberListParamsSchema,
 } from "@/features/members/schemas/member.schema";
@@ -97,14 +98,27 @@ export default async function MembersPage({
       />
 
       <Card>
-        <div className="border-b border-border p-4 sm:p-5">
-          <Suspense fallback={<div className="h-10" />}>
-            <MemberFilters
-              initialSearch={params.search}
-              initialStatus={params.status}
-            />
-          </Suspense>
-        </div>
+        <Suspense
+          fallback={<div className="h-[77px] border-b border-border" />}
+        >
+          <TableToolbar
+            searchValue={params.search}
+            searchPlaceholder="Cari nama atau nomor anggota…"
+            searchLabel="Cari anggota"
+            filters={[
+              {
+                key: "status",
+                label: "Saring menurut status",
+                value: params.status,
+                allLabel: "Semua status",
+                options: MEMBER_STATUSES.map((status) => ({
+                  value: status,
+                  label: memberStatus(status).label,
+                })),
+              },
+            ]}
+          />
+        </Suspense>
 
         <Suspense
           key={`${params.search}-${params.status}-${params.page}`}

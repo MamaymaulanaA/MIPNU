@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 import { FileClock } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
+import {
+  AUDIT_PAGE_SIZE,
+  AUDIT_RESOURCE_LABELS,
+  AUDIT_RESOURCE_OPTIONS,
+} from "@/features/audit/audit-catalog";
 import { EmptyState, ForbiddenState } from "@/components/feedback/states";
 import { Card } from "@/components/ui/card";
 import {
@@ -29,28 +36,57 @@ const ACTION_LABELS: Record<string, string> = {
   "member.status_changed": "Mengubah status anggota",
 };
 
-export default async function AuditPage() {
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function satuNilai(value: string | string[] | undefined): string {
+  return typeof value === "string" ? value : "";
+}
+
+export default async function AuditPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const context = await requireAccessContext();
 
   if (!context.organizationId || !can(context, PERMISSIONS.audit.view)) {
     return <ForbiddenState />;
   }
 
+  const params = await searchParams;
+  const cari = satuNilai(params.search).trim();
+  const jenis = satuNilai(params.jenis);
+  const halaman = Math.max(1, Number(satuNilai(params.page)) || 1);
+
   const supabase = await createClient();
 
   // Audit bersifat append-only dan tidak punya UI ubah/hapus. Halaman ini
   // memang hanya membaca (docs/DATABASE.md §44, RLS.md §115).
-  const { data } = await supabase
+  //
+  // Pencarian, penyaringan, DAN pembagian halaman seluruhnya di database.
+  // Sebelumnya halaman ini menarik 100 baris terakhir tanpa cara menelusuri
+  // yang lebih lama; batang gulir tidak menggantikan itu, ia hanya membatasi
+  // tingginya (AGENTS.md §57, §64).
+  const dari = (halaman - 1) * AUDIT_PAGE_SIZE;
+
+  let query = supabase
     .from("audit_logs")
     .select(
       `
       id, action, resource_type, resource_id, created_at,
       profiles ( display_name )
     `,
+      { count: "exact" },
     )
-    .eq("organization_id", context.organizationId)
+    .eq("organization_id", context.organizationId);
+
+  if (jenis) query = query.eq("resource_type", jenis);
+  if (cari) query = query.ilike("action", `%${cari.replace(/[%_]/g, "\$&")}%`);
+
+  const { data, count } = await query
     .order("created_at", { ascending: false })
-    .limit(100);
+    .order("id", { ascending: true })
+    .range(dari, dari + AUDIT_PAGE_SIZE - 1);
 
   type Row = {
     id: string;
@@ -61,6 +97,9 @@ export default async function AuditPage() {
   };
 
   const logs = (data as unknown as Row[] | null) ?? [];
+  const total = count ?? 0;
+  const jumlahHalaman = Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE));
+  const disaring = cari !== "" || jenis !== "";
 
   return (
     <div className="space-y-5">
@@ -70,14 +109,37 @@ export default async function AuditPage() {
       />
 
       <Card>
+        <TableToolbar
+          searchValue={cari}
+          searchPlaceholder="Cari aktivitas…"
+          searchLabel="Cari aktivitas"
+          filters={[
+            {
+              key: "jenis",
+              label: "Saring menurut objek",
+              value: jenis,
+              allLabel: "Semua objek",
+              options: AUDIT_RESOURCE_OPTIONS,
+            },
+          ]}
+        />
+
         {logs.length === 0 ? (
           <EmptyState
             icon={FileClock}
-            title="Belum ada aktivitas tercatat"
-            description="Perubahan data sensitif akan tercatat di sini secara otomatis."
+            title={
+              disaring
+                ? "Tidak ada aktivitas yang cocok"
+                : "Belum ada aktivitas tercatat"
+            }
+            description={
+              disaring
+                ? "Coba ubah kata kunci atau saringan objek."
+                : "Perubahan data sensitif akan tercatat di sini secara otomatis."
+            }
           />
         ) : (
-          <TableScroll>
+          <TableScroll bounded>
             <Table>
               <TableHead>
                 <TableRow className="hover:bg-transparent">
@@ -111,7 +173,8 @@ export default async function AuditPage() {
                     </TableCell>
 
                     <TableCell className="hidden text-muted-foreground md:table-cell">
-                      {log.resource_type}
+                      {AUDIT_RESOURCE_LABELS[log.resource_type] ??
+                        log.resource_type}
                     </TableCell>
 
                     <TableCell className="text-muted-foreground">
@@ -123,6 +186,13 @@ export default async function AuditPage() {
             </Table>
           </TableScroll>
         )}
+
+        <Pagination
+          page={halaman}
+          pageCount={jumlahHalaman}
+          total={total}
+          pageSize={AUDIT_PAGE_SIZE}
+        />
       </Card>
     </div>
   );

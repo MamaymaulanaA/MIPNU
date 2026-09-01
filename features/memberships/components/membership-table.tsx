@@ -122,7 +122,7 @@ export function MembershipTable({
 
   return (
     <>
-      <TableScroll>
+      <TableScroll bounded>
         <Table>
           <TableHead>
             <TableRow className="hover:bg-transparent">

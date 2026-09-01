@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Building2, Pencil, Plus } from "lucide-react";
 
 import { FormDialog } from "@/components/forms/form-dialog";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/feedback/states";
 import { Badge } from "@/components/ui/badge";
@@ -60,11 +62,24 @@ export function OrganizationManager({
   types,
   levels,
   parents,
+  cari,
+  status,
+  statusOptions,
+  halaman,
+  total,
+  ukuranHalaman,
 }: {
   organizations: OrganizationRow[];
   types: ReferenceOption[];
   levels: ReferenceOption[];
   parents: ReferenceOption[];
+  /** Keadaan toolbar, seluruhnya berasal dari URL dan diproses di server. */
+  cari: string;
+  status: string;
+  statusOptions: { value: string; label: string }[];
+  halaman: number;
+  total: number;
+  ukuranHalaman: number;
 }) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<OrganizationRow | null>(null);
@@ -93,19 +108,44 @@ export function OrganizationManager({
       />
 
       <Card>
+        <TableToolbar
+          searchValue={cari}
+          searchPlaceholder="Cari nama atau slug organisasi…"
+          searchLabel="Cari organisasi"
+          filters={[
+            {
+              key: "status",
+              label: "Saring menurut status",
+              value: status,
+              allLabel: "Semua status",
+              options: statusOptions,
+            },
+          ]}
+        />
+
         {organizations.length === 0 ? (
           <EmptyState
             icon={Building2}
-            title="Belum ada organisasi"
-            description="Buat organisasi pertama, lalu tautkan operator agar organisasi tersebut dapat mulai dikelola."
+            title={
+              cari || status
+                ? "Tidak ada organisasi yang cocok"
+                : "Belum ada organisasi"
+            }
+            description={
+              cari || status
+                ? "Coba ubah kata kunci atau saringan status."
+                : "Buat organisasi pertama, lalu tautkan operator agar organisasi tersebut dapat mulai dikelola."
+            }
             action={
-              <Button size="sm" onClick={() => setCreateOpen(true)}>
-                Buat organisasi pertama
-              </Button>
+              cari || status ? undefined : (
+                <Button size="sm" onClick={() => setCreateOpen(true)}>
+                  Buat organisasi pertama
+                </Button>
+              )
             }
           />
         ) : (
-          <TableScroll>
+          <TableScroll bounded>
             <Table>
               <TableHead>
                 <TableRow className="hover:bg-transparent">
@@ -172,6 +212,13 @@ export function OrganizationManager({
             </Table>
           </TableScroll>
         )}
+
+        <Pagination
+          page={halaman}
+          pageCount={Math.max(1, Math.ceil(total / ukuranHalaman))}
+          total={total}
+          pageSize={ukuranHalaman}
+        />
       </Card>
 
       <FormDialog
