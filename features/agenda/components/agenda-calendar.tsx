@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AgendaRow } from "@/features/agenda/components/agenda-manager";
 import { formatDateTime } from "@/lib/format";
 import { agendaType } from "@/lib/status";
+import { TINGGI_KONTROL } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
@@ -292,7 +293,14 @@ export function AgendaViewToggle({
     <div
       role="group"
       aria-label="Tampilan agenda"
-      className="inline-flex h-10 items-center rounded-md border border-border bg-muted p-1"
+      // Tinggi dari konstanta bersama, bukan `h-10` yang ditulis sendiri.
+      // Diukur di peramban pada 1440px: pengalih ini 40px sementara tombol di
+      // sebelahnya 44px — dua kontrol pada satu grup aksi yang tidak berdiri
+      // di garis yang sama.
+      className={cn(
+        TINGGI_KONTROL,
+        "inline-flex items-center rounded-md border border-border bg-muted p-1",
+      )}
     >
       {(["daftar", "kalender"] as const).map((view) => (
         <button

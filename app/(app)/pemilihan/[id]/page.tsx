@@ -119,7 +119,7 @@ export default async function ElectionDetailPage({
   const supabase = await createClient();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title={election.name}
         description={
@@ -287,7 +287,7 @@ async function SummaryTab({
     permissions.canManage;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {voterState.inDpt ? (
         <Card>
           <CardHeader>

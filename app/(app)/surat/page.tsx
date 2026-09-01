@@ -6,6 +6,7 @@ import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 import { exportLetters } from "@/features/exports/actions/export-csv";
 import { ExportButton } from "@/features/exports/components/export-button";
 import {
+  LetterCreateDialog,
   LetterTabs,
   type IncomingRow,
   type OutgoingRow,
@@ -173,30 +174,48 @@ export default async function LettersPage({
     notes: row.notes,
   }));
 
+  const opsiAnggota = (
+    (membersResult.data as { id: string; full_name: string }[] | null) ?? []
+  ).map((member) => ({ id: member.id, label: member.full_name }));
+  const opsiDokumen = (
+    (documentsResult.data as { id: string; title: string }[] | null) ?? []
+  ).map((document) => ({ id: document.id, label: document.title }));
+
   return (
     <div className="space-y-5">
       <PageHeader
         title="Surat"
         description="Arsip surat masuk dan surat keluar organisasi."
         actions={
-          can(context, PERMISSIONS.letters.export) ? (
-            // Ekspor mengikuti tab yang sedang dibuka: berkas "surat" yang
-            // mencampur surat masuk dan keluar dalam satu tabel tidak dapat
-            // dibaca sebagai arsip mana pun.
-            <ExportButton
-              label={
-                activeTab === "keluar"
-                  ? "Ekspor Surat Keluar"
-                  : "Ekspor Surat Masuk"
-              }
-              action={exportLetters.bind(
-                null,
-                context.organizationId,
-                activeTab === "keluar" ? "outgoing" : "incoming",
-                {},
-              )}
-            />
-          ) : null
+          <>
+            {can(context, PERMISSIONS.letters.export) ? (
+              // Ekspor mengikuti tab yang sedang dibuka: berkas "surat" yang
+              // mencampur surat masuk dan keluar dalam satu tabel tidak dapat
+              // dibaca sebagai arsip mana pun.
+              <ExportButton
+                label={
+                  activeTab === "keluar"
+                    ? "Ekspor Surat Keluar"
+                    : "Ekspor Surat Masuk"
+                }
+                action={exportLetters.bind(
+                  null,
+                  context.organizationId,
+                  activeTab === "keluar" ? "outgoing" : "incoming",
+                  {},
+                )}
+              />
+            ) : null}
+
+            {can(context, PERMISSIONS.letters.create) ? (
+              <LetterCreateDialog
+                organizationId={context.organizationId}
+                activeTab={activeTab}
+                memberOptions={opsiAnggota}
+                documentOptions={opsiDokumen}
+              />
+            ) : null}
+          </>
         }
       />
 
@@ -214,13 +233,8 @@ export default async function LettersPage({
         }}
         incoming={incoming}
         outgoing={outgoing}
-        memberOptions={(
-          (membersResult.data as { id: string; full_name: string }[] | null) ??
-          []
-        ).map((member) => ({ id: member.id, label: member.full_name }))}
-        documentOptions={(
-          (documentsResult.data as { id: string; title: string }[] | null) ?? []
-        ).map((document) => ({ id: document.id, label: document.title }))}
+        memberOptions={opsiAnggota}
+        documentOptions={opsiDokumen}
         permissions={{
           canCreate: can(context, PERMISSIONS.letters.create),
           canEdit: can(context, PERMISSIONS.letters.edit),

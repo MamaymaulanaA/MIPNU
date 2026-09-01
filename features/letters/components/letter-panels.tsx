@@ -91,6 +91,61 @@ export type KeadaanDaftar = {
   ukuranHalaman: number;
 };
 
+/**
+ * Tombol "Catat Surat" beserta dialognya, mengikuti tab yang sedang dibuka.
+ *
+ * Berdiri di kepala halaman, sebaris dengan tombol Ekspor. Sebelumnya ia
+ * melayang rata kanan DI ANTARA deretan tab dan kartu tabel — satu baris
+ * tersendiri yang bukan bagian dari kepala halaman maupun bagian dari
+ * kartunya, dan satu-satunya aksi primer di aplikasi ini yang mendarat di
+ * sana.
+ *
+ * Labelnya ikut tab karena arsipnya memang dua: mencatat surat masuk dan
+ * membuat surat keluar bukan tindakan yang sama.
+ */
+export function LetterCreateDialog({
+  organizationId,
+  activeTab,
+  memberOptions,
+  documentOptions,
+}: {
+  organizationId: string;
+  activeTab: "masuk" | "keluar";
+  memberOptions: LetterOption[];
+  documentOptions: LetterOption[];
+}) {
+  const [open, setOpen] = useState(false);
+  const keluar = activeTab === "keluar";
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>
+        <Plus size={16} aria-hidden="true" />
+        {keluar ? "Buat Surat Keluar" : "Catat Surat Masuk"}
+      </Button>
+
+      {keluar ? (
+        <OutgoingDialog
+          key={open ? "out-create-open" : "out-create-closed"}
+          open={open}
+          onClose={() => setOpen(false)}
+          organizationId={organizationId}
+          memberOptions={memberOptions}
+          documentOptions={documentOptions}
+        />
+      ) : (
+        <IncomingDialog
+          key={open ? "in-create-open" : "in-create-closed"}
+          open={open}
+          onClose={() => setOpen(false)}
+          organizationId={organizationId}
+          documentOptions={documentOptions}
+        />
+      )}
+    </>
+  );
+}
+
 export function LetterTabs({
   organizationId,
   activeTab,
@@ -192,22 +247,12 @@ function IncomingPanel({
   total: number;
 }) {
   const { showToast } = useToast();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<IncomingRow | null>(null);
   const [deleting, setDeleting] = useState<IncomingRow | null>(null);
   const [isPending, startTransition] = useTransition();
 
   return (
     <div className="space-y-4">
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} aria-hidden="true" />
-            Catat Surat Masuk
-          </Button>
-        </div>
-      ) : null}
-
       {/* Toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
       <Card>
         <TableToolbar
@@ -331,14 +376,6 @@ function IncomingPanel({
           pageSize={daftar.ukuranHalaman}
         />
       </Card>
-
-      <IncomingDialog
-        key={createOpen ? "in-create-open" : "in-create-closed"}
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        organizationId={organizationId}
-        documentOptions={documentOptions}
-      />
 
       <IncomingDialog
         key={editing?.id ?? "in-edit-closed"}
@@ -573,7 +610,6 @@ function OutgoingPanel({
   total: number;
 }) {
   const { showToast } = useToast();
-  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<OutgoingRow | null>(null);
   const [deleting, setDeleting] = useState<OutgoingRow | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -583,15 +619,6 @@ function OutgoingPanel({
 
   return (
     <div className="space-y-4">
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} aria-hidden="true" />
-            Buat Surat Keluar
-          </Button>
-        </div>
-      ) : null}
-
       {/* Toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
       <Card>
         <TableToolbar
@@ -744,15 +771,6 @@ function OutgoingPanel({
           pageSize={daftar.ukuranHalaman}
         />
       </Card>
-
-      <OutgoingDialog
-        key={createOpen ? "out-create-open" : "out-create-closed"}
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        organizationId={organizationId}
-        memberOptions={memberOptions}
-        documentOptions={documentOptions}
-      />
 
       <OutgoingDialog
         key={editing?.id ?? "out-edit-closed"}

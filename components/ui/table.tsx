@@ -14,10 +14,15 @@ import { cn } from "@/lib/utils";
  * tombol "Berikutnya".
  *
  * Batasnya MENGIKUTI TINGGI LAYAR, bukan angka mati: `calc(100dvh-20rem)`
- * menyisakan ruang untuk kepala halaman, toolbar, dan kaki tabel, lalu
- * `min-h` menjaganya tetap masuk akal pada layar pendek. Karena yang dipakai
- * `max-height` dan `overflow-y: auto`, tabel berisi tiga baris tetap setinggi
- * tiga baris — batas ini hanya bekerja ketika memang dilampaui.
+ * menyisakan ruang untuk kepala halaman, toolbar, dan kaki tabel. Karena yang
+ * dipakai `max-height` dan `overflow-y: auto`, tabel berisi tiga baris tetap
+ * setinggi tiga baris — batas ini hanya bekerja ketika memang dilampaui.
+ *
+ * TIDAK ADA `min-height`. Sebelumnya ada, 220px, dan itu membatalkan kalimat
+ * di atas: diukur di peramban pada halaman Kepengurusan, tabel berisi dua
+ * baris setinggi 134px duduk di dalam kotak 220px — 86px kosong yang tidak
+ * pernah diminta siapa pun, pada setiap tabel yang datanya sedikit. Batas
+ * bawah adalah cara membuat kekosongan, bukan cara mencegahnya.
  *
  * Gulirannya memakai `.scroll-area`, utilitas yang SAMA dengan sidebar dan
  * dialog: batang gulir 4px, jalur transparan, thumb yang menggelap saat
@@ -35,7 +40,7 @@ export function TableScroll({
     <div
       className={cn(
         "w-full overflow-x-auto",
-        bounded && "scroll-area max-h-[calc(100dvh-20rem)] min-h-[220px]",
+        bounded && "scroll-area max-h-[calc(100dvh-20rem)]",
         className,
       )}
       {...props}

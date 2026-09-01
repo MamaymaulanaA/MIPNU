@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ForbiddenState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import {
+  BudgetCreateDialog,
   BudgetManager,
   type BudgetItemRow,
   type BudgetRow,
@@ -112,24 +113,32 @@ export default async function FinanceBudgetsPage() {
     };
   });
 
+  const opsiPeriode = (
+    (periodsResult.data as
+      { id: string; name: string; status: string }[] | null) ?? []
+  ).map((period) => ({
+    id: period.id,
+    label: period.status === "ACTIVE" ? `${period.name} (aktif)` : period.name,
+  }));
+
   return (
     <div className="space-y-5">
       <PageHeader
         title="Anggaran"
         description="Rencana anggaran per periode, dibandingkan dengan pengeluaran yang sudah diposting."
+        actions={
+          can(context, PERMISSIONS.finance.manageBudgets) ? (
+            <BudgetCreateDialog
+              organizationId={context.organizationId}
+              periodOptions={opsiPeriode}
+            />
+          ) : null
+        }
       />
 
       <BudgetManager
         organizationId={context.organizationId}
         budgets={budgets}
-        periodOptions={(
-          (periodsResult.data as
-            { id: string; name: string; status: string }[] | null) ?? []
-        ).map((period) => ({
-          id: period.id,
-          label:
-            period.status === "ACTIVE" ? `${period.name} (aktif)` : period.name,
-        }))}
         expenseCategories={(
           (categoriesResult.data as { id: string; name: string }[] | null) ?? []
         ).map((category) => ({ id: category.id, label: category.name }))}

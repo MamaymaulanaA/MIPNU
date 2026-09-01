@@ -52,21 +52,55 @@ export type BudgetPermissions = {
   canApprove: boolean;
 };
 
+/**
+ * Tombol "Tambah Anggaran" beserta dialognya.
+ *
+ * Di kepala halaman, sebaris dengan judul. Sebelumnya ia berdiri sebagai blok
+ * 44px tersendiri di antara kepala halaman dan kartu anggaran — bukan bagian
+ * dari keduanya, dan satu-satunya hal yang menempati baris itu.
+ */
+export function BudgetCreateDialog({
+  organizationId,
+  periodOptions,
+}: {
+  organizationId: string;
+  periodOptions: BudgetOption[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        onClick={() => setOpen(true)}
+        disabled={periodOptions.length === 0}
+      >
+        <Plus size={16} aria-hidden="true" />
+        Tambah Anggaran
+      </Button>
+
+      <BudgetDialog
+        key={open ? "bud-create-open" : "bud-create-closed"}
+        open={open}
+        onClose={() => setOpen(false)}
+        organizationId={organizationId}
+        periodOptions={periodOptions}
+      />
+    </>
+  );
+}
+
 export function BudgetManager({
   organizationId,
   budgets,
-  periodOptions,
   expenseCategories,
   permissions,
 }: {
   organizationId: string;
   budgets: BudgetRow[];
-  periodOptions: BudgetOption[];
   expenseCategories: BudgetOption[];
   permissions: BudgetPermissions;
 }) {
   const { showToast } = useToast();
-  const [createOpen, setCreateOpen] = useState(false);
   const [adding, setAdding] = useState<BudgetRow | null>(null);
   const [removing, setRemoving] = useState<{
     budgetId: string;
@@ -76,18 +110,6 @@ export function BudgetManager({
 
   return (
     <>
-      {permissions.canManage ? (
-        <div className="flex justify-end">
-          <Button
-            onClick={() => setCreateOpen(true)}
-            disabled={periodOptions.length === 0}
-          >
-            <Plus size={16} aria-hidden="true" />
-            Tambah Anggaran
-          </Button>
-        </div>
-      ) : null}
-
       {budgets.length === 0 ? (
         <EmptyState
           icon={PiggyBank}
@@ -113,17 +135,22 @@ export function BudgetManager({
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <Badge tone={status.tone} dot>
-                      {status.label}
-                    </Badge>
+                  {/*
+                    Satu kontrol, bukan dua.
 
+                    Sebelumnya lencana status DAN daftar pilihan status berdiri
+                    berdampingan — keduanya menyebut hal yang sama, dan yang
+                    kedua terbaca sebagai kotak isian selebar 128px di sudut
+                    kepala kartu. Yang berhak mengubah status melihat daftarnya
+                    saja; yang tidak berhak melihat lencananya saja.
+                  */}
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {permissions.canApprove ? (
                       <Select
                         aria-label={`Status ${budget.name}`}
                         value={budget.status}
                         disabled={isPending}
-                        className="h-8 w-auto min-w-32 text-[13px]"
+                        className="h-9 w-auto text-[13px]"
                         onChange={(event) => {
                           const next = event.target.value as
                             "DRAFT" | "APPROVED" | "CLOSED";
@@ -146,7 +173,11 @@ export function BudgetManager({
                           </option>
                         ))}
                       </Select>
-                    ) : null}
+                    ) : (
+                      <Badge tone={status.tone} dot>
+                        {status.label}
+                      </Badge>
+                    )}
                   </div>
                 </CardHeader>
 
@@ -275,14 +306,6 @@ export function BudgetManager({
           })}
         </div>
       )}
-
-      <BudgetDialog
-        key={createOpen ? "bud-create-open" : "bud-create-closed"}
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        organizationId={organizationId}
-        periodOptions={periodOptions}
-      />
 
       <BudgetItemDialog
         key={adding?.id ?? "item-closed"}

@@ -50,7 +50,7 @@ export default async function ElectionsPage() {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title="Pemilihan"
         description="Pemilihan internal organisasi, dari penyusunan kandidat sampai hasil resmi."
