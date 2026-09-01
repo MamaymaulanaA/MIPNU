@@ -370,6 +370,21 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+
+    /*
+     * Tempat batang gulir selalu disediakan, dipakai atau tidak.
+     *
+     * Tanpa ini lebar isi halaman berubah 15px begitu halamannya lebih tinggi
+     * dari layar. Diukur di peramban pada 1440px: kartu Audit Log berakhir di
+     * 1401 sementara kartu di seluruh halaman lain berakhir di 1416 — dan
+     * berpindah halaman menggeser seluruh tata letak, termasuk sidebar dan
+     * kepala halaman.
+     *
+     * Harganya 15px yang tetap kosong pada halaman pendek. Itu jauh lebih
+     * murah daripada tata letak yang melompat setiap kali daftar bertambah
+     * satu baris.
+     */
+    scrollbar-gutter: stable;
   }
 
   body {
