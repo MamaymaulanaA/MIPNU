@@ -29,14 +29,20 @@
   /*
    * Nyaris putih, dan hampir tanpa warna.
    *
-   * Sebelumnya 23% saturasi pada hue 220 — cukup biru untuk terbaca
-   * dingin, terutama berdampingan dengan kartu putih murni. Yang
-   * diturunkan saturasinya, bukan hanya terangnya: latar yang terlalu
-   * terang membuat kartu putih kehilangan pemisahnya dan halaman
-   * terbaca rata, sementara latar yang kurang jenuh terbaca bersih
-   * tanpa mengorbankan pemisah itu.
+   * Sebelumnya 23% saturasi pada hue 220 — cukup biru untuk terbaca dingin,
+   * terutama berdampingan dengan kartu putih murni. Yang diturunkan lebih dulu
+   * saturasinya, bukan terangnya: warna yang mengganggu di sini birunya.
+   *
+   * Terangnya berhenti di 98.5%, dan angka itu batas, bukan pilihan bebas.
+   * Kartu berada di 100%, jadi selisihnya tinggal empat tingkat rgb —
+   * rgb(251,251,252) berbanding rgb(255,255,255). Cukup untuk membuat kartu
+   * terbaca terangkat, dan itulah seluruh tugas latar ini.
+   *
+   * Satu langkah lagi ke 99% menyisakan tiga tingkat, dan pada layar yang
+   * tidak dikalibrasi batas antara latar dan kartu berhenti terlihat sama
+   * sekali — halaman terbaca rata, dan yang tersisa hanya border 1px.
    */
-  --background: 220 16% 98%; /* #FAFBFC */
+  --background: 220 16% 98.5%; /* #FBFBFC */
   --foreground: 221 39% 11%; /* #111827 */
 
   --card: 0 0% 100%;
