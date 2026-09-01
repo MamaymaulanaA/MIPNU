@@ -8,7 +8,11 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ElectionCreateDialog } from "@/features/elections/components/election-form";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
+import { ELECTION_STATUSES } from "@/features/elections/schemas/election.schema";
 import { listElections } from "@/features/elections/queries/get-election";
+import { bacaParamDaftar } from "@/lib/list-params";
 import { ELECTION_TYPE_LABEL } from "@/features/elections/schemas/election.schema";
 import type { ElectionType } from "@/features/elections/schemas/election.schema";
 import { can, requireAccessContext } from "@/lib/auth/context";
@@ -21,7 +25,14 @@ export const metadata: Metadata = {
   title: "Pemilihan",
 };
 
-export default async function ElectionsPage() {
+/** Sembilan: tiga baris penuh pada kisi tiga kolom. */
+const UKURAN_HALAMAN = 9;
+
+export default async function ElectionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const context = await requireAccessContext();
 
   if (!context.organizationId || !can(context, PERMISSIONS.elections.view)) {
@@ -31,10 +42,20 @@ export default async function ElectionsPage() {
   const organizationId = context.organizationId;
   const canCreate = can(context, PERMISSIONS.elections.create);
 
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["status"],
+  });
+
   const supabase = await createClient();
 
-  const [elections, periodsResult] = await Promise.all([
-    listElections(organizationId),
+  const [halaman, periodsResult] = await Promise.all([
+    listElections(organizationId, {
+      dari: daftar.dari,
+      sampai: daftar.sampai,
+      cari: daftar.cari || undefined,
+      status: daftar.saring.status || undefined,
+    }),
     canCreate
       ? supabase
           .from("organization_periods")
@@ -48,6 +69,9 @@ export default async function ElectionsPage() {
     id: row.id,
     label: row.name,
   }));
+
+  const elections = halaman.rows;
+  const disaring = daftar.cari !== "" || daftar.saring.status !== "";
 
   return (
     <div className="space-y-5">
@@ -73,20 +97,51 @@ export default async function ElectionsPage() {
         pemilihan. Keduanya menjelaskan hal yang berbeda, dan itu sebabnya
         keduanya ada.
 
-        Kisinya menggulir di dalam kartu bila daftarnya panjang, memakai
-        `.scroll-area` yang sama dengan tabel dan Pengumuman. `listElections()`
-        belum membatasi barisnya di server; sampai ia melakukannya, batas
-        tinggi inilah yang menjaga kaki halaman tetap terjangkau.
+        Barisnya dipenggal di SERVER — sembilan per halaman, tiga baris penuh
+        pada kisi tiga kolom. Batas tinggi guliran tetap ada sebagai jaring
+        kedua untuk layar pendek, tetapi yang benar-benar menahan halaman ini
+        dari memanjang adalah `.range()` di querynya, bukan `max-height` yang
+        menyembunyikan baris setelah terkirim.
       */}
       <Card>
+        {/*
+          Toolbar memakai kolom yang MEMANG ada: `name` untuk pencarian dan
+          `status` untuk saringan. Tidak ada penyaring yang tidak didukung
+          querynya.
+        */}
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari pemilihan…"
+          searchLabel="Cari pemilihan"
+          filters={[
+            {
+              key: "status",
+              size: "sm",
+              label: "Saring menurut status",
+              value: daftar.saring.status,
+              allLabel: "Semua status",
+              options: ELECTION_STATUSES.map((value) => ({
+                value,
+                label: electionStatus(value).label,
+              })),
+            },
+          ]}
+        />
+
         {elections.length === 0 ? (
           <EmptyState
             icon={Vote}
-            title="Belum ada pemilihan"
+            title={
+              disaring
+                ? "Tidak ada pemilihan yang cocok"
+                : "Belum ada pemilihan"
+            }
             description={
-              canCreate
-                ? "Buat pemilihan baru untuk mulai menyusun kandidat dan daftar pemilih."
-                : "Belum ada pemilihan yang dapat Anda lihat pada organisasi ini."
+              disaring
+                ? "Ubah kata pencarian atau saringan statusnya."
+                : canCreate
+                  ? "Buat pemilihan baru untuk mulai menyusun kandidat dan daftar pemilih."
+                  : "Belum ada pemilihan yang dapat Anda lihat pada organisasi ini."
             }
           />
         ) : (
@@ -132,6 +187,14 @@ export default async function ElectionsPage() {
             })}
           </div>
         )}
+
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(1, Math.ceil(halaman.total / UKURAN_HALAMAN))}
+          total={halaman.total}
+          pageSize={UKURAN_HALAMAN}
+          label="pemilihan"
+        />
       </Card>
     </div>
   );

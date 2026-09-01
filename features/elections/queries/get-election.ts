@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
+import { polaCari } from "@/lib/list-params";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -91,17 +92,55 @@ export const getElection = cache(
   },
 );
 
+export type ElectionListPage = {
+  rows: ElectionRow[];
+  /** Jumlah SELURUH baris yang cocok, bukan yang terkirim. */
+  total: number;
+};
+
+/**
+ * Daftar pemilihan, dipenggal di server.
+ *
+ * Sebelumnya fungsi ini mengambil SELURUH pemilihan organisasi tanpa batas.
+ * Sebuah organisasi yang sudah berjalan bertahun-tahun mengirim seluruh
+ * arsipnya ke peramban setiap kali halaman dibuka — dan yang menahannya dari
+ * memanjang tak terbatas hanyalah batas tinggi guliran pada tampilannya, yang
+ * menyembunyikan barisnya setelah terkirim, bukan mencegahnya terkirim.
+ *
+ * Penyaringnya memakai kolom yang memang ada: `name` untuk pencarian dan
+ * `status` untuk saringan. Tidak ada penyaring yang tidak didukung querynya.
+ */
 export const listElections = cache(
-  async (organizationId: string): Promise<ElectionRow[]> => {
+  async (
+    organizationId: string,
+    opsi: {
+      dari: number;
+      sampai: number;
+      cari?: string;
+      status?: string;
+    },
+  ): Promise<ElectionListPage> => {
     const supabase = await createClient();
 
-    const { data } = await supabase
+    let query = supabase
       .from("elections")
-      .select(SELECT)
-      .eq("organization_id", organizationId)
-      .order("start_at", { ascending: false });
+      .select(SELECT, { count: "exact" })
+      .eq("organization_id", organizationId);
 
-    return ((data ?? []) as unknown as ElectionRecord[]).map(toRow);
+    if (opsi.status) query = query.eq("status", opsi.status);
+    if (opsi.cari) query = query.ilike("name", polaCari(opsi.cari));
+
+    const { data, count } = await query
+      // Pemecah seri deterministik: dua pemilihan yang mulai pada saat yang
+      // sama tidak boleh bertukar tempat antar-halaman.
+      .order("start_at", { ascending: false })
+      .order("id", { ascending: true })
+      .range(opsi.dari, opsi.sampai);
+
+    return {
+      rows: ((data ?? []) as unknown as ElectionRecord[]).map(toRow),
+      total: count ?? 0,
+    };
   },
 );
 
