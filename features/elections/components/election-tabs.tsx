@@ -54,9 +54,12 @@ export function ElectionTabs({
   return (
     <nav
       aria-label="Bagian pemilihan"
-      className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+      // Kepala kartu, bukan bilah mengambang. Bentuknya sama dengan
+      // `TableToolbar` di atas tabel: garis bawah menjadi pemisah kepala, dan
+      // padding sisinya mengikuti padding kartu.
+      className="overflow-x-auto border-b border-border px-4 sm:px-5"
     >
-      <ul className="flex min-w-max gap-1 border-b border-border">
+      <ul className="flex min-w-max gap-1">
         {visible.map((tab) => {
           const isActive = tab === active;
 

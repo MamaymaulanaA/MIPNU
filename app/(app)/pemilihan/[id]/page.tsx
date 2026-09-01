@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { CalendarRange, FileClock } from "lucide-react";
 
@@ -21,7 +22,10 @@ import {
   exportVoters,
 } from "@/features/elections/actions/export-elections";
 import { CandidatePanel } from "@/features/elections/components/candidate-panel";
-import { CommitteePanel } from "@/features/elections/components/committee-panel";
+import {
+  CommitteeAssignDialog,
+  CommitteePanel,
+} from "@/features/elections/components/committee-panel";
 import { ElectionEditDialog } from "@/features/elections/components/election-form";
 import {
   ElectionTabs,
@@ -149,6 +153,33 @@ export default async function ElectionDetailPage({
               />
             ) : null}
 
+            {tab === "panitia" && canAssignCommittee ? (
+              <CommitteeAssignDialog
+                organizationId={organizationId}
+                electionId={id}
+                committee={await listCommittee(id)}
+                memberOptions={await memberOptions(organizationId)}
+              />
+            ) : null}
+
+            {/*
+              Ekspor hasil hanya ditawarkan bila hasilnya memang sudah boleh
+              dilihat. Menawarkannya lebih awal berarti menjanjikan berkas yang
+              pasti ditolak server. Query hasilnya hanya dipanggil pada tab
+              ini, dan `getElectionResult` di-cache sehingga seksinya tidak
+              menanyakannya untuk kedua kali.
+            */}
+            {tab === "hasil" && (await getElectionResult(id)).result ? (
+              <ExportButton
+                label={
+                  (await getElectionResult(id)).result?.official
+                    ? "Ekspor Hasil Resmi"
+                    : "Ekspor Hasil"
+                }
+                action={exportResult.bind(null, organizationId, id)}
+              />
+            ) : null}
+
             {canEdit && !locked ? (
               <ElectionEditDialog
                 organizationId={organizationId}
@@ -185,60 +216,75 @@ export default async function ElectionDetailPage({
         </div>
       ) : null}
 
-      <ElectionTabs electionId={id} active={tab} visible={visibleTabs} />
+      {/*
+        SATU kartu untuk seluruh permukaan tab: deretan tab menjadi kepalanya,
+        isi tab menjadi badannya.
 
-      {tab === "ringkasan" ? (
-        <SummaryTab
-          organizationId={organizationId}
-          election={election}
-          votingOpen={votingOpen}
-          canVote={canVote}
-          permissions={{
-            canEdit,
-            canOpen: can(context, PERMISSIONS.elections.open),
-            canClose: can(context, PERMISSIONS.elections.close),
-            canPublish: can(context, PERMISSIONS.elections.publishResult),
-            canArchive: can(context, PERMISSIONS.elections.archive),
-            canManage,
-          }}
-          memberId={context.memberId}
-        />
-      ) : null}
+        Sebelumnya deretan tab mengambang sendiri di atas halaman, dan tiap tab
+        menyusun pembungkusnya masing-masing — Kandidat memakai kisi telanjang,
+        DPT sebuah `space-y-4` tanpa kartu, Hasil sebuah baris aksi melayang
+        di atas isi telanjang. Enam tab, enam bentuk.
 
-      {tab === "kandidat" ? (
-        <CandidatePanel
-          organizationId={organizationId}
-          electionId={id}
-          candidates={await listCandidates(id)}
-          memberOptions={await memberOptions(organizationId)}
-          canManage={canManageCandidates}
-          locked={locked}
-        />
-      ) : null}
+        Dengan tab sebagai kepala kartu, setiap tab mewarisi padding yang sama
+        dan tidak perlu memikirkan pembungkusnya sendiri — bentuk yang sama
+        dengan `TableToolbar` yang menjadi kepala kartu tabel.
+      */}
+      <Card>
+        <ElectionTabs electionId={id} active={tab} visible={visibleTabs} />
 
-      {tab === "dpt" && canManageVoters ? (
-        <VoterPanelSection
-          organizationId={organizationId}
-          electionId={id}
-          locked={locked}
-        />
-      ) : null}
+        <div className="p-4 sm:p-5">
+          {tab === "ringkasan" ? (
+            <SummaryTab
+              organizationId={organizationId}
+              election={election}
+              votingOpen={votingOpen}
+              canVote={canVote}
+              permissions={{
+                canEdit,
+                canOpen: can(context, PERMISSIONS.elections.open),
+                canClose: can(context, PERMISSIONS.elections.close),
+                canPublish: can(context, PERMISSIONS.elections.publishResult),
+                canArchive: can(context, PERMISSIONS.elections.archive),
+                canManage,
+              }}
+              memberId={context.memberId}
+            />
+          ) : null}
 
-      {tab === "panitia" && canAssignCommittee ? (
-        <CommitteeSection organizationId={organizationId} electionId={id} />
-      ) : null}
+          {tab === "kandidat" ? (
+            <CandidatePanel
+              organizationId={organizationId}
+              electionId={id}
+              candidates={await listCandidates(id)}
+              memberOptions={await memberOptions(organizationId)}
+              canManage={canManageCandidates}
+              locked={locked}
+            />
+          ) : null}
 
-      {tab === "partisipasi" ? (
-        <ParticipationSection electionId={id} live={votingOpen} />
-      ) : null}
+          {tab === "dpt" && canManageVoters ? (
+            <VoterPanelSection
+              organizationId={organizationId}
+              electionId={id}
+              locked={locked}
+            />
+          ) : null}
 
-      {tab === "hasil" ? (
-        <ResultSection organizationId={organizationId} electionId={id} />
-      ) : null}
+          {tab === "panitia" && canAssignCommittee ? (
+            <CommitteeSection organizationId={organizationId} electionId={id} />
+          ) : null}
 
-      {tab === "audit" && canViewAudit ? (
-        <AuditSection electionId={id} supabase={supabase} />
-      ) : null}
+          {tab === "partisipasi" ? (
+            <ParticipationSection electionId={id} live={votingOpen} />
+          ) : null}
+
+          {tab === "hasil" ? <ResultSection electionId={id} /> : null}
+
+          {tab === "audit" && canViewAudit ? (
+            <AuditSection electionId={id} supabase={supabase} />
+          ) : null}
+        </div>
+      </Card>
     </div>
   );
 }
@@ -256,7 +302,11 @@ async function periodOptions(organizationId: string) {
   return (data ?? []).map((row) => ({ id: row.id, label: row.name }));
 }
 
-async function memberOptions(organizationId: string) {
+/**
+ * Di-cache: dipanggil kepala halaman dan seksi tabnya pada render yang sama.
+ * Tanpa `cache`, satu tab memicu dua query anggota yang jawabannya identik.
+ */
+const memberOptions = cache(async (organizationId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("members")
@@ -272,7 +322,7 @@ async function memberOptions(organizationId: string) {
     label: row.full_name,
     memberNumber: row.member_number,
   }));
-}
+});
 
 /* ------------------------------------------------------------- ringkasan */
 
@@ -495,9 +545,8 @@ async function CommitteeSection({
 }) {
   const supabase = await createClient();
 
-  const [committee, members, permissionsResult] = await Promise.all([
+  const [committee, permissionsResult] = await Promise.all([
     listCommittee(electionId),
-    memberOptions(organizationId),
     supabase.from("permissions").select("id, code").like("code", "elections.%"),
   ]);
 
@@ -511,7 +560,6 @@ async function CommitteeSection({
       organizationId={organizationId}
       electionId={electionId}
       committee={committee}
-      memberOptions={members}
       permissionNames={permissionNames}
       canAssign
     />
@@ -552,41 +600,11 @@ async function ParticipationSection({
   );
 }
 
-async function ResultSection({
-  organizationId,
-  electionId,
-}: {
-  organizationId: string;
-  electionId: string;
-}) {
+async function ResultSection({ electionId }: { electionId: string }) {
+  // Tombol ekspornya ada di kepala halaman — lihat catatannya di sana.
   const { result, reason } = await getElectionResult(electionId);
 
-  return (
-    <div className="space-y-4">
-      {/* Tombol ekspor hanya muncul bila hasilnya memang sudah boleh dilihat.
-          Menawarkannya lebih awal berarti menjanjikan berkas yang pasti
-          ditolak server. */}
-      {result ? (
-        /*
-          Ekspor hasil tetap di seksinya, bukan di kepala halaman: ia hanya
-          boleh muncul ketika hasilnya memang sudah boleh dilihat, dan
-          pengetahuan itu baru ada setelah `getElectionResult` dijawab di
-          dalam seksi ini. Menaikkannya ke kepala berarti memanggil query
-          hasil pada SETIAP tab, termasuk tab yang tidak berhak melihatnya.
-
-          Ukurannya kini sama dengan tombol lain — bukan `size="sm"`.
-        */
-        <div className="flex justify-end">
-          <ExportButton
-            label={result.official ? "Ekspor Hasil Resmi" : "Ekspor Hasil"}
-            action={exportResult.bind(null, organizationId, electionId)}
-          />
-        </div>
-      ) : null}
-
-      <ResultView result={result} reason={reason} />
-    </div>
-  );
+  return <ResultView result={result} reason={reason} />;
 }
 
 async function AuditSection({
@@ -634,44 +652,44 @@ async function AuditSection({
   }
 
   return (
-    // Tabel audit di dalam kartu, seperti setiap tabel lain di aplikasi ini.
-    // Sebelumnya ia berdiri telanjang di atas halaman.
-    <Card>
-      <TableScroll bounded>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>Waktu</TableHeaderCell>
-              <TableHeaderCell>Peristiwa</TableHeaderCell>
-              <TableHeaderCell className="hidden sm:table-cell">
-                Pelaku
-              </TableHeaderCell>
-              <TableHeaderCell className="hidden md:table-cell">
-                Keterangan
-              </TableHeaderCell>
+    // Tabelnya sudah berada di dalam kartu permukaan tab; yang perlu di sini
+    // hanya batas tingginya. `-mx-4 sm:-mx-5` menarik guliran mendatarnya
+    // sampai tepi kartu, supaya kolom yang terpotong tidak berhenti di tengah
+    // padding.
+    <TableScroll bounded className="-mx-4 sm:-mx-5">
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableHeaderCell>Waktu</TableHeaderCell>
+            <TableHeaderCell>Peristiwa</TableHeaderCell>
+            <TableHeaderCell className="hidden sm:table-cell">
+              Pelaku
+            </TableHeaderCell>
+            <TableHeaderCell className="hidden md:table-cell">
+              Keterangan
+            </TableHeaderCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.id}>
+              <TableCell className="whitespace-nowrap text-muted-foreground">
+                {formatDateTime(row.created_at)}
+              </TableCell>
+              <TableCell className="font-medium text-foreground">
+                {row.action}
+              </TableCell>
+              <TableCell className="hidden text-muted-foreground sm:table-cell">
+                {row.profiles?.display_name ?? "Sistem"}
+              </TableCell>
+              <TableCell className="hidden text-muted-foreground md:table-cell">
+                {describeAudit(row.metadata)}
+              </TableCell>
             </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell className="whitespace-nowrap text-muted-foreground">
-                  {formatDateTime(row.created_at)}
-                </TableCell>
-                <TableCell className="font-medium text-foreground">
-                  {row.action}
-                </TableCell>
-                <TableCell className="hidden text-muted-foreground sm:table-cell">
-                  {row.profiles?.display_name ?? "Sistem"}
-                </TableCell>
-                <TableCell className="hidden text-muted-foreground md:table-cell">
-                  {describeAudit(row.metadata)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableScroll>
-    </Card>
+          ))}
+        </TableBody>
+      </Table>
+    </TableScroll>
   );
 }
 

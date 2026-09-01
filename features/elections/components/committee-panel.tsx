@@ -7,7 +7,6 @@ import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
@@ -87,14 +86,12 @@ export function CommitteePanel({
   organizationId,
   electionId,
   committee,
-  memberOptions,
   permissionNames,
   canAssign,
 }: {
   organizationId: string;
   electionId: string;
   committee: CommitteeRow[];
-  memberOptions: CommitteeMemberOption[];
   /** Peta id permission → kode, untuk menampilkan hak yang sudah melekat. */
   permissionNames: Record<string, string>;
   canAssign: boolean;
@@ -104,26 +101,10 @@ export function CommitteePanel({
   const [removing, setRemoving] = useState<CommitteeRow | null>(null);
 
   return (
-    /*
-      Kartu pembungkus dengan kepala bagian — bentuk yang sama dengan kedua
-      bagian pada halaman Akun Kas. Aksinya berada di kepala itu, bukan
-      melayang rata kanan di atas daftar: data panitianya diambil di dalam
-      seksi async ini, jadi menaikkannya ke kepala HALAMAN akan menuntut
-      pengambilan kedua hanya demi sebuah tombol.
-    */
-    <Card>
-      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
-        <h2 className="text-[15px] font-semibold text-foreground">Panitia</h2>
-        {canAssign ? (
-          <CommitteeAssignDialog
-            organizationId={organizationId}
-            electionId={electionId}
-            committee={committee}
-            memberOptions={memberOptions}
-          />
-        ) : null}
-      </div>
-
+    // Tanpa pembungkus sendiri: seluruh isi tab sudah berada di dalam kartu
+    // permukaan tab, dan kepala kartu itu adalah deretan tabnya. Aksinya ada
+    // di kepala halaman.
+    <>
       {committee.length === 0 ? (
         <EmptyState
           icon={ShieldCheck}
@@ -135,7 +116,7 @@ export function CommitteePanel({
           }
         />
       ) : (
-        <ul className="space-y-3 p-4 sm:p-5">
+        <ul className="space-y-3">
           {committee.map((member) => (
             <li
               key={member.id}
@@ -217,7 +198,7 @@ export function CommitteePanel({
         destructive
         pending={isPending}
       />
-    </Card>
+    </>
   );
 }
 
