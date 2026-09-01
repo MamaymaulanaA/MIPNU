@@ -440,50 +440,58 @@ const JADWAL_RUPA: Record<ScheduleKind, { label: string; tone: BadgeTone }> = {
  * Kotak tanggal.
  *
  * Sudutnya 6px, sama dengan wadah ikon pada panel Administrasi di sebelahnya —
- * bukan 10px. Lengkung besar pada kotak selebar 36px membuatnya terbaca
- * sebagai kapsul yang gagal alih-alih sebagai penanggalan.
+ * bukan 10px. Lengkung besar pada kotak sekecil ini membuatnya terbaca sebagai
+ * kapsul yang gagal alih-alih sebagai penanggalan.
  *
  * Tiga baris, bukan dua: bulan menjawab "kapan", tanggal menjawab "kapan
  * tepatnya", dan tahun menjaga agar jadwal yang jatuh tahun depan tidak
  * terbaca seperti minggu ini.
  *
- * UKURANNYA 36px (`size-9`), dan TIDAK lagi dikunci ke `IconBox`.
+ * PERSEGI PANJANG (40 × 42), bukan persegi, dan bukan pula seukuran `IconBox`.
+ * Tiga baris teks bertumpuk memang lebih tinggi daripada lebar; memaksanya
+ * masuk ke bujur sangkar adalah asal mula seluruh riwayat di bawah ini.
  *
- * Sebelumnya ia dipatok `size-7` (28px) supaya persis seukuran wadah ikon.
- * Niatnya benar — dua panel bersebelahan tidak boleh berbeda kerapatan —
- * tetapi yang disamakan adalah hal yang salah. Diukur di peramban pada
- * 1440px: tiga baris isinya menuntut 31px di dalam kotak 28px, jadi LUBER 3px
- * dan dipotong diam-diam oleh `overflow-hidden`. Tahunnya kehilangan kaki
- * huruf, dan kotaknya berdiri tanpa satu piksel pun padding.
+ * FLEX, BUKAN GRID — dan inilah inti perbaikannya.
  *
- * Yang harus seragam antar panel adalah TINGGI BARISNYA, dan itu sudah dijaga
- * `min-h-14` pada `ListItem` — bukan ukuran penandanya. Sebuah kotak berisi
- * tiga baris teks dan sebuah kotak berisi satu glif memang tidak sama besar;
- * memaksanya sama persis adalah yang tadi memotong tahunnya.
+ * Kotak ini pernah `grid ... place-items-center`. Pada kisi, `align-content`
+ * bawaan berperilaku `stretch`: sisa ruang TIDAK jatuh ke atas dan ke bawah
+ * isinya, melainkan dibagi rata ke dalam ketiga barisnya. Diukur di peramban
+ * pada 1440px, kotak 36px berisi 29px teks:
  *
- * Pada 36px isinya (29px) duduk dengan sisa 3,5px di atas dan di bawah, dan
- * kotaknya muat di dalam 38px ruang isi yang disediakan baris 60px — lega,
- * tanpa membuat baris Jadwal lebih tinggi daripada tetangganya. Hitungan
- * lengkapnya, berikut border yang mudah terlewat, ada di kepala `cards.tsx`.
+ *   baris kisi              9,66 / 14,67 / 9,67   (bukan 8 / 13 / 8)
+ *   border atas → "SEP"     0,83px
+ *   "2026" → border bawah   1,84px
+ *   tinta hari → tinta tahun  -0,33px  (bertumpang tindih)
  *
- * `overflow-hidden` DIHAPUS, bukan dipertahankan sebagai jaring pengaman.
- * Justru itu yang membuat cacatnya tidak terlihat selama ini: isi yang tidak
- * muat lebih baik terlihat menonjol keluar dan segera diperbaiki daripada
- * dipotong rapi dan lolos berbulan-bulan.
+ * Jadi sisa 7px itu ada — ia hanya diletakkan di tempat yang persis salah:
+ * merenggangkan huruf ke arah border, sambil menyisakan kurang dari dua
+ * piksel di luar. Menambah padding pada kisi tidak akan menolong; padding
+ * hanya memperbesar kotaknya, lalu stretch membagi tambahannya ke dalam lagi.
+ *
+ * `flex flex-col justify-center` membalik arah itu: baris memakai tinggi
+ * alaminya, dan seluruh sisa ruang menjadi jarak di LUAR isi — yang memang
+ * arti padding. Dengan `leading` eksplisit (9 / 14 / 9 = 32px) di dalam kotak
+ * berpadding 4px, hasilnya 4px di atas "SEP" dan 4px di bawah "2026",
+ * seimbang, dan tidak ada lagi tinta yang bersinggungan.
+ *
+ * `overflow-hidden` DIHAPUS sejak perbaikan sebelumnya, bukan dipertahankan
+ * sebagai jaring pengaman. Justru itu yang membuat cacat pertama tidak
+ * terlihat: isi yang tidak muat lebih baik menonjol keluar dan segera
+ * diperbaiki daripada dipotong rapi lalu lolos berbulan-bulan.
  */
 function DateTile({ date }: { date: Date }) {
   return (
     <span
       aria-hidden="true"
-      className="grid size-9 shrink-0 place-items-center rounded-sm border border-primary-border bg-primary-soft leading-none"
+      className="flex h-[42px] w-10 shrink-0 flex-col items-center justify-center gap-px rounded-sm border border-primary-border bg-primary-soft px-1 py-1"
     >
-      <span className="text-[8px] font-semibold tracking-wide text-primary uppercase">
+      <span className="text-[8px] leading-[9px] font-semibold tracking-wide text-primary uppercase">
         {BULAN_SINGKAT[date.getMonth()]}
       </span>
-      <span className="text-[13px] font-semibold text-foreground">
+      <span className="text-[13px] leading-[14px] font-bold text-foreground">
         {date.getDate()}
       </span>
-      <span className="text-[8px] text-muted-foreground">
+      <span className="text-[8px] leading-[9px] text-muted-foreground">
         {date.getFullYear()}
       </span>
     </span>

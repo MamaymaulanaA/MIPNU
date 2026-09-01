@@ -31,47 +31,44 @@ import { cn } from "@/lib/utils";
  *   badan panel    px-3.5 py-3   (14 / 12)
  *   kartu metrik   p-3.5         (14)
  *   item daftar    px-3 py-2.5   (12 / 10)
- *   tinggi item    min-h-15      (60)
+ *   tinggi item    min-h-16      (64)
  *   penanda→teks   gap-3         (12)
  *   jarak item     gap-2         (8)
  *   jarak panel    gap-4         (16)
  *   jarak baris    space-y-4     (16)
  *   wadah ikon     size-8        (32)
- *   kotak tanggal  size-9        (36)
+ *   kotak tanggal  w-10 h-[42px] (40 × 42)
  *
  * TINGGI BARIS DAN PENANDANYA — kenapa angkanya seperti itu.
  *
- * Penanda terbesar di dashboard adalah kotak tanggal: 36px, karena isinya tiga
- * baris teks (8 + 13 + 8 = 29px) dan ia tetap perlu ruang di atas serta di
- * bawahnya supaya tidak terbaca sesak. Tinggi barislah yang mengikuti angka
- * itu, bukan sebaliknya.
+ * Penanda terbesar di dashboard adalah kotak tanggal, dan tinggi barislah yang
+ * mengikuti ukuran kotak itu — bukan sebaliknya. Hitungannya MEMAKAI
+ * BORDER-BOX, dan borderlah yang paling mudah terlewat:
  *
- * HITUNGANNYA MEMAKAI BORDER-BOX, dan borderlah yang mudah terlewat:
- *
- *   60  tinggi baris (min-h-15)
+ *   64  tinggi baris (min-h-16)
  *   -20 padding tegak (py-2.5, dua sisi)
  *   -2  border (1px, dua sisi)
  *   ------
- *   38  ruang isi — cukup untuk kotak 36px, dengan 2px sisa
+ *   42  ruang isi — tepat setinggi kotak tanggal
  *
- * Percobaan pertama memakai `min-h-14` (56px) dengan alasan "56 − 2×10 = 36,
- * pas". Itu MELUPAKAN border. Ruang isinya sebenarnya 34px, kotak 36px tidak
- * muat, dan barisnya mengembang sendiri ke 58px — diukur di peramban pada
- * 1440px, dua baris Jadwal berdiri 58px sementara dua belas baris lain di
- * halaman yang sama 56px. Lantai yang tidak memperhitungkan border bukan
- * lantai; ia saran yang diam-diam dilanggar oleh baris yang isinya paling
- * besar.
+ * RIWAYAT ANGKA INI, supaya tidak diputar ulang:
  *
- * Sebelum semua ini, barisnya 48px dengan padding 8px dan kotak tanggalnya
- * dipatok `size-7` (28px) demi seukuran wadah ikon. Isinya menuntut 31px di
- * dalam 28px, jadi LUBER 3px dan dipotong diam-diam oleh `overflow-hidden`:
- * tahun pada baris ketiga kehilangan kaki hurufnya, dan kotaknya berdiri tanpa
- * satu piksel pun padding.
+ * (1) Baris 48px, kotak `size-7` (28px) dipatok agar seukuran wadah ikon.
+ *     Isinya menuntut 31px, jadi LUBER 3px dan dipotong diam-diam oleh
+ *     `overflow-hidden`. Tahun kehilangan kaki hurufnya.
  *
- * Wadah ikon dan kotak tanggal SENGAJA tidak lagi dipaksa seukuran (32 vs 36).
- * Yang harus sama antar panel adalah TINGGI BARISNYA, bukan ukuran penandanya
- * — dan itu sudah dijamin `min-h-15`. Menyamakan ukuran penanda justru yang
- * dulu memaksa tiga baris teks masuk ke kotak setinggi satu ikon.
+ * (2) Baris `min-h-14` (56px) dengan alasan "56 − 2×10 = 36, pas". MELUPAKAN
+ *     border: ruang isinya 34px, kotak 36px tidak muat, dan barisnya
+ *     mengembang sendiri ke 58px sementara dua belas baris lain 56px.
+ *
+ * (3) Baris `min-h-15` (60px), kotak 36px persegi. Tidak ada lagi yang
+ *     terpotong, TETAPI kotaknya masih `display: grid` — dan di situlah
+ *     sisanya hilang. Lihat catatan pada `DateTile`.
+ *
+ * Wadah ikon dan kotak tanggal SENGAJA tidak seukuran (32 vs 40×42). Yang
+ * harus sama antar panel adalah TINGGI BARISNYA, dan itu dijamin `min-h-16`.
+ * Menyamakan ukuran penanda justru yang dulu memaksa tiga baris teks masuk ke
+ * kotak setinggi satu ikon.
  *
  * SKALA SUDUT — dua tingkat, dan hanya dua:
  *
@@ -405,16 +402,16 @@ export function ListItem({
     </>
   );
 
-  // `min-h-15` (60px) menyamakan tinggi baris yang PUNYA keterangan dengan
+  // `min-h-16` (64px) menyamakan tinggi baris yang PUNYA keterangan dengan
   // yang tidak. Tanpa itu tinggi baris ditentukan oleh ada-tidaknya satu baris
   // teks, dan dua panel bersebelahan berbeda beberapa piksel tanpa satu pun
   // padding yang berbeda. Tinggi baris daftar tidak boleh ditentukan isinya.
   //
   // Angkanya sekaligus menyediakan ruang bagi penanda terbesar — kotak tanggal
-  // 36px. Lihat hitungan border-box di kepala berkas: padding DAN border sama-
-  // sama dipotong dari 60px, menyisakan 38px.
+  // setinggi 42px. Lihat hitungan border-box di kepala berkas: padding DAN
+  // border sama-sama dipotong dari 64px, menyisakan tepat 42px.
   const kelas = cn(
-    "flex min-h-15 items-center gap-3 rounded-sm border border-border px-3 py-2.5",
+    "flex min-h-16 items-center gap-3 rounded-sm border border-border px-3 py-2.5",
     href &&
       "transition-colors hover:border-primary-border hover:bg-primary-soft",
   );
@@ -510,16 +507,16 @@ export const SLOT_KONTEN = "grid";
  * belum punya isi tetap sejajar dengan tetangganya — tanpa baris palsu, dan
  * tanpa kartu yang menciut sampai tinggal judulnya.
  *
- * `min-h-[128px]` menggantikan lantai yang dulu dipegang `SLOT_KONTEN`, dan
+ * `min-h-[136px]` menggantikan lantai yang dulu dipegang `SLOT_KONTEN`, dan
  * hanya di sini. Inilah satu-satunya keadaan yang memang perlu lantai:
  * panel tanpa isi tidak punya apa pun untuk menentukan tingginya, dan tanpa
  * angka ini ia menciut sampai tinggal judul lalu terbaca sebagai kartu yang
  * rusak.
  *
  * Angkanya TURUNAN, bukan pilihan: dua baris item beserta jarak di antaranya,
- * 2×60 + 8 = 128. Ia ikut ketika tinggi baris berubah — dulu 104 ketika
- * barisnya 48px. Lantai yang dipatok lepas dari tinggi baris akan meleset
- * diam-diam pada penyetelan berikutnya.
+ * 2×64 + 8 = 136. Ia ikut ketika tinggi baris berubah — 104 ketika barisnya
+ * 48px, 128 ketika 60px. Lantai yang dipatok lepas dari tinggi baris akan
+ * meleset diam-diam pada penyetelan berikutnya.
  */
 export function EmptyNote({
   icon: Icon,
@@ -529,7 +526,7 @@ export function EmptyNote({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-[128px] flex-col items-center justify-center gap-2 py-4 text-center">
+    <div className="flex min-h-[136px] flex-col items-center justify-center gap-2 py-4 text-center">
       <span
         aria-hidden="true"
         className="grid size-8 shrink-0 place-items-center rounded-sm bg-muted text-muted-soft"
