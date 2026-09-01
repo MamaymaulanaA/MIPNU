@@ -1,23 +1,40 @@
 import type { Metadata } from "next";
 
 import { ForbiddenState } from "@/components/feedback/states";
-import { PageHeader } from "@/components/layout/page-header";
 import {
   DocumentManager,
   type DocumentRow,
 } from "@/features/documents/components/document-manager";
 import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { bacaParamDaftar, polaCari } from "@/lib/list-params";
+
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Dokumen",
 };
 
+const UKURAN_HALAMAN = 20;
+
+/** Label kategori. Nilainya sama persis dengan `DOCUMENT_CATEGORIES`. */
+const KATEGORI_DOKUMEN = [
+  { value: "LETTER", label: "Surat" },
+  { value: "PROPOSAL", label: "Proposal" },
+  { value: "LPJ", label: "LPJ" },
+  { value: "SK", label: "SK" },
+  { value: "CERTIFICATE", label: "Sertifikat" },
+  { value: "REPORT", label: "Laporan" },
+  { value: "EVENT_DOCUMENTATION", label: "Dokumentasi Kegiatan" },
+  { value: "OTHER", label: "Lainnya" },
+];
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
 export default async function DocumentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ kategori?: string; cari?: string }>;
+  searchParams: SearchParams;
 }) {
   const context = await requireAccessContext();
 
@@ -25,7 +42,15 @@ export default async function DocumentsPage({
     return <ForbiddenState />;
   }
 
-  const filters = await searchParams;
+  // Kunci pencarian mengikuti toolbar bersama (`search`). Sebelumnya halaman
+  // ini memakai `cari` beserta form buatan tangan: penyaringnya SUDAH bekerja
+  // di server, tetapi kontrolnya berupa <input>/<select> mentah setinggi 40px
+  // yang tidak mengikuti tinggi kontrol MIPNU mana pun.
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["kategori"],
+  });
+
   const supabase = await createClient();
 
   let query = supabase
@@ -36,17 +61,19 @@ export default async function DocumentsPage({
       visibility, created_at,
       profiles ( display_name )
     `,
+      { count: "exact" },
     )
     .eq("organization_id", context.organizationId)
     .is("deleted_at", null);
 
-  if (filters.kategori) query = query.eq("category", filters.kategori);
-  if (filters.cari) {
-    const escaped = filters.cari.replace(/[%_,()\\]/g, (m) => `\\${m}`);
-    query = query.ilike("title", `%${escaped}%`);
-  }
+  if (daftar.saring.kategori)
+    query = query.eq("category", daftar.saring.kategori);
+  if (daftar.cari) query = query.ilike("title", polaCari(daftar.cari));
 
-  const { data } = await query.order("created_at", { ascending: false });
+  const { data, count } = await query
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: true })
+    .range(daftar.dari, daftar.sampai);
 
   type Row = {
     id: string;
@@ -75,60 +102,26 @@ export default async function DocumentsPage({
   }));
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Dokumen"
-        description="Arsip berkas organisasi. Tersimpan pada bucket privat, diakses lewat tautan berumur pendek."
-      />
-
-      <form className="flex flex-wrap items-end gap-2.5">
-        <input
-          type="search"
-          name="cari"
-          placeholder="Cari judul dokumen"
-          defaultValue={filters.cari ?? ""}
-          aria-label="Cari dokumen"
-          className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-64"
-        />
-
-        <select
-          name="kategori"
-          defaultValue={filters.kategori ?? ""}
-          aria-label="Filter kategori"
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">Semua kategori</option>
-          <option value="LETTER">Surat</option>
-          <option value="PROPOSAL">Proposal</option>
-          <option value="LPJ">LPJ</option>
-          <option value="SK">SK</option>
-          <option value="CERTIFICATE">Sertifikat</option>
-          <option value="REPORT">Laporan</option>
-          <option value="EVENT_DOCUMENTATION">Dokumentasi Kegiatan</option>
-          <option value="OTHER">Lainnya</option>
-        </select>
-
-        <button
-          type="submit"
-          className="h-10 rounded-md border border-border px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          Terapkan
-        </button>
-      </form>
-
-      <DocumentManager
-        organizationId={context.organizationId}
-        documents={documents}
-        permissions={{
-          canCreate: can(context, PERMISSIONS.documents.create),
-          canDownload: can(context, PERMISSIONS.documents.download),
-          canManageVisibility: can(
-            context,
-            PERMISSIONS.documents.manageVisibility,
-          ),
-          canDelete: can(context, PERMISSIONS.documents.delete),
-        }}
-      />
-    </div>
+    <DocumentManager
+      organizationId={context.organizationId}
+      documents={documents}
+      daftar={{
+        cari: daftar.cari,
+        kategori: daftar.saring.kategori,
+        kategoriOptions: KATEGORI_DOKUMEN,
+        halaman: daftar.halaman,
+        total: count ?? 0,
+        ukuranHalaman: UKURAN_HALAMAN,
+      }}
+      permissions={{
+        canCreate: can(context, PERMISSIONS.documents.create),
+        canDownload: can(context, PERMISSIONS.documents.download),
+        canManageVisibility: can(
+          context,
+          PERMISSIONS.documents.manageVisibility,
+        ),
+        canDelete: can(context, PERMISSIONS.documents.delete),
+      }}
+    />
   );
 }

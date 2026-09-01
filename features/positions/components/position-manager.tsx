@@ -11,6 +11,9 @@ import { KeyRound, Network, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { EmptyState } from "@/components/feedback/states";
+import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -60,16 +63,26 @@ export type PositionPermissions = {
   canManagePermissions: boolean;
 };
 
+/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
+export type KeadaanDaftar = {
+  cari: string;
+  halaman: number;
+  total: number;
+  ukuranHalaman: number;
+};
+
 export function PositionManager({
   organizationId,
   positions,
   permissionCatalog,
   permissions,
+  daftar,
 }: {
   organizationId: string;
   positions: PositionRow[];
   permissionCatalog: PermissionOption[];
   permissions: PositionPermissions;
+  daftar: KeadaanDaftar;
 }) {
   const { showToast } = useToast();
 
@@ -96,24 +109,44 @@ export function PositionManager({
   }
 
   return (
-    <>
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} aria-hidden="true" />
-            Tambah Jabatan
-          </Button>
-        </div>
-      ) : null}
+    <div className="space-y-5">
+      <PageHeader
+        title="Jabatan"
+        description="Jabatan organisasi beserta permission yang melekat padanya. Jabatan bukan role sistem."
+        actions={
+          permissions.canCreate ? (
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus size={16} aria-hidden="true" />
+              Tambah Jabatan
+            </Button>
+          ) : undefined
+        }
+      />
 
       <Card>
+        {/* Tanpa penyaring: jabatan tidak punya kolom status maupun kategori
+            yang bermakna untuk disaring. Menambahkan dropdown hanya agar
+            toolbarnya terlihat sama dengan halaman lain akan menjadi kontrol
+            yang tidak melakukan apa pun. */}
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari jabatan…"
+          searchLabel="Cari jabatan"
+        />
+
         {positions.length === 0 ? (
           <EmptyState
             icon={Network}
-            title="Belum ada jabatan"
-            description="Jabatan menentukan hak operasional pengurus. Ketua, Sekretaris, dan Bendahara dibuat di sini — bukan sebagai role sistem."
+            title={
+              daftar.cari ? "Tidak ada jabatan yang cocok" : "Belum ada jabatan"
+            }
+            description={
+              daftar.cari
+                ? "Coba ubah kata kuncinya."
+                : "Jabatan menentukan hak operasional pengurus. Ketua, Sekretaris, dan Bendahara dibuat di sini — bukan sebagai role sistem."
+            }
             action={
-              permissions.canCreate ? (
+              !daftar.cari && permissions.canCreate ? (
                 <Button size="sm" onClick={() => setCreateOpen(true)}>
                   Buat jabatan pertama
                 </Button>
@@ -121,7 +154,7 @@ export function PositionManager({
             }
           />
         ) : (
-          <TableScroll>
+          <TableScroll bounded>
             <Table>
               <TableHead>
                 <TableRow className="hover:bg-transparent">
@@ -209,6 +242,15 @@ export function PositionManager({
             </Table>
           </TableScroll>
         )}
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(
+            1,
+            Math.ceil(daftar.total / daftar.ukuranHalaman),
+          )}
+          total={daftar.total}
+          pageSize={daftar.ukuranHalaman}
+        />
       </Card>
 
       <PositionDialog
@@ -247,7 +289,7 @@ export function PositionManager({
         title={`Hapus jabatan ${deleting?.name ?? ""}?`}
         description="Jabatan yang sudah pernah dipakai pada kepengurusan tidak dapat dihapus, karena riwayat penugasan menunjuk padanya."
       />
-    </>
+    </div>
   );
 }
 

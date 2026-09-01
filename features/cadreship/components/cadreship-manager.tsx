@@ -141,7 +141,7 @@ export function CadreshipManager({
           }
         />
       ) : (
-        <TableScroll>
+        <TableScroll bounded>
           <Table>
             <TableHead>
               <TableRow className="hover:bg-transparent">

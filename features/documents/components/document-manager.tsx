@@ -4,6 +4,10 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { Download, FolderClosed, Trash2, Upload } from "lucide-react";
 
 import { EmptyState } from "@/components/feedback/states";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,14 +74,26 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
+export type KeadaanDaftar = {
+  cari: string;
+  kategori: string;
+  kategoriOptions: { value: string; label: string }[];
+  halaman: number;
+  total: number;
+  ukuranHalaman: number;
+};
+
 export function DocumentManager({
   organizationId,
   documents,
   permissions,
+  daftar,
 }: {
   organizationId: string;
   documents: DocumentRow[];
   permissions: DocumentPermissions;
+  daftar: KeadaanDaftar;
 }) {
   const { showToast } = useToast();
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -89,192 +105,233 @@ export function DocumentManager({
     permissions.canDelete ||
     permissions.canManageVisibility;
 
+  const disaring = daftar.cari !== "" || daftar.kategori !== "";
+
   return (
-    <>
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setUploadOpen(true)}>
-            <Upload size={16} aria-hidden="true" />
-            Unggah Dokumen
-          </Button>
-        </div>
-      ) : null}
+    <div className="space-y-5">
+      <PageHeader
+        title="Dokumen"
+        description="Berkas organisasi tersimpan pada bucket privat."
+        actions={
+          permissions.canCreate ? (
+            <Button onClick={() => setUploadOpen(true)}>
+              <Upload size={16} aria-hidden="true" />
+              Unggah Dokumen
+            </Button>
+          ) : undefined
+        }
+      />
 
-      {documents.length === 0 ? (
-        <EmptyState
-          icon={FolderClosed}
-          title="Belum ada dokumen"
-          description="Berkas organisasi tersimpan pada bucket privat dan hanya dapat dibuka lewat tautan berumur pendek."
+      {/* Toolbar, tabel, dan kaki tabel dalam SATU kartu (§14). */}
+      <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari dokumen…"
+          searchLabel="Cari dokumen"
+          filters={[
+            {
+              key: "kategori",
+              label: "Saring menurut kategori",
+              value: daftar.kategori,
+              allLabel: "Semua kategori",
+              options: daftar.kategoriOptions,
+            },
+          ]}
         />
-      ) : (
-        <TableScroll>
-          <Table>
-            <TableHead>
-              <TableRow className="hover:bg-transparent">
-                <TableHeaderCell>Dokumen</TableHeaderCell>
-                <TableHeaderCell className="hidden md:table-cell">
-                  Kategori
-                </TableHeaderCell>
-                <TableHeaderCell className="hidden lg:table-cell">
-                  Diunggah
-                </TableHeaderCell>
-                <TableHeaderCell>Visibilitas</TableHeaderCell>
-                {hasActions ? (
-                  <TableHeaderCell className="text-right">Aksi</TableHeaderCell>
-                ) : null}
-              </TableRow>
-            </TableHead>
 
-            <TableBody>
-              {documents.map((row) => {
-                const visibility = documentVisibility(row.visibility);
+        {documents.length === 0 ? (
+          <EmptyState
+            icon={FolderClosed}
+            title={
+              disaring ? "Tidak ada dokumen yang cocok" : "Belum ada dokumen"
+            }
+            description={
+              disaring
+                ? "Coba ubah kata kunci atau saringan kategori."
+                : "Berkas organisasi tersimpan pada bucket privat dan hanya dapat dibuka lewat tautan berumur pendek."
+            }
+          />
+        ) : (
+          <TableScroll bounded>
+            <Table>
+              <TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHeaderCell>Dokumen</TableHeaderCell>
+                  <TableHeaderCell className="hidden md:table-cell">
+                    Kategori
+                  </TableHeaderCell>
+                  <TableHeaderCell className="hidden lg:table-cell">
+                    Diunggah
+                  </TableHeaderCell>
+                  <TableHeaderCell>Visibilitas</TableHeaderCell>
+                  {hasActions ? (
+                    <TableHeaderCell className="text-right">
+                      Aksi
+                    </TableHeaderCell>
+                  ) : null}
+                </TableRow>
+              </TableHead>
 
-                return (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <span className="font-medium text-foreground">
-                        {row.title}
-                      </span>
-                      <span className="block text-[13px] text-muted-foreground">
-                        {row.originalFilename} · {formatSize(row.fileSize)}
-                      </span>
-                    </TableCell>
+              <TableBody>
+                {documents.map((row) => {
+                  const visibility = documentVisibility(row.visibility);
 
-                    <TableCell className="hidden text-muted-foreground md:table-cell">
-                      {CATEGORY_LABELS[row.category] ?? row.category}
-                    </TableCell>
-
-                    <TableCell className="hidden text-muted-foreground lg:table-cell">
-                      {formatShortDate(row.createdAt)}
-                      {row.uploaderName ? (
-                        <span className="block text-[13px]">
-                          {row.uploaderName}
-                        </span>
-                      ) : null}
-                    </TableCell>
-
-                    <TableCell>
-                      {permissions.canManageVisibility ? (
-                        <Select
-                          aria-label={`Visibilitas ${row.title}`}
-                          value={row.visibility}
-                          disabled={isPending}
-                          className="h-8 w-auto min-w-32 text-[13px]"
-                          onChange={(event) => {
-                            const next = event.target
-                              .value as DocumentVisibility;
-
-                            startTransition(async () => {
-                              const result = await updateDocumentVisibility(
-                                organizationId,
-                                row.id,
-                                next,
-                              );
-                              if (!result.success) {
-                                showToast(result.error, "error");
-                              }
-                            });
-                          }}
-                        >
-                          {DOCUMENT_VISIBILITIES.map((value) => (
-                            <option key={value} value={value}>
-                              {documentVisibility(value).label}
-                            </option>
-                          ))}
-                        </Select>
-                      ) : (
-                        <Badge tone={visibility.tone} dot>
-                          {visibility.label}
-                        </Badge>
-                      )}
-                    </TableCell>
-
-                    {hasActions ? (
+                  return (
+                    <TableRow key={row.id}>
                       <TableCell>
-                        <div className="flex flex-wrap justify-end gap-1.5">
-                          {permissions.canDownload ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={isPending}
-                              onClick={() =>
-                                startTransition(async () => {
-                                  const result =
-                                    await createDocumentDownloadUrl(
-                                      organizationId,
-                                      row.id,
-                                    );
-
-                                  if (!result.success) {
-                                    showToast(result.error, "error");
-                                    return;
-                                  }
-
-                                  window.open(
-                                    result.data.url,
-                                    "_blank",
-                                    "noopener,noreferrer",
-                                  );
-                                })
-                              }
-                            >
-                              <Download size={14} aria-hidden="true" />
-                              Unduh
-                            </Button>
-                          ) : null}
-
-                          {permissions.canDelete ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleting(row)}
-                            >
-                              <Trash2 size={14} aria-hidden="true" />
-                              Hapus
-                            </Button>
-                          ) : null}
-                        </div>
+                        <span className="font-medium text-foreground">
+                          {row.title}
+                        </span>
+                        <span className="block text-[13px] text-muted-foreground">
+                          {row.originalFilename} · {formatSize(row.fileSize)}
+                        </span>
                       </TableCell>
-                    ) : null}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableScroll>
-      )}
 
-      <UploadDialog
-        key={uploadOpen ? "upload-open" : "upload-closed"}
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        organizationId={organizationId}
-        canManageVisibility={permissions.canManageVisibility}
-      />
+                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                        {CATEGORY_LABELS[row.category] ?? row.category}
+                      </TableCell>
 
-      <ConfirmDialog
-        open={Boolean(deleting)}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => {
-          if (!deleting) return;
-          const target = deleting;
+                      <TableCell className="hidden text-muted-foreground lg:table-cell">
+                        {formatShortDate(row.createdAt)}
+                        {row.uploaderName ? (
+                          <span className="block text-[13px]">
+                            {row.uploaderName}
+                          </span>
+                        ) : null}
+                      </TableCell>
 
-          startTransition(async () => {
-            const result = await deleteDocument(organizationId, target.id);
-            setDeleting(null);
-            showToast(
-              result.success ? "Dokumen dihapus." : result.error,
-              result.success ? "success" : "error",
-            );
-          });
-        }}
-        pending={isPending}
-        destructive
-        confirmLabel="Hapus"
-        title={`Hapus ${deleting?.title ?? "dokumen"}?`}
-        description="Berkas fisiknya ikut dibuang dari storage dan tidak dapat dipulihkan. Catatan metadatanya tetap tersimpan."
-      />
-    </>
+                      <TableCell>
+                        {permissions.canManageVisibility ? (
+                          <Select
+                            aria-label={`Visibilitas ${row.title}`}
+                            value={row.visibility}
+                            disabled={isPending}
+                            className="h-8 w-auto min-w-32 text-[13px]"
+                            onChange={(event) => {
+                              const next = event.target
+                                .value as DocumentVisibility;
+
+                              startTransition(async () => {
+                                const result = await updateDocumentVisibility(
+                                  organizationId,
+                                  row.id,
+                                  next,
+                                );
+                                if (!result.success) {
+                                  showToast(result.error, "error");
+                                }
+                              });
+                            }}
+                          >
+                            {DOCUMENT_VISIBILITIES.map((value) => (
+                              <option key={value} value={value}>
+                                {documentVisibility(value).label}
+                              </option>
+                            ))}
+                          </Select>
+                        ) : (
+                          <Badge tone={visibility.tone} dot>
+                            {visibility.label}
+                          </Badge>
+                        )}
+                      </TableCell>
+
+                      {hasActions ? (
+                        <TableCell>
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            {permissions.canDownload ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={isPending}
+                                onClick={() =>
+                                  startTransition(async () => {
+                                    const result =
+                                      await createDocumentDownloadUrl(
+                                        organizationId,
+                                        row.id,
+                                      );
+
+                                    if (!result.success) {
+                                      showToast(result.error, "error");
+                                      return;
+                                    }
+
+                                    window.open(
+                                      result.data.url,
+                                      "_blank",
+                                      "noopener,noreferrer",
+                                    );
+                                  })
+                                }
+                              >
+                                <Download size={14} aria-hidden="true" />
+                                Unduh
+                              </Button>
+                            ) : null}
+
+                            {permissions.canDelete ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleting(row)}
+                              >
+                                <Trash2 size={14} aria-hidden="true" />
+                                Hapus
+                              </Button>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                      ) : null}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableScroll>
+        )}
+
+        <UploadDialog
+          key={uploadOpen ? "upload-open" : "upload-closed"}
+          open={uploadOpen}
+          onClose={() => setUploadOpen(false)}
+          organizationId={organizationId}
+          canManageVisibility={permissions.canManageVisibility}
+        />
+
+        <ConfirmDialog
+          open={Boolean(deleting)}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => {
+            if (!deleting) return;
+            const target = deleting;
+
+            startTransition(async () => {
+              const result = await deleteDocument(organizationId, target.id);
+              setDeleting(null);
+              showToast(
+                result.success ? "Dokumen dihapus." : result.error,
+                result.success ? "success" : "error",
+              );
+            });
+          }}
+          pending={isPending}
+          destructive
+          confirmLabel="Hapus"
+          title={`Hapus ${deleting?.title ?? "dokumen"}?`}
+          description="Berkas fisiknya ikut dibuang dari storage dan tidak dapat dipulihkan. Catatan metadatanya tetap tersimpan."
+        />
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(
+            1,
+            Math.ceil(daftar.total / daftar.ukuranHalaman),
+          )}
+          total={daftar.total}
+          pageSize={daftar.ukuranHalaman}
+        />
+      </Card>
+    </div>
   );
 }
 

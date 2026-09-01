@@ -5,6 +5,9 @@ import { Network, Pencil, Plus } from "lucide-react";
 
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { EmptyState } from "@/components/feedback/states";
+import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,6 +48,18 @@ export type AssignmentRow = {
 
 export type Option = { id: string; label: string };
 
+/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
+export type KeadaanDaftar = {
+  cari: string;
+  periode: string;
+  jabatan: string;
+  periodeOptions: { value: string; label: string }[];
+  jabatanOptions: { value: string; label: string }[];
+  halaman: number;
+  total: number;
+  ukuranHalaman: number;
+};
+
 export function ManagementManager({
   organizationId,
   assignments,
@@ -52,6 +67,8 @@ export function ManagementManager({
   members,
   positions,
   permissions,
+  daftar,
+  aksiTambahan,
 }: {
   organizationId: string;
   assignments: AssignmentRow[];
@@ -59,6 +76,16 @@ export function ManagementManager({
   members: Option[];
   positions: Option[];
   permissions: { canAssign: boolean; canEdit: boolean; canEnd: boolean };
+  daftar: KeadaanDaftar;
+  /**
+   * Aksi tambahan pada kepala halaman — tombol Ekspor.
+   *
+   * Dioper sebagai node, bukan dibangun di sini: ekspor terikat pada server
+   * action yang di-bind di Server Component beserta pemeriksaan
+   * `management.export`. Komponen klien ini tidak boleh memutuskan siapa yang
+   * boleh mengekspor.
+   */
+  aksiTambahan?: React.ReactNode;
 }) {
   const { showToast } = useToast();
 
@@ -92,31 +119,84 @@ export function ManagementManager({
     });
   }
 
+  const disaring =
+    daftar.cari !== "" || daftar.periode !== "" || daftar.jabatan !== "";
+
   return (
-    <>
-      {permissions.canAssign ? (
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          {missing.length > 0 ? (
-            <p className="text-[13px] text-muted-foreground">
-              Lengkapi {missing.join(", ")} terlebih dahulu.
-            </p>
-          ) : null}
-          <Button onClick={() => setCreateOpen(true)} disabled={!canOpenForm}>
-            <Plus size={16} aria-hidden="true" />
-            Tugaskan Pengurus
-          </Button>
-        </div>
-      ) : null}
+    <div className="space-y-5">
+      <PageHeader
+        title="Kepengurusan"
+        description="Riwayat penugasan pengurus per periode. Jabatan bukan role sistem."
+        actions={
+          <>
+            {aksiTambahan}
+            {permissions.canAssign ? (
+              <>
+                {missing.length > 0 ? (
+                  <p className="text-[13px] text-muted-foreground">
+                    Lengkapi {missing.join(", ")} terlebih dahulu.
+                  </p>
+                ) : null}
+                <Button
+                  onClick={() => setCreateOpen(true)}
+                  disabled={!canOpenForm}
+                >
+                  <Plus size={16} aria-hidden="true" />
+                  Tugaskan Pengurus
+                </Button>
+              </>
+            ) : null}
+          </>
+        }
+      />
 
       <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari nama pengurus…"
+          searchLabel="Cari pengurus"
+          filters={[
+            ...(daftar.periodeOptions.length > 0
+              ? [
+                  {
+                    key: "periode",
+                    label: "Saring menurut periode",
+                    value: daftar.periode,
+                    allLabel: "Semua periode",
+                    options: daftar.periodeOptions,
+                  },
+                ]
+              : []),
+            ...(daftar.jabatanOptions.length > 0
+              ? [
+                  {
+                    key: "jabatan",
+                    label: "Saring menurut jabatan",
+                    value: daftar.jabatan,
+                    allLabel: "Semua jabatan",
+                    options: daftar.jabatanOptions,
+                  },
+                ]
+              : []),
+          ]}
+        />
+
         {assignments.length === 0 ? (
           <EmptyState
             icon={Network}
-            title="Belum ada penugasan pengurus"
-            description="Penugasan menghubungkan anggota, jabatan, dan periode. Dari sinilah permission jabatan mulai berlaku."
+            title={
+              disaring
+                ? "Tidak ada penugasan yang cocok"
+                : "Belum ada penugasan pengurus"
+            }
+            description={
+              disaring
+                ? "Coba ubah kata kunci atau saringannya."
+                : "Penugasan menghubungkan anggota, jabatan, dan periode. Dari sinilah permission jabatan mulai berlaku."
+            }
           />
         ) : (
-          <TableScroll>
+          <TableScroll bounded>
             <Table>
               <TableHead>
                 <TableRow className="hover:bg-transparent">
@@ -198,6 +278,15 @@ export function ManagementManager({
             </Table>
           </TableScroll>
         )}
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(
+            1,
+            Math.ceil(daftar.total / daftar.ukuranHalaman),
+          )}
+          total={daftar.total}
+          pageSize={daftar.ukuranHalaman}
+        />
       </Card>
 
       <AssignmentDialog
@@ -230,7 +319,7 @@ export function ManagementManager({
         title={`Akhiri penugasan ${ending?.memberName ?? ""}?`}
         description="Permission yang berasal dari jabatan ini berhenti berlaku seketika. Penugasannya tetap tersimpan sebagai riwayat, tidak dihapus."
       />
-    </>
+    </div>
   );
 }
 

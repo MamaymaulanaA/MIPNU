@@ -5,6 +5,9 @@ import { Archive, CalendarRange, Pencil, Plus } from "lucide-react";
 
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { EmptyState } from "@/components/feedback/states";
+import { PageHeader } from "@/components/layout/page-header";
+import { Pagination } from "@/components/data-table/pagination";
+import { TableToolbar } from "@/components/data-table/toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -54,14 +57,26 @@ export type PeriodPermissions = {
  * field) dan selalu dibaca dalam konteks daftar periode lain — memindahkan
  * pengguna ke halaman lain justru memutus konteks itu.
  */
+/** Keadaan toolbar dan pagination — seluruhnya berasal dari URL dan server. */
+export type KeadaanDaftar = {
+  cari: string;
+  status: string;
+  statusOptions: { value: string; label: string }[];
+  halaman: number;
+  total: number;
+  ukuranHalaman: number;
+};
+
 export function PeriodManager({
   organizationId,
   periods,
   permissions,
+  daftar,
 }: {
   organizationId: string;
   periods: PeriodRow[];
   permissions: PeriodPermissions;
+  daftar: KeadaanDaftar;
 }) {
   const { showToast } = useToast();
 
@@ -114,25 +129,57 @@ export function PeriodManager({
     });
   }
 
+  const disaring = daftar.cari !== "" || daftar.status !== "";
+
   return (
-    <>
-      {permissions.canCreate ? (
-        <div className="flex justify-end">
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} aria-hidden="true" />
-            Tambah Periode
-          </Button>
-        </div>
-      ) : null}
+    /*
+      Kepala halaman dirender di sini, bukan di Server Component-nya: aksi
+      utamanya dan tombol pada keadaan kosong membuka DIALOG YANG SAMA, jadi
+      keduanya perlu state yang sama. Pengambilan datanya tetap di server.
+    */
+    <div className="space-y-5">
+      <PageHeader
+        title="Periode Kepengurusan"
+        description="Periode lama tetap tersimpan ketika periode baru dibuat."
+        actions={
+          permissions.canCreate ? (
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus size={16} aria-hidden="true" />
+              Tambah Periode
+            </Button>
+          ) : undefined
+        }
+      />
 
       <Card>
+        <TableToolbar
+          searchValue={daftar.cari}
+          searchPlaceholder="Cari periode…"
+          searchLabel="Cari periode"
+          filters={[
+            {
+              key: "status",
+              label: "Saring menurut status",
+              value: daftar.status,
+              allLabel: "Semua status",
+              options: daftar.statusOptions,
+            },
+          ]}
+        />
+
         {periods.length === 0 ? (
           <EmptyState
             icon={CalendarRange}
-            title="Belum ada periode"
-            description="Periode kepengurusan menjadi konteks bagi struktur pengurus, program kerja, dan laporan."
+            title={
+              disaring ? "Tidak ada periode yang cocok" : "Belum ada periode"
+            }
+            description={
+              disaring
+                ? "Coba ubah kata kunci atau saringan status."
+                : "Periode kepengurusan menjadi konteks bagi struktur pengurus, program kerja, dan laporan."
+            }
             action={
-              permissions.canCreate ? (
+              !disaring && permissions.canCreate ? (
                 <Button size="sm" onClick={() => setCreateOpen(true)}>
                   Buat periode pertama
                 </Button>
@@ -140,7 +187,7 @@ export function PeriodManager({
             }
           />
         ) : (
-          <TableScroll>
+          <TableScroll bounded>
             <Table>
               <TableHead>
                 <TableRow className="hover:bg-transparent">
@@ -241,6 +288,15 @@ export function PeriodManager({
             </Table>
           </TableScroll>
         )}
+        <Pagination
+          page={daftar.halaman}
+          pageCount={Math.max(
+            1,
+            Math.ceil(daftar.total / daftar.ukuranHalaman),
+          )}
+          total={daftar.total}
+          pageSize={daftar.ukuranHalaman}
+        />
       </Card>
 
       <PeriodDialog
@@ -288,7 +344,7 @@ export function PeriodManager({
         title="Arsipkan periode ini?"
         description="Periode disingkirkan dari daftar kerja sehari-hari. Tidak ada data yang dihapus: struktur kepengurusan periode ini tetap tersimpan dan tetap dapat dibaca sebagai riwayat."
       />
-    </>
+    </div>
   );
 }
 

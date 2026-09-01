@@ -1,22 +1,34 @@
 import type { Metadata } from "next";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { ForbiddenState } from "@/components/feedback/states";
 import { PositionManager } from "@/features/positions/components/position-manager";
 import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { bacaParamDaftar, polaCariOr } from "@/lib/list-params";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Jabatan",
 };
 
-export default async function PositionsPage() {
+const UKURAN_HALAMAN = 20;
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function PositionsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const context = await requireAccessContext();
 
   if (!context.organizationId || !can(context, PERMISSIONS.positions.view)) {
     return <ForbiddenState />;
   }
+
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+  });
 
   const supabase = await createClient();
   const canManagePermissions = can(
@@ -24,18 +36,28 @@ export default async function PositionsPage() {
     PERMISSIONS.positions.managePermissions,
   );
 
-  const [positionsResult, catalogResult] = await Promise.all([
-    supabase
-      .from("positions")
-      .select(
-        `
+  let daftarQuery = supabase
+    .from("positions")
+    .select(
+      `
         id, name, code, description, sort_order, parent_position_id,
         position_permissions ( permission_id )
       `,
-      )
-      .eq("organization_id", context.organizationId)
+      { count: "exact" },
+    )
+    .eq("organization_id", context.organizationId);
+
+  if (daftar.cari) {
+    const aman = polaCariOr(daftar.cari);
+    if (aman)
+      daftarQuery = daftarQuery.or(`name.ilike.%${aman}%,code.ilike.%${aman}%`);
+  }
+
+  const [positionsResult, catalogResult] = await Promise.all([
+    daftarQuery
       .order("sort_order", { ascending: true })
-      .order("name", { ascending: true }),
+      .order("name", { ascending: true })
+      .range(daftar.dari, daftar.sampai),
 
     // Katalog hanya dimuat bila memang akan dipakai, dan permission platform
     // dikecualikan karena tidak dapat didelegasikan lewat jabatan.
@@ -64,36 +86,35 @@ export default async function PositionsPage() {
   const nameById = new Map(rows.map((row) => [row.id, row.name]));
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Jabatan"
-        description="Jabatan organisasi beserta permission yang melekat padanya. Jabatan bukan role sistem."
-      />
-
-      <PositionManager
-        organizationId={context.organizationId}
-        positions={rows.map((row) => ({
-          id: row.id,
-          name: row.name,
-          code: row.code,
-          description: row.description,
-          sortOrder: row.sort_order,
-          parentPositionId: row.parent_position_id,
-          parentName: row.parent_position_id
-            ? (nameById.get(row.parent_position_id) ?? null)
-            : null,
-          permissionIds: row.position_permissions.map(
-            (entry) => entry.permission_id,
-          ),
-        }))}
-        permissionCatalog={catalogResult.data ?? []}
-        permissions={{
-          canCreate: can(context, PERMISSIONS.positions.create),
-          canEdit: can(context, PERMISSIONS.positions.edit),
-          canDelete: can(context, PERMISSIONS.positions.delete),
-          canManagePermissions,
-        }}
-      />
-    </div>
+    <PositionManager
+      organizationId={context.organizationId}
+      positions={rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        code: row.code,
+        description: row.description,
+        sortOrder: row.sort_order,
+        parentPositionId: row.parent_position_id,
+        parentName: row.parent_position_id
+          ? (nameById.get(row.parent_position_id) ?? null)
+          : null,
+        permissionIds: row.position_permissions.map(
+          (entry) => entry.permission_id,
+        ),
+      }))}
+      permissionCatalog={catalogResult.data ?? []}
+      permissions={{
+        canCreate: can(context, PERMISSIONS.positions.create),
+        canEdit: can(context, PERMISSIONS.positions.edit),
+        canDelete: can(context, PERMISSIONS.positions.delete),
+        canManagePermissions,
+      }}
+      daftar={{
+        cari: daftar.cari,
+        halaman: daftar.halaman,
+        total: positionsResult.count ?? 0,
+        ukuranHalaman: UKURAN_HALAMAN,
+      }}
+    />
   );
 }

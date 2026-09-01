@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
-import { PageHeader } from "@/components/layout/page-header";
 import { ForbiddenState } from "@/components/feedback/states";
 import { ExportButton } from "@/features/exports/components/export-button";
 import { exportManagement } from "@/features/exports/actions/export-csv";
 import { ManagementManager } from "@/features/management/components/management-manager";
 import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
+import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 import { formatPeriodRange, orDash } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,12 +14,25 @@ export const metadata: Metadata = {
   title: "Kepengurusan",
 };
 
-export default async function ManagementPage() {
+const UKURAN_HALAMAN = 20;
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function ManagementPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   const context = await requireAccessContext();
 
   if (!context.organizationId || !can(context, PERMISSIONS.management.view)) {
     return <ForbiddenState />;
   }
+
+  const daftar = bacaParamDaftar(await searchParams, {
+    ukuranHalaman: UKURAN_HALAMAN,
+    kunciSaring: ["periode", "jabatan"],
+  });
 
   const supabase = await createClient();
   const canAssign = can(context, PERMISSIONS.management.assign);
@@ -36,8 +49,25 @@ export default async function ManagementPage() {
           positions!inner ( name, sort_order ),
           organization_periods!inner ( name, start_date, end_date )
         `,
+          { count: "exact" },
         )
-        .eq("organization_id", context.organizationId),
+        .eq("organization_id", context.organizationId)
+        .match(
+          Object.fromEntries(
+            [
+              daftar.saring.periode
+                ? ["organization_period_id", daftar.saring.periode]
+                : null,
+              daftar.saring.jabatan
+                ? ["position_id", daftar.saring.jabatan]
+                : null,
+            ].filter(Boolean) as [string, string][],
+          ),
+        )
+        // `members!inner` yang membuat penyaringan atas nama anggota dapat
+        // dilakukan di database, bukan setelah barisnya sampai ke aplikasi.
+        .ilike("members.full_name", daftar.cari ? polaCari(daftar.cari) : "%")
+        .range(daftar.dari, daftar.sampai),
 
       // Pilihan form hanya dimuat bila pengguna memang boleh menugaskan.
       canAssign
@@ -114,42 +144,55 @@ export default async function ManagementPage() {
     });
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Kepengurusan"
-        description="Riwayat penugasan pengurus per periode. Jabatan bukan role sistem."
-        actions={
-          can(context, PERMISSIONS.management.export) ? (
-            <ExportButton
-              action={exportManagement.bind(null, context.organizationId)}
-            />
-          ) : undefined
-        }
-      />
-
-      <ManagementManager
-        organizationId={context.organizationId}
-        assignments={assignments}
-        periods={(periodsResult.data ?? []).map((period) => ({
-          id: period.id,
-          label: `${period.name} (${formatPeriodRange(period.start_date, period.end_date)})`,
-        }))}
-        members={(membersResult.data ?? []).map((member) => ({
-          id: member.id,
-          label: member.member_number
-            ? `${member.full_name} · ${orDash(member.member_number)}`
-            : member.full_name,
-        }))}
-        positions={(positionsResult.data ?? []).map((position) => ({
-          id: position.id,
+    <ManagementManager
+      aksiTambahan={
+        can(context, PERMISSIONS.management.export) ? (
+          <ExportButton
+            action={exportManagement.bind(null, context.organizationId)}
+          />
+        ) : undefined
+      }
+      organizationId={context.organizationId}
+      assignments={assignments}
+      periods={(periodsResult.data ?? []).map((period) => ({
+        id: period.id,
+        label: `${period.name} (${formatPeriodRange(period.start_date, period.end_date)})`,
+      }))}
+      members={(membersResult.data ?? []).map((member) => ({
+        id: member.id,
+        label: member.member_number
+          ? `${member.full_name} · ${orDash(member.member_number)}`
+          : member.full_name,
+      }))}
+      positions={(positionsResult.data ?? []).map((position) => ({
+        id: position.id,
+        label: position.name,
+      }))}
+      permissions={{
+        canAssign,
+        canEdit: can(context, PERMISSIONS.management.edit),
+        canEnd: can(context, PERMISSIONS.management.end),
+      }}
+      daftar={{
+        cari: daftar.cari,
+        periode: daftar.saring.periode,
+        jabatan: daftar.saring.jabatan,
+        // Pilihan saringan berasal dari daftar yang SUDAH dimuat halaman
+        // ini untuk formnya — bukan query tambahan. Bila pemanggil tidak
+        // berhak menugaskan, daftarnya kosong dan saringannya tidak
+        // dirender sama sekali.
+        periodeOptions: (periodsResult.data ?? []).map((period) => ({
+          value: period.id,
+          label: period.name,
+        })),
+        jabatanOptions: (positionsResult.data ?? []).map((position) => ({
+          value: position.id,
           label: position.name,
-        }))}
-        permissions={{
-          canAssign,
-          canEdit: can(context, PERMISSIONS.management.edit),
-          canEnd: can(context, PERMISSIONS.management.end),
-        }}
-      />
-    </div>
+        })),
+        halaman: daftar.halaman,
+        total: assignmentsResult.count ?? 0,
+        ukuranHalaman: UKURAN_HALAMAN,
+      }}
+    />
   );
 }
