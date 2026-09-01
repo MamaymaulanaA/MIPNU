@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Building2, Pencil } from "lucide-react";
+import { Building2 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { ErrorState, ForbiddenState } from "@/components/feedback/states";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OrganizationProfileDialog } from "@/features/organizations/components/organization-profile-dialog";
 import { getOrganizationProfile } from "@/features/organizations/queries/get-organization";
 import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
@@ -45,14 +44,29 @@ export default async function OrganizationPage() {
       <PageHeader
         title="Profil Organisasi"
         description="Identitas dan data dasar organisasi."
+        /*
+          Tombolnya hanya dirender bagi pemegang `organization.edit`. Itu
+          keputusan tampilan, BUKAN pengamanan: `updateOrganization` tetap
+          memeriksa permission yang sama di server sebelum menyentuh basis
+          data, dan RLS memeriksanya sekali lagi (AGENTS.md §56).
+        */
         actions={
           can(context, PERMISSIONS.organization.edit) ? (
-            <Button variant="secondary" asChild>
-              <Link href="/organisasi/edit">
-                <Pencil size={16} aria-hidden="true" />
-                Ubah
-              </Link>
-            </Button>
+            <OrganizationProfileDialog
+              organizationId={organization.id}
+              values={{
+                name: organization.name,
+                shortName: organization.shortName ?? "",
+                address: organization.address ?? "",
+                village: organization.village ?? "",
+                district: organization.district ?? "",
+                cityRegency: organization.cityRegency ?? "",
+                province: organization.province ?? "",
+                email: organization.email ?? "",
+                phone: organization.phone ?? "",
+                description: organization.description ?? "",
+              }}
+            />
           ) : undefined
         }
       />

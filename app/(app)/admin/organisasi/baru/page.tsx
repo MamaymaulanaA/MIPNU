@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/layout/page-header";
 import { ForbiddenState } from "@/components/feedback/states";
-import { OrganizationForm } from "@/features/organizations/components/organization-form";
+import { CreateOrganizationForm } from "@/features/organizations/components/organization-form";
 import { can, requireAccessContext } from "@/lib/auth/context";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
@@ -46,8 +46,7 @@ export default async function NewOrganizationPage() {
         description="Setelah dibuat, tautkan seorang operator agar organisasi ini dapat mulai dikelola."
       />
 
-      <OrganizationForm
-        mode="create"
+      <CreateOrganizationForm
         types={(types.data ?? []).map((type) => ({
           id: type.id,
           label: `${type.code} — ${type.name}`,
