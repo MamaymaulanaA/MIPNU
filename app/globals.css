@@ -14,8 +14,10 @@
  *     desktop. Button, input, select, dan trigger dropdown pada baris yang
  *     sama otomatis sejajar karena semuanya membaca konstanta yang sama di
  *     `components/ui/control.ts` — bukan karena penulisnya ingat.
- *  4. Bayangan seminimal mungkin. Card memakai border 1px, bukan shadow.
- *     Shadow hanya untuk lapisan mengambang: dropdown, popover, dialog.
+ *  4. Bayangan seminimal mungkin. Card memakai border 1px ditambah
+ *     `raised` — tingkat paling tipis yang ada, 4% hitam. Tingkat di
+ *     atasnya, `floating` dan `overlay`, tetap hanya untuk lapisan yang
+ *     benar-benar mengambang: dropdown, popover, dialog.
  *  5. Warna status (success/warning/destructive/info) hanya dipakai untuk
  *     keadaan yang benar-benar bermakna — bukan untuk memberi variasi warna.
  */
@@ -24,8 +26,10 @@
 
 :root {
   /* ---- Semantic surface & text ----
-     Background off-white kebiruan, card putih. Hierarki datang dari
-     perbedaan itu, bukan dari shadow (UI.md, aturan 4 di atas). */
+     Background nyaris putih, card putih. Hierarki TIDAK lagi datang dari
+     perbedaan itu — pada jarak tiga tingkat rgb, perbedaan itu di bawah
+     ambang lihat. Yang membentuknya border 1px ditambah bayangan `raised`
+     (UI.md, aturan 4 di atas). */
   /*
    * Nyaris putih, dan hampir tanpa warna.
    *
@@ -33,11 +37,11 @@
    * samping kartu putih murni. Yang diturunkan lebih dulu saturasinya, bukan
    * terangnya: warna yang mengganggu di sini birunya.
    *
-   * Terangnya kini 99%, tinggal tiga tingkat rgb dari kartu. Pada jarak
-   * sedekat itu isian latar berhenti menjadi pemisah, dan itu disengaja:
-   * yang memisahkan kartu dari halaman adalah border 1px-nya —
-   * rgb(222,228,237), cukup gelap untuk terbaca sendirian. Latar tidak lagi
-   * dituntut mengangkat kartu; ia hanya perlu berhenti terbaca abu-abu.
+   * Terangnya kini 99%, tinggal tiga tingkat rgb dari kartu — ΔL* 1,01,
+   * di bawah ambang lihat. Isian latar karena itu berhenti menjadi pemisah,
+   * dan tugas itu pindah seluruhnya ke kartu: border 1px rgb(222,228,237)
+   * ditambah bayangan `raised`. Latar tidak lagi dituntut mengangkat kartu;
+   * ia hanya perlu berhenti terbaca abu-abu.
    *
    * Konsekuensinya harus dijaga di tempat lain: apa pun yang menandai keadaan
    * dengan mengisi `bg-background` di atas permukaan lain akan pudar bersama
@@ -480,6 +484,24 @@
   }
   .scroll-none::-webkit-scrollbar {
     display: none;
+  }
+
+  /*
+   * Kartu di dalam kartu tidak ikut terangkat.
+   *
+   * `raised` menyatakan "permukaan ini naik dari latar halaman". Kartu yang
+   * bersarang di dalam kartu lain tidak melakukan itu — ia baris di dalam
+   * wadah, dan bayangannya hanya menumpuk di atas bayangan induknya. Terukur
+   * pada halaman Program Kerja: enam kartu program bersarang, enam bayangan
+   * ganda.
+   *
+   * Dicabut lewat aturan turunan, bukan lewat `shadow-none` yang ditulis satu
+   * per satu di tiap pemakai — supaya kartu bersarang berikutnya benar tanpa
+   * penulisnya harus ingat. `floating` dan `overlay` tidak tersentuh: dropdown
+   * dan dialog memang mengambang di atas apa pun yang menampungnya.
+   */
+  .shadow-raised .shadow-raised {
+    box-shadow: none;
   }
 
   .scroll-area {
