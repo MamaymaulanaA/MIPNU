@@ -20,7 +20,7 @@ const SIZES = {
   sm: "size-8", // 32px — header, baris padat
   md: "size-9", // 36px — daftar
   lg: "size-10", // 40px — baris anggota
-  xl: "size-20", // 80px — halaman profil & detail anggota
+  xl: "size-16", // 64px — blok identitas: profil saya & rincian anggota
   "2xl": "size-24", // 96px — kartu kandidat
 } as const;
 
