@@ -66,3 +66,4 @@ vitest.config.mts
 
 # internal README — local development only
 README.internal.md
+.env*
