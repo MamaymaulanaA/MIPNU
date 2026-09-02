@@ -137,7 +137,6 @@ export function ManagementManager({
   if (daftar.periodeOptions.length > 0) {
     filterKepengurusan.push({
       key: "periode",
-      size: "sm",
       label: "Saring menurut periode",
       value: daftar.periode,
       allLabel: "Semua periode",
@@ -148,7 +147,6 @@ export function ManagementManager({
   if (daftar.jabatanOptions.length > 0) {
     filterKepengurusan.push({
       key: "jabatan",
-      size: "sm",
       label: "Saring menurut jabatan",
       value: daftar.jabatan,
       allLabel: "Semua jabatan",

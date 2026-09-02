@@ -132,7 +132,6 @@ export default async function AttendancePage({
           filters={[
             {
               key: "status",
-              size: "xs",
               label: "Saring menurut status",
               value: daftar.saring.status,
               allLabel: "Semua status",

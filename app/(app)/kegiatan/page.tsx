@@ -102,7 +102,6 @@ export default async function EventsPage({
           filters={[
             {
               key: "status",
-              size: "sm",
               label: "Saring menurut status",
               value: daftar.saring.status,
               allLabel: "Semua status",

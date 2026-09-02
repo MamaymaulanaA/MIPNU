@@ -30,33 +30,39 @@ import { cn } from "@/lib/utils";
  */
 
 /**
- * Lebar penyaring — tiga tingkat, dipilih menurut LABEL TERPANJANGNYA.
+ * Lebar penyaring: ditentukan ISINYA, bukan dipilih di muka.
  *
- * Sebelumnya setiap penyaring dipatok `sm:w-44` (176px), berapa pun panjang
- * teksnya. Akibatnya "Semua status" duduk di dalam kotak yang separuhnya
- * kosong, sementara "Operator Organisasi" nyaris menyentuh tepi — satu angka
- * salah untuk keduanya sekaligus.
+ * Sebelumnya ada tiga tingkat tetap — 136, 168, dan 208px — dan penulis
+ * halaman memilih salah satunya. Diukur di peramban pada 22 halaman Pengurus,
+ * tebakan itu meleset ke DUA arah sekaligus:
  *
- *   xs  136  Status, Tipe, Tahun — label pendek dan tetap
- *   sm  168  Kategori, Periode, Jenjang
- *   md  208  Role, nama organisasi, label yang memang panjang
+ *   Pemilihan "Semua status"     168 dipakai, 136 dibutuhkan  (32px sia-sia)
+ *   Agenda    "Semua jenis"      168 dipakai, 138 dibutuhkan  (30px sia-sia)
+ *   Transaksi "Semua akun"       168 dipakai, 139 dibutuhkan  (29px sia-sia)
+ *   Event     "Semua status"     168 dipakai, 179 dibutuhkan  (TERPOTONG)
+ *   Dokumen   "Semua kategori"   168 dipakai, 193 dibutuhkan  (TERPOTONG)
  *
- * Bukan `w-auto`. Lebar otomatis pada `<select>` mengikuti OPSI TERPANJANG,
- * sehingga satu opsi "Dokumentasi Kegiatan" melebarkan kotaknya jauh melewati
- * "Semua kategori" yang biasanya terlihat — dan lebarnya berubah-ubah begitu
- * pilihan diganti. Lebar yang dipilih di muka membuat toolbar diam.
+ * Dua yang terakhir bukan soal rapi: "Pendaftaran ditutup" dan "Dokumentasi
+ * Kegiatan" benar-benar terpotong ketika terpilih.
  *
- * Ini HANYA untuk penyaring toolbar. Field di dalam form tetap mengikuti kisi
- * formnya; menyempitkannya menjadi selebar isi akan membuat form terbaca
- * seperti deretan chip.
+ * `w-auto` memperbaiki keduanya sekaligus. Komentar lama menolaknya dengan
+ * alasan "lebarnya berubah-ubah begitu pilihan diganti" — dan itu KELIRU;
+ * diuji langsung, satu select `w-auto` diukur pada keenam pilihannya
+ * memberikan 136px setiap kali. Lebar select native mengikuti opsi
+ * TERPANJANG, dan opsi terpanjang tidak berubah ketika pengguna memilih.
+ * Toolbar tetap diam.
+ *
+ * Yang benar dari kekhawatiran lama: satu opsi panjang memang melebarkan
+ * kotaknya. Itu dijaga `max-w`, bukan dengan membuang lebar otomatisnya.
+ *
+ *   min-w-28  112px  lantai — penyaring beropsi pendek tetap nyaman diklik
+ *   max-w-56  224px  langit-langit — satu nama panjang tidak menelan toolbar
+ *
+ * Hanya untuk penyaring toolbar. Field di dalam form tetap mengikuti kisi
+ * formnya; menyempitkannya menjadi selebar isi membuat form terbaca seperti
+ * deretan chip.
  */
-const LEBAR_FILTER = {
-  xs: "sm:w-34",
-  sm: "sm:w-42",
-  md: "sm:w-52",
-} as const;
-
-export type FilterSize = keyof typeof LEBAR_FILTER;
+const LEBAR_FILTER = "sm:w-auto sm:min-w-28 sm:max-w-56";
 
 export type TableFilter = {
   /** Nama parameter di URL. */
@@ -68,7 +74,6 @@ export type TableFilter = {
   allLabel: string;
   options: { value: string; label: string }[];
   /** Bawaannya `sm`. Pilih menurut label terpanjang yang mungkin tampil. */
-  size?: FilterSize;
 };
 
 /**
@@ -240,7 +245,7 @@ export function TableToolbar({
                   ...kosongkanLain(),
                 })
               }
-              className={cn("w-full", LEBAR_FILTER[filter.size ?? "sm"])}
+              className={cn("w-full", LEBAR_FILTER)}
             >
               <option value="">{filter.allLabel}</option>
               {filter.options.map((option) => (

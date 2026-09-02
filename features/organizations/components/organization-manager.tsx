@@ -115,7 +115,6 @@ export function OrganizationManager({
           filters={[
             {
               key: "status",
-              size: "xs",
               label: "Saring menurut status",
               value: status,
               allLabel: "Semua status",

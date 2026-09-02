@@ -157,7 +157,6 @@ export default async function FinanceReportPage({
           filters={[
             {
               key: "akun",
-              size: "sm",
               label: "Saring menurut akun kas",
               value: akun,
               allLabel: "Semua akun",

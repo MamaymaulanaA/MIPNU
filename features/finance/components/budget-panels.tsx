@@ -6,6 +6,8 @@ import { PiggyBank, Plus, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
+import { TINGGI_KONTROL_RINGKAS } from "@/components/ui/control";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
@@ -150,7 +152,10 @@ export function BudgetManager({
                         aria-label={`Status ${budget.name}`}
                         value={budget.status}
                         disabled={isPending}
-                        className="h-9 w-auto text-[13px]"
+                        className={cn(
+                          TINGGI_KONTROL_RINGKAS,
+                          "w-auto text-[13px]",
+                        )}
                         onChange={(event) => {
                           const next = event.target.value as
                             "DRAFT" | "APPROVED" | "CLOSED";

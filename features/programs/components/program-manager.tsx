@@ -6,6 +6,7 @@ import { Pencil, Plus, Target, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
+import { TINGGI_KONTROL_RINGKAS } from "@/components/ui/control";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
@@ -352,7 +353,7 @@ function ProgramCard({
               aria-label={`Status ${program.name}`}
               value={program.status}
               disabled={isPending}
-              className="h-9 w-auto text-[13px]"
+              className={cn(TINGGI_KONTROL_RINGKAS, "w-auto text-[13px]")}
               onChange={(event) => {
                 const next = event.target.value as ProgramStatus;
 

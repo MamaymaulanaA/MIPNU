@@ -158,7 +158,6 @@ export function AgendaManager({
           filters={[
             {
               key: "jenis",
-              size: "sm",
               label: "Saring menurut jenis",
               value: daftar.jenis,
               allLabel: "Semua jenis",

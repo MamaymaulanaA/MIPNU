@@ -164,7 +164,6 @@ export default async function FinanceAccountsPage({
           filters={[
             {
               key: "statusAkun",
-              size: "xs",
               label: "Saring akun menurut status",
               value: statusAkun,
               allLabel: "Semua status",
@@ -202,7 +201,6 @@ export default async function FinanceAccountsPage({
           filters={[
             {
               key: "jenisKategori",
-              size: "xs",
               label: "Saring kategori menurut jenis",
               value: jenisKategori,
               allLabel: "Semua jenis",

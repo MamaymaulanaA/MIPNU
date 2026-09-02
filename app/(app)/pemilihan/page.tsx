@@ -116,7 +116,6 @@ export default async function ElectionsPage({
           filters={[
             {
               key: "status",
-              size: "sm",
               label: "Saring menurut status",
               value: daftar.saring.status,
               allLabel: "Semua status",

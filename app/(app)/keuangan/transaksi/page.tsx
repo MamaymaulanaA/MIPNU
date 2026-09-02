@@ -253,7 +253,6 @@ export default async function FinanceTransactionsPage({
           filters={[
             {
               key: "jenis",
-              size: "xs",
               label: "Saring menurut jenis",
               value: saring.jenis,
               allLabel: "Semua jenis",
@@ -264,7 +263,6 @@ export default async function FinanceTransactionsPage({
             },
             {
               key: "status",
-              size: "xs",
               label: "Saring menurut status",
               value: saring.status,
               allLabel: "Semua status",
@@ -276,7 +274,6 @@ export default async function FinanceTransactionsPage({
             },
             {
               key: "akun",
-              size: "sm",
               label: "Saring menurut akun",
               value: saring.akun,
               allLabel: "Semua akun",
@@ -287,7 +284,6 @@ export default async function FinanceTransactionsPage({
             },
             {
               key: "kategori",
-              size: "sm",
               label: "Saring menurut kategori",
               value: saring.kategori,
               allLabel: "Semua kategori",

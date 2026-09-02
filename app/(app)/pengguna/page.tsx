@@ -172,7 +172,6 @@ export default async function UsersPage({
           filters={[
             {
               key: "peran",
-              size: "md",
               label: "Saring menurut role",
               value: peran,
               allLabel: "Semua role",
@@ -183,7 +182,6 @@ export default async function UsersPage({
             },
             {
               key: "status",
-              size: "xs",
               label: "Saring menurut status",
               value: status,
               allLabel: "Semua status",

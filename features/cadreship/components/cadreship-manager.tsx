@@ -171,7 +171,6 @@ export function CadreshipManager({
           filters={[
             {
               key: "jenjang",
-              size: "sm",
               label: "Saring menurut jenjang",
               value: daftar.jenjang,
               allLabel: "Semua jenjang",
@@ -179,7 +178,6 @@ export function CadreshipManager({
             },
             {
               key: "status",
-              size: "xs",
               label: "Saring menurut status",
               value: daftar.status,
               allLabel: "Semua status",

@@ -29,3 +29,19 @@ export const TINGGI_KONTROL = "h-[46px] min-[480px]:h-11";
  * justru paling menentukan.
  */
 export const TINGGI_KONTROL_IKON = "size-11 min-[480px]:size-10";
+
+/**
+ * Tinggi kontrol RINGKAS untuk aksi sebaris.
+ *
+ * Dipakai oleh kontrol yang duduk di dalam kartu berdampingan dengan tombol
+ * `size="sm"` — pemilih status pada Program Kerja dan Anggaran. Tombol itu
+ * setinggi 36px; kontrol standar 44px, dan berdampingan keduanya terbaca
+ * sebagai dua komponen dari sistem berbeda, bukan satu kelompok aksi.
+ *
+ * `min-[480px]:h-9` BUKAN pengulangan yang bisa dibuang. Menulis `h-9` saja
+ * hanya menimpa `h-[46px]` dari `TINGGI_KONTROL`; varian `min-[480px]:h-11`
+ * miliknya selamat dan kembali berlaku begitu layar >= 480px. Itulah sebabnya
+ * pemilih status terukur 44px di desktop padahal kodenya menulis `h-9` —
+ * kelasnya ada, tetapi kalah oleh varian yang lebih spesifik.
+ */
+export const TINGGI_KONTROL_RINGKAS = "h-9 min-[480px]:h-9";

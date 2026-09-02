@@ -108,7 +108,6 @@ export default async function MembersPage({
             filters={[
               {
                 key: "status",
-                size: "xs",
                 label: "Saring menurut status",
                 value: params.status,
                 allLabel: "Semua status",

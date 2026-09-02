@@ -184,7 +184,6 @@ export default async function WorkProgramsPage({
           filters={[
             {
               key: "periode",
-              size: "sm",
               label: "Saring menurut periode",
               value: daftar.saring.periode,
               allLabel: "Semua periode",
@@ -195,7 +194,6 @@ export default async function WorkProgramsPage({
             },
             {
               key: "status",
-              size: "xs",
               label: "Saring menurut status",
               value: daftar.saring.status,
               allLabel: "Semua status",
