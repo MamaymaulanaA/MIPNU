@@ -477,6 +477,35 @@
    * tab yang tingginya meleset satu piksel memunculkan batang gulir vertikal
    * lengkap dengan tombol panah di ujung kanannya.
    */
+  /*
+   * Panah pada select.
+   *
+   * Sebelumnya ditulis sebagai nilai arbitrer Tailwind di komponennya:
+   * `bg-[url("data:image/svg+xml,%3Csvg xmlns='...' width='16' ...")]`.
+   * Kelas itu TIDAK PERNAH menghasilkan aturan apa pun. Nilai arbitrer
+   * Tailwind tidak boleh memuat spasi literal, sedangkan SVG-nya penuh spasi
+   * di antara atributnya, sehingga parser menyerah tanpa bersuara.
+   *
+   * Akibatnya tiap select berjalan dengan `appearance: none` — panah bawaan
+   * peramban dimatikan — tanpa panah pengganti, sementara `pr-8` tetap
+   * memesan 32px untuk panah yang tak pernah ada. Kotaknya terbaca kosong di
+   * sebelah kanan, dan tidak ada satu pun tanda bahwa ia bisa dibuka.
+   *
+   * Di sini tidak ada parser nilai arbitrer, jadi SVG-nya boleh ditulis apa
+   * adanya. Spasinya tetap di-encode `%20` agar aman di dalam url().
+   */
+  .select-chevron {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%2364748b'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%209%206%206%206-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 16px;
+  }
+
+  /* Slate-500 terlalu redup di atas permukaan gelap. */
+  .dark .select-chevron {
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%2394a3b8'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%209%206%206%206-6'/%3E%3C/svg%3E");
+  }
+
   .scroll-none {
     overflow-x: auto;
     overflow-y: hidden;

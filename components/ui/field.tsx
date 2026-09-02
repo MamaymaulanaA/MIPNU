@@ -55,11 +55,10 @@ export function Select({
       className={cn(
         controlBase,
         TINGGI_KONTROL,
-        "cursor-pointer appearance-none bg-no-repeat py-0 pr-8 pl-3",
-        // Chevron sebagai data-URI: menghindari satu request aset untuk ikon
-        // sekecil ini, dan mewarisi warna netral tema.
-        "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")]",
-        "bg-[position:right_0.75rem_center]",
+        // `pr-8` memberi tempat bagi panah: ikon 16px yang duduk 12px dari
+        // tepi kanan, menyisakan 4px jarak dari teks terpanjang.
+        "cursor-pointer appearance-none py-0 pr-8 pl-3",
+        "select-chevron",
         className,
       )}
       {...props}
