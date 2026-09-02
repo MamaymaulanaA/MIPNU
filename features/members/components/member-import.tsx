@@ -126,7 +126,7 @@ export function MemberImport({ organizationId }: { organizationId: string }) {
               const file = event.target.files?.[0];
               if (file) void handleFile(file);
             }}
-            className="block w-full text-[13px] text-muted-foreground file:mr-3 file:h-10 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-card file:px-4 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted"
+            className="block w-full text-[13px] text-muted-foreground file:mr-3 file:h-[46px] min-[480px]:file:h-11 file:cursor-pointer file:rounded-md file:border file:border-border file:bg-card file:px-4 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted"
           />
 
           <FormAlert message={readError ?? undefined} />
