@@ -52,8 +52,22 @@ import { cn } from "@/lib/utils";
  * TERPANJANG, dan opsi terpanjang tidak berubah ketika pengguna memilih.
  * Toolbar tetap diam.
  *
- * Yang benar dari kekhawatiran lama: satu opsi panjang memang melebarkan
- * kotaknya. Itu dijaga `max-w`, bukan dengan membuang lebar otomatisnya.
+ * `w-auto` saja masih menyisakan satu masalah: ia selebar opsi TERPANJANG,
+ * jadi penyaring Event duduk di 179px demi "Pendaftaran ditutup" walau yang
+ * tampil "Semua status" (134px) — 45px kosong sepanjang waktu.
+ * `field-sizing: content` menyelesaikannya: kotaknya selebar nilai yang
+ * SEDANG tampil, dan melebar sendiri ketika opsi panjang itu benar dipilih,
+ * sehingga tidak ada yang terpotong maupun menganggur.
+ *
+ * Harganya: pada halaman dengan beberapa penyaring sebaris, satu yang
+ * menyusut menggeser tetangga kanannya — terukur 17px di Transaksi, satu-
+ * satunya halaman dengan enam penyaring. Itu dapat diterima karena mengubah
+ * penyaring memang memicu navigasi dan tabelnya dimuat ulang; pergeseran itu
+ * terjadi bersama perubahan yang jauh lebih besar, bukan pada halaman diam.
+ * Sembilan halaman lain hanya punya satu atau dua penyaring.
+ *
+ * `max-w` tetap menjaga satu nama yang sangat panjang agar tidak menelan
+ * toolbar, dan `min-w` menjaga lantai sasaran klik.
  *
  *   min-w-28  112px  lantai — penyaring beropsi pendek tetap nyaman diklik
  *   max-w-56  224px  langit-langit — satu nama panjang tidak menelan toolbar
@@ -62,7 +76,8 @@ import { cn } from "@/lib/utils";
  * formnya; menyempitkannya menjadi selebar isi membuat form terbaca seperti
  * deretan chip.
  */
-const LEBAR_FILTER = "sm:w-auto sm:min-w-28 sm:max-w-56";
+const LEBAR_FILTER =
+  "sm:field-sizing-content sm:w-auto sm:min-w-28 sm:max-w-56";
 
 export type TableFilter = {
   /** Nama parameter di URL. */
