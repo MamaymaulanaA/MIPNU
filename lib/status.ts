@@ -60,10 +60,6 @@ export const managementStatus = present({
   REVOKED: { label: "Dicabut", tone: "destructive" },
 });
 
-/**
- * Role sengaja bernada halus. Role bukan hiasan — badge-nya tidak boleh
- * berteriak lebih keras daripada data (docs/UI.md §113).
- */
 export const roleStatus = present({
   SUPER_ADMIN: { label: "Super Admin", tone: "primary" },
   OPERATOR_ORGANISASI: { label: "Operator", tone: "info" },

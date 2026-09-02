@@ -78,8 +78,6 @@ export default async function ElectionDetailPage({
 
   if (!context.organizationId) return <ForbiddenState />;
 
-  // RLS yang menentukan keterlihatan: pemegang elections.view, dan anggota
-  // yang namanya ada di DPT. Pemilihan tenant lain menghasilkan NULL.
   const election = await getElection(id);
   if (!election) notFound();
 

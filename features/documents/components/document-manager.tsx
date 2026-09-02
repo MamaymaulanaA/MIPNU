@@ -208,12 +208,6 @@ export function DocumentManager({
                             disabled={isPending}
                             className={cn(
                               TINGGI_KONTROL_RINGKAS,
-                              // Memeluk nilai yang sedang tampil.
-                              // `min-w-32` yang lama membatalkan hal itu:
-                              // lantai 128px membuat nilai sependek
-                              // "Publik" tetap duduk di kotak selebar itu.
-                              // `w-auto` tetap ada sebagai jaring pengaman
-                              // untuk peramban tanpa `field-sizing`.
                               "field-sizing-content w-auto text-[13px]",
                             )}
                             onChange={(event) => {

@@ -110,8 +110,6 @@ export default async function LettersPage({
         .is("deleted_at", null)
         .order("full_name"),
 
-      // Hanya dokumen yang benar-benar boleh dilihat pemanggil yang muncul
-      // sebagai pilihan lampiran — RLS `documents_select` yang menentukan.
       supabase
         .from("documents")
         .select("id, title, category")

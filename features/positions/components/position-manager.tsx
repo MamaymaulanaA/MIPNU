@@ -323,7 +323,6 @@ function PositionDialog({
   const failed = state && !state.success ? state : null;
   const fieldErrors = failed?.fieldErrors;
 
-  // Sebuah jabatan tidak boleh memilih dirinya sendiri sebagai induk.
   const parentOptions = positions.filter((item) => item.id !== position?.id);
 
   return (
@@ -430,13 +429,6 @@ function PositionDialog({
   );
 }
 
-/**
- * Pemilihan permission jabatan.
- *
- * Dikelompokkan per resource supaya daftar 70+ permission tetap terbaca.
- * Permission platform tidak muncul di katalog sama sekali — ia memang tidak
- * dapat didelegasikan lewat jabatan.
- */
 function PermissionDialog({
   open,
   onClose,

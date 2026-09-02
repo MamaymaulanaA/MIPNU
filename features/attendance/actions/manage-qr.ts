@@ -127,14 +127,6 @@ export type CheckInOutcome = {
   sessionId: string | null;
 };
 
-/**
- * Menukar token QR menjadi catatan kehadiran.
- *
- * Seluruh validasi terjadi di dalam `mipnu_check_in_with_token()`: keaslian
- * token, masa berlaku, status sesi, keanggotaan organisasi, permission, dan
- * duplikasi. Server action ini hanya memastikan pemanggilnya sudah login dan
- * menerjemahkan hasilnya.
- */
 export async function checkInWithToken(
   token: string,
 ): Promise<ActionResult<CheckInOutcome>> {

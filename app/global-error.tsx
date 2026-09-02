@@ -2,19 +2,6 @@
 
 import { useEffect } from "react";
 
-/**
- * Jaring terakhir.
- *
- * `app/error.tsx` hanya menangkap kegagalan DI DALAM root layout. Bila root
- * layout itu sendiri yang gagal — misalnya karena provider atau font gagal
- * dimuat — boundary tersebut ikut gagal, dan tanpa berkas ini pengguna
- * menerima halaman error bawaan Next yang tidak berbahasa Indonesia dan tidak
- * menyerupai aplikasi ini sama sekali.
- *
- * Karena ia menggantikan root layout, ia harus menyertakan <html> dan <body>
- * sendiri, dan tidak boleh bergantung pada apa pun yang mungkin ikut gagal:
- * tidak ada import komponen, tidak ada token tema, hanya gaya sebaris.
- */
 export default function GlobalError({
   error,
   reset,

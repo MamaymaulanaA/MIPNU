@@ -38,15 +38,6 @@
   --destructive: 0 72% 51%; /* #DC2626 */
   --destructive-foreground: 0 0% 100%;
 
-  /* ---- Success TANPA hijau ----
-     Keputusan final: MIPNU tidak memakai hijau di UI. Success karenanya
-     memakai biru yang lebih DALAM daripada primary, bukan biru yang sama:
-     #1E40AF vs #2F6FED. Perbedaan kedalaman itu yang membedakan "sudah
-     final" dari "dapat ditindak", tanpa menambah warna baru.
-
-     Karena warnanya kini sekeluarga dengan primary, warna TIDAK PERNAH
-     menjadi satu-satunya sinyal. Setiap status success wajib disertai
-     label teks, dan badge menambahkan titik sebagai sinyal kedua. */
   --success: 226 71% 40%; /* #1E40AF */
   --success-foreground: 0 0% 100%;
 
@@ -68,15 +59,6 @@
   --destructive-soft: 0 86% 97%;
   --info-soft: 200 90% 95%;
 
-  /* ---- Aksen data ----
-     Dipakai HANYA untuk membedakan kategori pada dashboard: wadah ikon
-     kartu metrik, irisan donat, dan penanda domain aktivitas. Bukan status,
-     jadi tidak boleh dipakai untuk sukses/gagal/peringatan — token semantik
-     di atas tetap satu-satunya sumber untuk itu.
-
-     Tidak ada hijau di sini, sesuai keputusan palet. Cyan berada di hue 192,
-     jauh dari wilayah hijau, dan tetap terbaca berdampingan dengan biru
-     primer karena kedalamannya berbeda. */
   --accent-cyan: 192 91% 36%; /* #0891B2 */
   --accent-cyan-soft: 185 96% 94%;
   --accent-purple: 263 83% 58%; /* #7C3AED */
@@ -350,36 +332,10 @@
 }
 
 @layer utilities {
-  /* Scrollbar yang hampir tidak terasa ada.
-   *
-   * Dua jalur, dan pemisahannya DISENGAJA: sejak Chromium mendukung properti
-   * standar `scrollbar-width`, menyetelnya membuat seluruh pseudo-element
-   * `::-webkit-scrollbar` DIABAIKAN — dan `thin` di Chromium berarti sekitar
-   * 10px, jauh dari tipis. Karena itu properti standar hanya dipasang di
-   * peramban yang memang tidak punya pseudo-element webkit (Firefox), lewat
-   * `@supports not selector(...)`.
-   *
-   * Hasilnya: Chromium mendapat 4px yang benar-benar 4px, Firefox mendapat
-   * `thin` dengan warna yang sama halusnya. Kemampuan menggulung tidak
-   * dikurangi sedikit pun — hanya penampakannya yang mundur, karena batang
-   * gulir bukan informasi yang perlu dibaca setiap saat (docs/UI.md §14). */
-  /*
-   * Panah pada select.
-   *
-   * Sebelumnya ditulis sebagai nilai arbitrer Tailwind di komponennya:
-   * `bg-[url("data:image/svg+xml,%3Csvg xmlns='...' width='16' ...")]`.
-   * Kelas itu TIDAK PERNAH menghasilkan aturan apa pun. Nilai arbitrer
-   * Tailwind tidak boleh memuat spasi literal, sedangkan SVG-nya penuh spasi
-   * di antara atributnya, sehingga parser menyerah tanpa bersuara.
-   *
-   * Akibatnya tiap select berjalan dengan `appearance: none` — panah bawaan
-   * peramban dimatikan — tanpa panah pengganti, sementara `pr-8` tetap
-   * memesan 32px untuk panah yang tak pernah ada. Kotaknya terbaca kosong di
-   * sebelah kanan, dan tidak ada satu pun tanda bahwa ia bisa dibuka.
-   *
-   * Di sini tidak ada parser nilai arbitrer, jadi SVG-nya boleh ditulis apa
-   * adanya. Spasinya tetap di-encode `%20` agar aman di dalam url().
-   */
+  /* `scrollbar-width` mematikan seluruh ::-webkit-scrollbar, jadi jalur standar
+     hanya dipasang di peramban tanpa pseudo-element webkit (lihat @supports di bawah). */
+  /* SVG ditulis di sini, bukan sebagai nilai arbitrer Tailwind: nilai arbitrer
+     tidak boleh memuat spasi literal dan parser-nya gagal tanpa bersuara. */
   .select-chevron {
     background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%2364748b'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%209%206%206%206-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -439,8 +395,7 @@
     background: hsl(var(--muted-foreground) / 0.38);
   }
 
-  /* Firefox: tidak punya pseudo-element di atas, jadi dipakai properti
-     standar. `thin` adalah nilai paling tipis yang tersedia di sana. */
+  /* Firefox: tanpa pseudo-element, `thin` adalah yang paling tipis tersedia. */
   @supports not selector(::-webkit-scrollbar) {
     html,
     .scroll-area {

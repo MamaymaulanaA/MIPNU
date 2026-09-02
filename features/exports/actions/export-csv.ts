@@ -20,21 +20,6 @@ function timestamp() {
   return new Date().toISOString().slice(0, 10);
 }
 
-/**
- * Ekspor anggota.
- *
- * Dua permission berbeda bekerja di sini, dan itu disengaja:
- *
- *   `members.export`       menentukan boleh-tidaknya mengekspor sama sekali.
- *   `members.view_private` menentukan apakah kolom email/telepon/alamat ikut.
- *
- * Pemegang export tanpa view_private mendapat berkas TANPA kolom pribadi.
- * Ekspor tidak boleh menjadi pintu belakang yang memberi apa yang tidak
- * boleh dilihat di layar (docs/PERMISSIONS.md §76).
- *
- * Filter yang sedang aktif ikut diterapkan, sehingga yang diunduh sama
- * dengan yang dilihat.
- */
 export async function exportMembers(
   organizationId: string,
   rawParams: Partial<MemberListParams>,
@@ -121,7 +106,6 @@ export async function exportMembers(
   }
 }
 
-/** Ekspor struktur kepengurusan. Tenant-scoped, permission-aware. */
 export async function exportManagement(
   organizationId: string,
 ): Promise<ActionResult<CsvExport>> {

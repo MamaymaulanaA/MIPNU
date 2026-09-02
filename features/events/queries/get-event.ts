@@ -14,17 +14,6 @@ export type EventDetail = {
   registrationEndAt: string | null;
   status: string;
   visibility: string;
-  /**
-   * Apakah pendaftaran sedang terbuka SAAT query dijalankan.
-   *
-   * Sengaja dihitung di sini, bukan di dalam component: nilainya bergantung
-   * pada waktu sekarang, sehingga tidak murni dan tidak boleh dievaluasi
-   * selama render.
-   *
-   * Ini hanya petunjuk untuk UI. Penjagaan sesungguhnya ada di policy
-   * `event_participants_insert` yang memanggil
-   * `app_private.event_registration_open()`.
-   */
   registrationOpen: boolean;
 };
 

@@ -128,14 +128,6 @@ export async function updateCadreshipRecord(
   }
 }
 
-/**
- * Memverifikasi kaderisasi.
- *
- * Aksi tersendiri, bukan nilai pada dropdown status. Permission-nya juga
- * tersendiri — dan penegakannya tidak berhenti di sini: trigger
- * `guard_cadreship_verification()` menolak perubahan kolom verifikasi dari
- * jalur mana pun yang tidak memegang cadreship.verify.
- */
 export async function verifyCadreshipRecord(
   organizationId: string,
   recordId: string,

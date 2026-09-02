@@ -28,16 +28,6 @@ export function parseTab(value: string | undefined): ElectionTab {
     : "ringkasan";
 }
 
-/**
- * Tab detail pemilihan.
- *
- * Berbasis tautan, bukan state client: setiap tab punya URL sendiri sehingga
- * dapat dibagikan, di-refresh, dan dibuka di tab peramban baru — dan seluruh
- * isinya tetap dirender server, tempat permission benar-benar diperiksa.
- *
- * Tab yang tidak berhak dilihat pengguna TIDAK ditampilkan; halaman tetap
- * menolaknya lagi bila URL-nya diketik langsung.
- */
 export function ElectionTabs({
   electionId,
   active,

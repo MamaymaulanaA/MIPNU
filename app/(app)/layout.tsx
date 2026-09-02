@@ -9,13 +9,6 @@ import {
   listAccessibleOrganizations,
 } from "@/lib/auth/context";
 
-/**
- * Layout area aplikasi.
- *
- * Di sinilah identitas, daftar organisasi, dan permission efektif diselesaikan
- * — sekali per request, di server. Client tidak pernah menghitung permission
- * sendiri; ia hanya menerima hasilnya untuk menyusun menu.
- */
 export default async function AppLayout({
   children,
 }: {

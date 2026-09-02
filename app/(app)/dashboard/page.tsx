@@ -36,21 +36,6 @@ export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-/**
- * Dashboard role-aware.
- *
- * Halaman ini hanya MENGUMPULKAN data dan memilih dashboard mana yang dirender;
- * seluruh tampilannya ada di `features/dashboard/components`. Pemisahan itu
- * yang membuat aturan pentingnya terlihat di satu tempat: setiap query di bawah
- * didahului pemeriksaan permission, sehingga baris yang tidak boleh dilihat
- * tidak pernah diambil — bukan diambil lalu disembunyikan di browser
- * (docs/PERMISSIONS.md §76).
- *
- * Angka agregatnya sendiri datang dari `mipnu_organization_stats()` dan
- * `mipnu_platform_stats()`, yang menyaring haknya sendiri di dalam database.
- * Tidak ada satu pun angka hardcoded di halaman ini (PRD §64).
- */
-
 type SisaPeriode = {
   text: string;
   short: string;
@@ -101,8 +86,6 @@ function sisaMasaPeriode(endDate: string): SisaPeriode | null {
 export default async function DashboardPage() {
   const context = await requireAccessContext();
 
-  // Administrator platform: satu-satunya tempat angka lintas organisasi
-  // ditampilkan, dan hanya berisi agregat — tanpa data tenant privat.
   const platformStats = can(context, PERMISSIONS.reports.viewGlobal)
     ? await getPlatformStats()
     : null;
@@ -115,8 +98,6 @@ export default async function DashboardPage() {
       can(context, PERMISSIONS.audit.view) && context.organizationId
         ? getRecentActivity(context.organizationId, BATAS_PRATINJAU)
         : [],
-      // Daftar akun tunduk pada permission-nya sendiri: yang tidak berhak
-      // membuka modul Pengguna tidak menerima barisnya di payload RSC.
       can(context, PERMISSIONS.users.view) ? getAccountPreview() : [],
     ]);
 
@@ -168,12 +149,6 @@ export default async function DashboardPage() {
   const bolehLihatAudit = can(context, PERMISSIONS.audit.view);
   const bolehLihatPemilihan = can(context, PERMISSIONS.elections.view);
 
-  /*
-   * Gerbang daftar tindak lanjut memakai permission PENANGANAN, bukan
-   * permission melihat. Yang tidak dapat menautkan akun tidak perlu tahu
-   * berapa anggota yang belum punya akun — angka itu menjadi pekerjaan orang
-   * lain, dan dashboard bukan tempat membebankannya.
-   */
   const gerbangTindakLanjut = {
     linkAccounts: can(context, PERMISSIONS.users.assignOrganization),
     memberStatus: can(context, PERMISSIONS.members.manageStatus),
@@ -182,18 +157,12 @@ export default async function DashboardPage() {
     events: can(context, PERMISSIONS.events.publish),
   };
 
-  // Sumber grafik ditentukan per-modul: yang tidak boleh dilihat tidak ikut
-  // dihitung, sehingga jumlah rapat organisasi tidak bocor lewat sebuah garis.
   const sumberKegiatan = {
     agenda: can(context, PERMISSIONS.agenda.view),
     events: can(context, PERMISSIONS.events.view),
     meetings: can(context, PERMISSIONS.meetings.view),
   };
 
-  /*
-   * Gerbang ringkasan struktur memakai permission PENYUNTINGAN. Jabatan dan
-   * periode boleh dilihat hampir semua pengurus; yang memeliharanya operator.
-   */
   const gerbangOperasional = {
     positions: can(context, PERMISSIONS.positions.edit),
     periods: can(context, PERMISSIONS.periods.edit),

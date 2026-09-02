@@ -30,7 +30,6 @@ export default async function AdminOrganizationsPage({
 }: {
   searchParams: SearchParams;
 }) {
-  // Konteks platform: permission global, tanpa organisasi aktif.
   const context = await requireAccessContext(null);
 
   if (!can(context, PERMISSIONS.organization.create)) {
@@ -85,9 +84,6 @@ export default async function AdminOrganizationsPage({
         .eq("is_active", true)
         .order("hierarchy_rank"),
 
-      // Calon induk TIDAK boleh ikut terpotong pagination: dialog pembuatan
-      // harus dapat menunjuk organisasi mana pun, bukan hanya yang kebetulan
-      // ada di halaman yang sedang dibuka. Kolomnya sengaja hanya dua.
       supabase
         .from("organizations")
         .select("id, name")

@@ -7,13 +7,6 @@ import {
 } from "@/components/layout/navigation";
 import { PERMISSIONS } from "@/lib/auth/permissions";
 
-/**
- * Navigasi disaring permission.
- *
- * Ini soal tampilan, bukan keamanan — tetapi tetap diuji, karena menu yang
- * bocor ke role yang salah adalah gejala pertama resolver permission yang
- * melenceng.
- */
 describe("filterNavigation", () => {
   it("tidak menampilkan apa pun tanpa permission", () => {
     expect(filterNavigation(new Set())).toEqual([]);
@@ -34,7 +27,6 @@ describe("filterNavigation", () => {
     expect(labels).toContain("Dashboard");
     expect(labels).toContain("Agenda");
 
-    // Tanpa members.view, menu anggota tidak boleh muncul sama sekali.
     expect(labels).not.toContain("Data Anggota");
     expect(labels).not.toContain("Audit Log");
     expect(labels).not.toContain("Pengguna");
@@ -73,13 +65,6 @@ describe("filterNavigation", () => {
   });
 });
 
-/**
- * Penanda menu aktif.
- *
- * Bug yang dikunci di sini nyata dan pernah terlihat: `/organisasi/periode`
- * menyalakan "Profil Organisasi" dan "Periode" sekaligus, karena setiap item
- * dicocokkan sendiri-sendiri dengan `startsWith`.
- */
 describe("resolveActiveHref", () => {
   it("submenu mengalahkan induknya", () => {
     expect(resolveActiveHref("/organisasi/periode")).toBe(

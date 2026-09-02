@@ -2,17 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Dua bagian dashboard yang tidak dapat diambil dari agregat: pratinjau
- * anggota dan aktivitas terbaru.
- *
- * Keduanya BARIS, bukan angka — dan karena itu keduanya tunduk pada RLS
- * tabelnya masing-masing. Pemanggil tetap wajib memeriksa permission lebih
- * dulu supaya query-nya tidak dijalankan sama sekali bagi yang tidak berhak:
- * baris yang tidak boleh dilihat tidak boleh sampai ke payload RSC, bukan
- * sekadar disembunyikan CSS.
- */
-
 export type ActivityDomain =
   "kegiatan" | "administrasi" | "keanggotaan" | "pemilihan" | "lainnya";
 
@@ -42,16 +31,6 @@ function ranah(action: string): ActivityDomain {
   return RANAH[action.split(".")[0] ?? ""] ?? "lainnya";
 }
 
-/**
- * Peristiwa yang TIDAK PERNAH muncul di dashboard, apa pun hak pemanggilnya.
- *
- * `elections.vote_cast` mencatat bahwa seseorang memberikan suara — tanpa
- * kandidat, jadi kerahasiaan pilihannya utuh. Tetapi menampilkan "X memberikan
- * suara" pada aliran aktivitas yang berjalan sepanjang hari pemungutan suara
- * mengubah fakta yang tenang di layar DPT menjadi siaran langsung siapa yang
- * sudah dan belum memilih. Itu tekanan sosial yang tidak diminta siapa pun
- * (EVOTING §127, §198).
- */
 const DIKECUALIKAN = ["elections.vote_cast"];
 
 const LABEL: Record<string, string> = {
@@ -75,17 +54,6 @@ const LABEL: Record<string, string> = {
   "elections.result_published": "Hasil pemilihan dipublikasikan",
 };
 
-/**
- * Aktivitas terbaru organisasi.
- *
- * Sumbernya `audit_logs`, yang RLS-nya sendiri sudah membatasi baris mana
- * terbaca oleh siapa. Pemanggil tetap memeriksa `audit.view` lebih dulu agar
- * query-nya tidak berjalan sama sekali bagi yang tidak berhak.
- *
- * Metadata TIDAK ikut dibaca. Isinya beragam antar-modul dan sebagian memuat
- * hal yang tidak pantas berada di dashboard; yang dibutuhkan di sini hanya
- * peristiwa, waktu, dan pelakunya.
- */
 export async function getRecentActivity(
   organizationId: string,
   limit = 6,

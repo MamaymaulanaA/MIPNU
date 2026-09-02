@@ -59,13 +59,6 @@ export default async function AuditPage({
 
   const supabase = await createClient();
 
-  // Audit bersifat append-only dan tidak punya UI ubah/hapus. Halaman ini
-  // memang hanya membaca (docs/DATABASE.md §44, RLS.md §115).
-  //
-  // Pencarian, penyaringan, DAN pembagian halaman seluruhnya di database.
-  // Sebelumnya halaman ini menarik 100 baris terakhir tanpa cara menelusuri
-  // yang lebih lama; batang gulir tidak menggantikan itu, ia hanya membatasi
-  // tingginya (AGENTS.md §57, §64).
   const dari = (halaman - 1) * AUDIT_PAGE_SIZE;
 
   let query = supabase

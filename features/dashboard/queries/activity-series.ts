@@ -2,22 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Deret kegiatan organisasi per bulan.
- *
- * Sumbernya tiga tabel yang memang berarti "kegiatan": agenda, event, dan
- * rapat. Masing-masing hanya ikut dihitung bila pemanggil berhak melihatnya —
- * seorang anggota yang tidak boleh membuka daftar rapat tidak akan menemukan
- * jumlah rapat organisasinya lewat sebuah grafik.
- *
- * Yang diambil HANYA kolom tanggal. Judul, lokasi, dan peserta tidak
- * dibutuhkan untuk menghitung, jadi tidak ikut dikirim.
- *
- * Pengelompokan dilakukan di sini, bukan di SQL: rentangnya dua belas bulan
- * dan barisnya sedikit, sehingga satu view atau RPC baru hanya menambah
- * permukaan migrasi tanpa menghemat apa pun.
- */
-
 export type ActivityPoint = {
   month: string;
   label: string;

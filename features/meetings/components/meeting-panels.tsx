@@ -305,11 +305,6 @@ export function MeetingParticipants({
   const taken = new Set(participants.map((row) => row.memberId));
   const available = memberOptions.filter((option) => !taken.has(option.id));
 
-  // Daftar anggota yang dapat dipilih disaring RLS: pemegang
-  // meetings.manage_participants yang TIDAK memegang members.view hanya
-  // melihat dirinya sendiri. Membedakan kedua sebab kosongnya penting —
-  // "semua sudah jadi peserta" dan "Anda tidak dapat melihat anggota lain"
-  // menuntut tindakan yang sama sekali berbeda dari pembacanya.
   const noneVisible = memberOptions.length === 0;
 
   return (
@@ -415,12 +410,6 @@ export function MeetingParticipants({
                           disabled={isPending}
                           className={cn(
                             TINGGI_KONTROL_RINGKAS,
-                            // Memeluk nilai yang sedang tampil.
-                            // `min-w-32` yang lama membatalkan hal itu:
-                            // lantai 128px membuat nilai sependek
-                            // "Izin" tetap duduk di kotak selebar itu.
-                            // `w-auto` tetap ada sebagai jaring pengaman
-                            // untuk peramban tanpa `field-sizing`.
                             "field-sizing-content w-auto text-[13px]",
                           )}
                           onChange={(event) => {

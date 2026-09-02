@@ -23,13 +23,6 @@ export type OrganizationProfile = {
   description: string | null;
 };
 
-/**
- * Profil satu organisasi.
- *
- * Tidak perlu memfilter tenant secara manual: RLS pada `organizations` hanya
- * meloloskan organisasi yang benar-benar dapat diakses pemanggil, sehingga id
- * organisasi lain menghasilkan NULL, bukan data (docs/ARCHITECTURE.md §81).
- */
 export async function getOrganizationProfile(
   organizationId: string,
 ): Promise<OrganizationProfile | null> {

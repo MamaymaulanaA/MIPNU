@@ -79,26 +79,6 @@ import {
 import { electionStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-/**
- * Dashboard organisasi.
- *
- * Berorientasi ORGANISASI, bukan platform: pertanyaannya bukan "berapa
- * organisasi yang ada" melainkan "bagaimana keadaan organisasi saya" —
- * anggotanya, kepengurusannya, programnya, kasnya, dan apa yang akan terjadi
- * minggu ini.
- *
- * Susunannya berangkat dari satu kenyataan tentang perannya: seorang pengurus
- * memegang belasan modul sekaligus. Karena itu setelah empat angka terpenting
- * ada KISI MODUL — satu sel pendek per modul yang boleh dibukanya, lengkap
- * dengan angkanya sendiri. Satu pindai memberi tahu apa yang bergerak di
- * seluruh organisasi, dan setiap sel adalah pintu ke modulnya.
- *
- * Isinya ditentukan seluruhnya oleh permission. Setiap blok agregat datang
- * NULL dari `mipnu_organization_stats()` bila pemanggil tidak berhak, dan
- * daftar baris sudah ditahan di lapisan pemanggil — jadi yang tidak boleh
- * dilihat tidak pernah masuk payload, bukan dirender lalu disembunyikan.
- */
-
 const BULAN_SINGKAT = [
   "Jan",
   "Feb",
@@ -126,14 +106,6 @@ type Kandidat = {
   caption: string;
 };
 
-/**
- * Satu daftar kandidat, berurutan menurut kepentingannya bagi pengurus.
- *
- * Empat pertama yang tersedia naik menjadi kartu metrik; sisanya turun menjadi
- * sel modul. Satu daftar, bukan dua, supaya tidak ada angka yang muncul dua
- * kali — dan supaya peran dengan tiga permission tetap mendapat kartu metrik
- * alih-alih baris kosong.
- */
 function susunKandidat(
   stats: OrganizationStats,
   summary: InsightSummary,
@@ -326,19 +298,6 @@ function susunKandidat(
     });
   }
 
-  /*
-   * Pemilihan, terakhir dalam urutan.
-   *
-   * Alasannya bukan urutan penting, melainkan siapa yang membutuhkannya
-   * sebagai KARTU. Peran dengan banyak permission sudah punya delapan kartu
-   * sebelum sampai ke sini dan tetap mendapat panel Pemilihan tersendiri;
-   * seorang anggota hanya punya tiga, dan bagi dialah kartu ini melengkapi
-   * baris sekaligus menaruh pemilihan di tempat yang pertama terlihat.
-   *
-   * Angkanya aman ditampilkan pada status apa pun: jumlah pemilihan, berapa
-   * yang sedang berlangsung, dan partisipasi — tidak satu pun menyentuh
-   * perolehan kandidat, DPT, atau isi surat suara.
-   */
   if (election) {
     const berlangsung =
       election.byStatus.find((row) => row.status === "OPEN")?.total ?? 0;
@@ -640,22 +599,6 @@ function ElectionPanel({ summary }: { summary: ElectionSummary }) {
           </EmptyNote>
         ) : null}
 
-        {/*
-          `ItemList`, BUKAN baris telanjang di dalam `div` pembungkus di atas.
-
-          Sebelumnya `ListItem` dipanggil langsung sebagai anak `div` itu.
-          `ListItem` merender `<li>`, dan sebuah `<li>` yang tidak berada di
-          dalam `<ul>` tidak mewarisi `list-style: none` dari mana pun —
-          Preflight Tailwind memasangnya pada wadahnya, bukan pada `li`. Maka
-          setiap baris pemilihan tumbuh titik hitam di kirinya, sementara
-          keenam daftar lain di dashboard yang sama bersih.
-
-          Titiknya kini padam dua kali: `ListItem` membawa `list-none` sendiri,
-          dan barisnya berada di dalam `<ul>` tempatnya memang seharusnya.
-          Yang kedua bukan pengulangan yang pertama — ia yang membuat
-          strukturnya benar bagi pembaca layar, yang mengumumkan "daftar,
-          3 butir" hanya bila daftarnya memang sebuah daftar.
-        */}
         {daftar.length > 0 ? (
           <ItemList>
             {daftar.map((row) => (
@@ -962,16 +905,6 @@ export function OrganizationDashboard({
     );
   }
 
-  /*
-   * Pemilihan naik ke baris grafik ketika tidak ada kolom Informasi Cepat.
-   *
-   * Bukan pemeriksaan role — `AccessContext` memang tidak menyimpannya — tapi
-   * konsekuensi langsung dari permission: kolom Informasi Cepat hanya lahir
-   * ketika kandidat metriknya melimpah, dan itu hanya terjadi pada peran yang
-   * berhak atas banyak modul. Peran yang tidak punya kolom itu meninggalkan
-   * sepertiga baris grafiknya menganggur, dan pemilihan adalah hal yang paling
-   * ingin ditemukan seorang anggota di sana — bukan di dasar halaman.
-   */
   const pemilihanDiSamping = !panelCepat && panelPemilihan !== null;
   const sampingGrafik =
     panelCepat ?? (pemilihanDiSamping ? panelPemilihan : null);
@@ -1045,12 +978,6 @@ export function OrganizationDashboard({
             <div
               key={section.key}
               className={cn(
-                // `min-w-0` wajib: item grid bawaannya `min-width: auto`,
-                // sehingga isi yang lebih lebar akan melebarkan seluruh halaman
-                // alih-alih digulung di dalam kartunya sendiri. `grid`, bukan
-                // `flex`, supaya panelnya meregang ke DUA arah — diukur pada
-                // 1440px, sel selebar 366px berisi panel 366/353/320 dan tepi
-                // kanan barisnya bergerigi.
                 "grid min-w-0",
                 bawah.length === 3 &&
                   index === 2 &&

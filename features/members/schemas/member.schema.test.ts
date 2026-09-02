@@ -80,8 +80,6 @@ describe("createMemberSchema", () => {
       organization_id: "11111111-1111-1111-1111-111111111111",
     });
 
-    // Tenant tidak boleh pernah datang dari form. Kalau field ini sampai
-    // lolos ke hasil parse, data bisa ditulis ke organisasi lain.
     expect(parsed).not.toHaveProperty("organizationId");
     expect(parsed).not.toHaveProperty("organization_id");
   });
@@ -100,7 +98,6 @@ describe("memberListParamsSchema", () => {
   });
 
   it("menolak kolom sort yang tidak dikenal", () => {
-    // Kolom pengurutan tidak boleh ditentukan bebas oleh browser.
     const result = memberListParamsSchema.safeParse({ sort: "notes" });
     expect(result.success).toBe(false);
   });

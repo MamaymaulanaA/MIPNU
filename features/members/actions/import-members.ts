@@ -13,13 +13,6 @@ import { recordAudit } from "@/services/audit/record";
 
 const MAX_CSV_BYTES = 2 * 1024 * 1024;
 
-/**
- * Kolom yang dikenali.
- *
- * `organization_id` SENGAJA tidak ada. Tenant tidak pernah datang dari
- * berkas — kolom seperti itu di spreadsheet diabaikan sepenuhnya, bukan
- * dipakai (docs/AUTHORIZATION.md §17).
- */
 const COLUMN_ALIASES: Record<string, string[]> = {
   fullName: ["nama_lengkap", "nama", "full_name", "fullname"],
   memberNumber: ["nomor_anggota", "no_anggota", "member_number", "nia"],
@@ -84,7 +77,7 @@ function normalizeRows(csvText: string) {
       if (field) values[field] = value;
     }
 
-    return { row: index + 2, values }; // +2: baris 1 header, index 0-based
+    return { row: index + 2, values };
   });
 
   return { normalized, unrecognizedColumns };

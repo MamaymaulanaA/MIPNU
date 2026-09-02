@@ -5,18 +5,6 @@ import { cache } from "react";
 import { polaCari } from "@/lib/list-params";
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Query pemilihan.
- *
- * Yang TIDAK ada di berkas ini sama pentingnya dengan yang ada: tidak satu pun
- * fungsi di sini menyentuh tabel `ballots`. Perolehan suara hanya keluar dari
- * `mipnu_election_result`, yang menolak selama pemungutan suara berlangsung —
- * bukan dari query yang kebetulan tidak dipanggil saat OPEN.
- *
- * RLS yang menentukan baris mana terlihat; id milik tenant lain menghasilkan
- * NULL, bukan data.
- */
-
 export type ElectionRow = {
   id: string;
   name: string;
@@ -118,8 +106,6 @@ export const listElections = cache(
     if (opsi.cari) query = query.ilike("name", polaCari(opsi.cari));
 
     const { data, count } = await query
-      // Pemecah seri deterministik: dua pemilihan yang mulai pada saat yang
-      // sama tidak boleh bertukar tempat antar-halaman.
       .order("start_at", { ascending: false })
       .order("id", { ascending: true })
       .range(opsi.dari, opsi.sampai);
@@ -415,12 +401,6 @@ export type OwnVoterState = {
   votedAt: string | null;
 };
 
-/**
- * Keadaan hak pilih pemanggil pada satu pemilihan.
- *
- * Dibaca dari barisnya sendiri di DPT — RLS mengizinkan seorang anggota
- * melihat barisnya, dan hanya barisnya.
- */
 export async function getOwnVoterState(
   electionId: string,
   memberId: string | null,

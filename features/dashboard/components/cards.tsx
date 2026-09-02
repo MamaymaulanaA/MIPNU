@@ -13,21 +13,6 @@ import type { StoredGender } from "@/lib/avatar";
 import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/**
- * Wadah ikon, 32px di seluruh dashboard.
- *
- * Satu ukuran untuk SEMUA wadah ikon: kartu metrik dan kartu kecil berdiri
- * berdekatan pada halaman yang sama, dan dua ukuran wadah membuat keduanya
- * terbaca sebagai dua sistem alih-alih satu bahasa.
- *
- * Angkanya mengikuti tinggi barisnya. Pada baris 48px, wadah 28px memakai 58%
- * tinggi baris; ketika barisnya naik ke 56px, wadah yang sama tinggal 50% dan
- * ikonnya mulai terlihat hanyut di tengah ruang kosong. Pada 32px proporsinya
- * kembali ke 57% — ikon tetap penanda, bukan subjek, dan tidak pula tenggelam.
- *
- * Ukuran ini TIDAK mengikat kotak tanggal. Lihat catatan skala di atas: yang
- * wajib seragam antar panel adalah tinggi barisnya.
- */
 export function IconBox({
   icon: Icon,
   tone,
@@ -165,12 +150,6 @@ export function Panel({
         className,
       )}
     >
-      {/*
-        Menumpuk di bawah 640px. Diukur di peramban pada 320px: judul panel
-        dan chip aksinya berebut satu baris, dan judulnya sendiri — "Kegiatan
-        Organisasi" — ikut terpotong. Judul panel tidak boleh menjadi korban
-        elemen pendampingnya.
-      */}
       <div className="flex flex-col items-start gap-1 border-b border-border px-3.5 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="min-w-0 max-w-full">
           <h2 className="truncate text-[14px] font-semibold text-foreground">
@@ -257,14 +236,6 @@ export function ListItem({
     </>
   );
 
-  // `min-h-16` (64px) menyamakan tinggi baris yang PUNYA keterangan dengan
-  // yang tidak. Tanpa itu tinggi baris ditentukan oleh ada-tidaknya satu baris
-  // teks, dan dua panel bersebelahan berbeda beberapa piksel tanpa satu pun
-  // padding yang berbeda. Tinggi baris daftar tidak boleh ditentukan isinya.
-  //
-  // Angkanya sekaligus menyediakan ruang bagi penanda terbesar — kotak tanggal
-  // setinggi 42px. Lihat hitungan border-box di kepala berkas: padding DAN
-  // border sama-sama dipotong dari 64px, menyisakan tepat 42px.
   const kelas = cn(
     "flex min-h-16 items-center gap-3 rounded-sm border border-border px-3 py-2.5",
     href &&

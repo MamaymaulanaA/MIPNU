@@ -61,10 +61,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
 
-      {/*
-        aria-live="polite" supaya pembaca layar mengumumkan hasil aksi tanpa
-        memotong apa yang sedang dibacakan.
-      */}
       <div
         aria-live="polite"
         aria-atomic="false"

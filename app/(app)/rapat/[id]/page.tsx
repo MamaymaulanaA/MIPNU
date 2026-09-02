@@ -44,8 +44,6 @@ export default async function MeetingDetailPage({
     .is("deleted_at", null)
     .maybeSingle();
 
-  // Rapat organisasi lain tidak dibedakan dari rapat yang memang tidak ada:
-  // keduanya 404, sehingga keberadaan sumber daya tenant lain tidak terungkap.
   if (!meeting) notFound();
 
   const [participantsResult, minutesResult, membersResult] = await Promise.all([

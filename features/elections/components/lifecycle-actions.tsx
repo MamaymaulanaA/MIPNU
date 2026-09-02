@@ -34,17 +34,6 @@ export type LifecyclePermissions = {
   canManage: boolean;
 };
 
-/**
- * Tombol tahapan pemilihan.
- *
- * Setiap tindakan sensitif melewati konfirmasi yang menyebut akibatnya secara
- * spesifik (EVOTING §137-§141) — bukan "Anda yakin?" yang tidak memberi tahu
- * apa yang akan terjadi. Membuka suara mengunci kandidat dan DPT; menutupnya
- * menghentikan pemungutan; mempublikasikan tidak dapat dibatalkan.
- *
- * Menyembunyikan tombol hanyalah kenyamanan. Yang benar-benar menolak adalah
- * fungsi database, yang memeriksa permission DAN status.
- */
 export function LifecycleActions({
   organizationId,
   electionId,

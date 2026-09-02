@@ -85,9 +85,6 @@ export async function updatePosition(
     const parsed = parseForm(positionSchema, formData, POSITION_FIELDS);
     if (!parsed.ok) return parsed.result;
 
-    // Jabatan tidak boleh menjadi induk dirinya sendiri. Database sudah
-    // menolaknya lewat CHECK, tetapi ditangkap di sini agar pesannya jatuh
-    // di field yang benar.
     if (parsed.data.parentPositionId === positionId) {
       return {
         success: false,
@@ -152,9 +149,6 @@ export async function deletePosition(
       .eq("organization_id", context.organizationId!);
 
     if (error) {
-      // FK ke management_assignments memakai ON DELETE RESTRICT: jabatan yang
-      // pernah dipakai tidak boleh lenyap, karena riwayat kepengurusan
-      // menunjuk padanya.
       return databaseFailure(error, {
         "23503": {
           success: false,
@@ -181,16 +175,6 @@ export async function deletePosition(
   }
 }
 
-/**
- * Menyetel permission sebuah jabatan.
- *
- * Ini yang membuat "Bendahara boleh mengelola keuangan" menjadi nyata tanpa
- * membuat BENDAHARA sebagai role sistem (PRD §11).
- *
- * Permission ber-scope platform ditolak database
- * (`app_private.reject_platform_permission`), sehingga pengelola organisasi
- * tidak dapat menaikkan dirinya ke wewenang platform lewat jabatan.
- */
 export async function setPositionPermissions(
   organizationId: string,
   positionId: string,
@@ -206,9 +190,6 @@ export async function setPositionPermissions(
     const selected = formValues(formData, "permissionIds");
     const supabase = await createClient();
 
-    // Pastikan jabatan memang milik organisasi aktif sebelum menyentuh
-    // tabel anaknya. RLS sudah menjaga, tetapi ini membuat kegagalannya
-    // menjadi pesan yang jelas, bukan penghapusan yang tidak berpengaruh.
     const { data: position, error: positionError } = await supabase
       .from("positions")
       .select("id, name")
@@ -256,7 +237,6 @@ export async function setPositionPermissions(
       action: "position.permissions_changed",
       resourceType: "position",
       resourceId: positionId,
-      // Perubahan permission wajib dapat diaudit (docs/PERMISSIONS.md §83).
       metadata: { position: position.name, permission_count: selected.length },
     });
 

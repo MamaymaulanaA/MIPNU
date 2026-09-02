@@ -75,7 +75,6 @@ export function CommitteePanel({
   organizationId: string;
   electionId: string;
   committee: CommitteeRow[];
-  /** Peta id permission → kode, untuk menampilkan hak yang sudah melekat. */
   permissionNames: Record<string, string>;
   canAssign: boolean;
 }) {

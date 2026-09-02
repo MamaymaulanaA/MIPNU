@@ -6,14 +6,7 @@ import { cookies } from "next/headers";
 import { publicEnv } from "@/lib/env";
 import type { Database } from "@/types/database.types";
 
-/**
- * Supabase client untuk Server Component, Server Action, dan Route Handler.
- *
- * Tetap memakai anon key + session user, BUKAN service role. Ini disengaja:
- * seluruh query alur pengguna biasa harus melewati RLS sehingga isolasi
- * tenant tetap ditegakkan database, bukan sekadar oleh kode aplikasi
- * (SYSTEM.md §15, §30).
- */
+// Anon key + sesi user, bukan service role: isolasi tenant ditegakkan RLS.
 export async function createClient() {
   const cookieStore = await cookies();
 
@@ -31,8 +24,7 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             }
           } catch {
-            // Server Component tidak boleh menulis cookie. Aman diabaikan:
-            // middleware sudah menyegarkan session pada setiap request.
+            // Server Component tidak boleh menulis cookie; middleware yang menyegarkan sesi.
           }
         },
       },

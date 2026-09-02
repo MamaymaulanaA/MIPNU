@@ -1,17 +1,3 @@
-/**
- * Konstanta permission Phase 1-4.
- *
- * Harus sinkron dengan seed di
- * `supabase/migrations/20260829001200_seed_system_data.sql` (Phase 1),
- * `supabase/migrations/20260830091000_phase2_permissions.sql` (Phase 2),
- * `supabase/migrations/20260830122000_finance_permissions.sql` (Phase 3), dan
- * `supabase/migrations/20260830152000_election_permissions.sql` (Phase 4).
- *
- * Gunanya bukan menjadi source of truth authorization — database tetap
- * pemutusnya — melainkan menghapus magic string dari codebase sehingga salah
- * ketik permission menjadi error compile, bukan penolakan diam-diam saat
- * runtime (SYSTEM.md §85).
- */
 export const PERMISSIONS = {
   organization: {
     view: "organization.view",
@@ -202,13 +188,6 @@ export const PERMISSIONS = {
   },
 } as const;
 
-/**
- * Union seluruh permission code yang dikenal, mis. `"members.edit"`.
- *
- * Dipetakan per grup lebih dulu, baru digabung. Menulis
- * `Group[keyof Group]` langsung di atas union grup akan menghasilkan
- * IRISAN key antar-grup — praktisnya hanya `view` — bukan gabungannya.
- */
 export type Permission = {
   [
     Group in keyof typeof PERMISSIONS

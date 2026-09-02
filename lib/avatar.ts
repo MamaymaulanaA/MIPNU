@@ -5,13 +5,7 @@ export type StoredGender = "L" | "P" | null | undefined;
 
 const BACKGROUND = ["eef4ff", "c9d8ff", "ffffff"] as const;
 
-const CLOTHING = [
-  "1f356b", // navy
-  "255ed3", // primary dark
-  "2f6fed", // primary blue
-  "667085", // slate
-  "c9d8ff", // powder blue
-] as const;
+const CLOTHING = ["1f356b", "255ed3", "2f6fed", "667085", "c9d8ff"] as const;
 
 const HAIR_COLOR = ["362c47", "6c4545", "dee1f5"] as const;
 
@@ -92,7 +86,6 @@ function generate(presentation: Presentation, seed: string): string {
 
 export type AvatarInput = {
   customUrl?: string | null;
-  /** Nilai `members.gender` apa adanya. Jangan diisi hasil tebakan. */
   gender?: StoredGender;
   identity?: string | null;
 };

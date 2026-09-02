@@ -63,13 +63,6 @@ export async function changeMembershipRole(
   }
 }
 
-/**
- * Mengakhiri akses seseorang ke organisasi.
- *
- * Bukan DELETE: membership yang dihapus akan menghilangkan jejak siapa pernah
- * punya akses ke apa. Statusnya berubah menjadi ENDED dan `ended_at` diisi
- * (docs/RLS.md §30).
- */
 export async function endMembership(
   organizationId: string,
   membershipId: string,

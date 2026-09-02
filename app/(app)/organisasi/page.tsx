@@ -44,12 +44,6 @@ export default async function OrganizationPage() {
       <PageHeader
         title="Profil Organisasi"
         description="Identitas dan data dasar organisasi."
-        /*
-          Tombolnya hanya dirender bagi pemegang `organization.edit`. Itu
-          keputusan tampilan, BUKAN pengamanan: `updateOrganization` tetap
-          memeriksa permission yang sama di server sebelum menyentuh basis
-          data, dan RLS memeriksanya sekali lagi (AGENTS.md §56).
-        */
         actions={
           can(context, PERMISSIONS.organization.edit) ? (
             <OrganizationProfileDialog

@@ -2,12 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Setiap bagian bernilai NULL bila pemanggil tidak berhak melihatnya —
- * keputusan itu dibuat di dalam `mipnu_organization_stats()`, bukan di sini.
- * Aplikasi tidak boleh menerima angka lalu memutuskan menyembunyikannya;
- * angka yang tidak boleh dilihat memang tidak pernah dikirim.
- */
 export type OrganizationStats = {
   members: { total: number; active: number; alumni: number } | null;
   management: { active: number } | null;

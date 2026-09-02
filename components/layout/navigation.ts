@@ -32,7 +32,6 @@ export type NavItem = {
   href: Route;
   label: string;
   icon: LucideIcon;
-  /** Menu tampil hanya bila user memiliki permission ini. */
   permission: Permission;
 };
 
@@ -41,17 +40,6 @@ export type NavGroup = {
   items: NavItem[];
 };
 
-/**
- * Konfigurasi navigasi.
- *
- * Satu tempat, bukan logika permission yang ditulis ulang di tiap menu
- * (ARCHITECTURE.md §73). Menyembunyikan menu adalah kenyamanan, BUKAN
- * keamanan — setiap halaman tetap memeriksa haknya sendiri di server.
- *
- * Hanya modul yang halamannya BENAR-BENAR ADA yang terdaftar: menu yang
- * menuju halaman kosong lebih buruk daripada menu yang belum ada
- * (AGENTS.md §88).
- */
 export const NAVIGATION: NavGroup[] = [
   {
     label: null,
@@ -232,8 +220,6 @@ export const NAVIGATION: NavGroup[] = [
     ],
   },
   {
-    // Administrasi platform, bukan administrasi satu organisasi.
-    // Hanya muncul bagi pemegang permission global.
     label: "Platform",
     items: [
       {
@@ -246,15 +232,6 @@ export const NAVIGATION: NavGroup[] = [
   },
 ];
 
-/**
- * Menu aktif = prefiks terpanjang di SELURUH katalog rute, bukan hanya menu
- * yang terlihat.
- *
- * Mencocokkan per item membuat `/organisasi/periode` menyalakan dua menu
- * sekaligus. Menghitung hanya dari menu terlihat membuat induk menyala ketika
- * anaknya disembunyikan permission; bila pemenangnya tidak terlihat, tidak ada
- * yang aktif.
- */
 export function resolveActiveHref(pathname: string): string | null {
   let terbaik: string | null = null;
 
@@ -272,7 +249,6 @@ export function resolveActiveHref(pathname: string): string | null {
   return terbaik;
 }
 
-/** Menyaring navigasi berdasarkan permission efektif user. */
 export function filterNavigation(permissions: ReadonlySet<string>): NavGroup[] {
   return NAVIGATION.map((group) => ({
     ...group,

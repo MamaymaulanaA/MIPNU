@@ -2,15 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Daftar pekerjaan, bukan ringkasan keadaan.
- *
- * Sebuah baris hanya muncul bila pemanggil BERWENANG menanganinya, bukan
- * sekadar boleh melihatnya. Baris bernilai nol tidak ditampilkan, dan panelnya
- * tidak dirender bila kosong. Karena itu panel ini efektif hanya muncul untuk
- * operator — karena permission penanganannya, bukan karena rolenya diperiksa.
- */
-
 export type AttentionKey =
   | "anggota-tanpa-akun"
   | "akun-belum-ditautkan"

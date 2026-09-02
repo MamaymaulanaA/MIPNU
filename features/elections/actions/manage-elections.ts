@@ -204,14 +204,6 @@ export async function deleteElection(
   }
 }
 
-/**
- * Satu pembungkus untuk seluruh RPC tahapan.
- *
- * Permission tidak diperiksa ulang di sini: fungsi databasenya yang memutuskan,
- * dan memeriksanya dua kali dengan aturan yang ditulis dua kali adalah cara
- * paling mudah membuat keduanya berbeda suatu hari. Yang diperiksa di sini
- * hanya bahwa pemanggil memang berada di organisasi ini.
- */
 async function runStage(
   organizationId: string,
   electionId: string,

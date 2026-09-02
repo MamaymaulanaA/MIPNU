@@ -59,25 +59,25 @@ export function databaseFailure(
   if (override) return override;
 
   switch (error.code) {
-    case "23505": // unique_violation
+    case "23505":
       return {
         success: false,
         error: "Data serupa sudah ada.",
         kind: "CONFLICT",
       };
-    case "23503": // foreign_key_violation
+    case "23503":
       return {
         success: false,
         error: "Data terkait tidak ditemukan atau masih digunakan.",
         kind: "CONFLICT",
       };
-    case "23514": // check_violation
+    case "23514":
       return {
         success: false,
         error: "Data tidak memenuhi aturan yang berlaku.",
         kind: "VALIDATION",
       };
-    case "42501": // insufficient_privilege
+    case "42501":
       return {
         success: false,
         error: "Anda tidak memiliki akses untuk tindakan ini.",

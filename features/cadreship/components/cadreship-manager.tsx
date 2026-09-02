@@ -88,7 +88,6 @@ export function CadreshipManager({
   permissions: CadreshipPermissions;
   ownOnly: boolean;
   daftar: KeadaanDaftar;
-  /** Tombol Ekspor, dibangun di server beserta pemeriksaan permission-nya. */
   aksiTambahan?: React.ReactNode;
 }) {
   const { showToast } = useToast();

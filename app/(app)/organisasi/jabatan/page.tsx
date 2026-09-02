@@ -59,8 +59,6 @@ export default async function PositionsPage({
       .order("name", { ascending: true })
       .range(daftar.dari, daftar.sampai),
 
-    // Katalog hanya dimuat bila memang akan dipakai, dan permission platform
-    // dikecualikan karena tidak dapat didelegasikan lewat jabatan.
     canManagePermissions
       ? supabase
           .from("permissions")

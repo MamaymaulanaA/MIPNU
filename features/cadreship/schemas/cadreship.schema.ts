@@ -7,14 +7,6 @@ export const CADRESHIP_STATUSES = [
   "NOT_PASSED",
 ] as const;
 
-/**
- * VERIFIED tidak ada dalam daftar di atas, dan itu disengaja.
- *
- * Verifikasi bukan pilihan pada dropdown yang sama dengan status lainnya: ia
- * tindakan tersendiri, menuntut permission tersendiri, dan meninggalkan jejak
- * siapa yang melakukannya. Menaruhnya di dropdown akan membuat "menyatakan
- * sah" tampak setara dengan "mengoreksi ketikan".
- */
 export type CadreshipStatus = (typeof CADRESHIP_STATUSES)[number];
 
 const optionalText = (max: number) =>

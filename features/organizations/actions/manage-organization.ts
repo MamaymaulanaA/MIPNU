@@ -18,13 +18,6 @@ import { databaseFailure, parseForm } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/**
- * Membuat organisasi baru.
- *
- * Ini aksi tingkat platform: `organization.create` hanya dimiliki role global,
- * sehingga tidak ada organization context untuk disandarkan. Otorisasinya
- * diperiksa terhadap permission global, lalu RLS memeriksanya lagi.
- */
 export async function createOrganization(
   _previousState: ActionResult<{ id: string }> | null,
   formData: FormData,
@@ -95,12 +88,6 @@ export async function createOrganization(
   }
 }
 
-/**
- * Mengubah data dasar organisasi yang sedang aktif.
- *
- * Organisasi target berasal dari access context, bukan dari form — jadi
- * memodifikasi payload tidak dapat mengarahkan perubahan ke tenant lain.
- */
 export async function updateOrganization(
   organizationId: string,
   _previousState: ActionResult<void> | null,

@@ -2,20 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Angka struktur organisasi yang dipelihara operator.
- *
- * Bukan ringkasan keadaan seperti jumlah anggota, melainkan jumlah HAL YANG
- * DIKONFIGURASI: jabatan, periode kepengurusan, dan akun yang tertaut ke
- * organisasi. Tiga angka itu jarang berubah, dan justru karena itu berguna —
- * operator adalah orang yang mengubahnya.
- *
- * Gerbangnya memakai permission PENYUNTINGAN, bukan permission melihat.
- * Jabatan dan periode boleh dilihat hampir semua pengurus; yang memeliharanya
- * hanya operator. Karena itu blok ini muncul di dashboard operator dan tidak
- * di dashboard peran lain, tanpa satu pun pemeriksaan role.
- */
-
 export type OperationalRow = {
   key: "jabatan" | "periode" | "akun";
   label: string;

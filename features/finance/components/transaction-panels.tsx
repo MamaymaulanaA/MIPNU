@@ -66,10 +66,6 @@ export type TransactionPermissions = {
   canPost: boolean;
   canVoid: boolean;
   canDelete: boolean;
-  /**
-   * finance.view_proofs. Menyembunyikan tombolnya hanyalah kenyamanan —
-   * createProofUrl() dan RLS `documents_select` yang benar-benar menolak.
-   */
   canViewProofs: boolean;
 };
 
@@ -341,19 +337,6 @@ export function TransactionManager({
         transaction={voiding}
       />
 
-      {/*
-        Posting lewat konfirmasi, bukan sekali klik.
-
-        Sebelumnya tombol Posting memanggil `postTransaction` langsung dari
-        `onClick` — satu-satunya aksi keuangan tanpa langkah kedua, padahal
-        justru ia yang paling sulit ditarik kembali: setelah diposting,
-        transaksi masuk ledger, menggerakkan saldo, dan tidak dapat disunting
-        maupun dihapus lagi. Menghapus DRAF sudah meminta konfirmasi;
-        mengunci sebuah transaksi selamanya tidak.
-
-        Yang berubah hanya kapan aksinya dipanggil. Aturan immutability,
-        pemeriksaan permission, dan validasinya tetap di server.
-      */}
       <ConfirmDialog
         open={Boolean(posting)}
         onClose={() => setPosting(null)}

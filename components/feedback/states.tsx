@@ -69,10 +69,6 @@ export function ErrorState({
   );
 }
 
-/**
- * Ditampilkan ketika user terautentikasi tetapi tidak berhak.
- * Tidak membocorkan permission apa yang kurang (PERMISSIONS.md §97).
- */
 export function ForbiddenState({
   description = "Anda tidak memiliki akses untuk melihat bagian ini.",
   className,

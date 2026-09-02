@@ -23,14 +23,6 @@ export const metadata: Metadata = {
 
 const UKURAN_HALAMAN = 25;
 
-/**
- * Daftar transaksi.
- *
- * Seluruh penyaringan, pengurutan, dan pemenggalan halaman terjadi di
- * database. Ledger tidak pernah diambil utuh ke peramban — bukan hanya karena
- * berat, tetapi karena baris yang dikirim ke sana sudah terkirim, betapapun
- * rapi disembunyikannya.
- */
 export default async function FinanceTransactionsPage({
   searchParams,
 }: {

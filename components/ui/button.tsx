@@ -29,13 +29,6 @@ const buttonVariants = cva(
       },
       size: {
         default: cn(TINGGI_KONTROL, "px-4 text-sm"),
-        // Ringkas, dan memang boleh ringkas: aksi kecil di dalam baris tabel,
-        // kartu, dan keadaan kosong (docs/UI.md §10). BUKAN untuk aksi utama.
-        //
-        // Ringkasnya berhenti di ponsel, mengikuti aturan yang sudah dipegang
-        // `icon` tepat di bawah ini: 36px nyaman untuk kursor, tetapi di bawah
-        // ambang sasaran sentuh jari. Sebelumnya `sm` datar 36px di semua
-        // ukuran — satu-satunya ukuran tombol yang melanggar aturan itu.
         sm: cn("h-11 min-[480px]:h-9", "px-3 text-[13px]"),
         lg: "h-12 px-5 text-[15px]",
         icon: cn(TINGGI_KONTROL_IKON, "p-0"),

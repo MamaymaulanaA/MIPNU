@@ -336,13 +336,6 @@ export async function updateOutgoingLetter(
   }
 }
 
-/**
- * Menyetujui / mengubah status surat keluar.
- *
- * Permission terpisah dari letters.edit, dan pemisahan itu tidak berhenti di
- * sini: trigger `guard_letter_approval()` menolak perubahan kolom status dari
- * jalur mana pun tanpa letters.approve.
- */
 export async function setOutgoingLetterStatus(
   organizationId: string,
   letterId: string,

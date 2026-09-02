@@ -210,14 +210,6 @@ export async function updateWorkProgram(
   }
 }
 
-/**
- * Memperbarui progress.
- *
- * Permission-nya terpisah dari programs.edit karena pekerjaannya juga
- * terpisah: pelaksana melaporkan sejauh mana program berjalan, perencana
- * menentukan programnya apa. Rentang 0-100 ditegakkan constraint database,
- * bukan hanya oleh slider di layar.
- */
 export async function updateProgramProgress(
   organizationId: string,
   programId: string,

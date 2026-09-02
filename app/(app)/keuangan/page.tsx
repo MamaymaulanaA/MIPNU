@@ -34,14 +34,6 @@ type Summary = {
   transaction_count: number;
 };
 
-/**
- * Ringkasan keuangan.
- *
- * Seluruh angka berasal dari RPC yang menjumlah di database. Tidak ada
- * transaksi yang diambil ke sini untuk dijumlahkan di JavaScript — ledger
- * organisasi yang berjalan bertahun-tahun tidak muat, dan saldo yang dihitung
- * di peramban tidak dapat dipertanggungjawabkan.
- */
 export default async function FinanceOverviewPage() {
   const context = await requireAccessContext();
 

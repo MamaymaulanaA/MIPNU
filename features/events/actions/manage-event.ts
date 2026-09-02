@@ -99,11 +99,6 @@ export async function updateEvent(
     const input = parsed.data;
     const supabase = await createClient();
 
-    // Kapasitas tidak boleh diturunkan di bawah jumlah peserta yang sudah
-    // memegang kursi. Trigger database menjaga pendaftaran baru, tetapi
-    // tidak memeriksa perubahan kapasitas — peserta yang sudah terdaftar
-    // tidak akan otomatis tergeser, dan angka kapasitas yang lebih kecil
-    // dari kenyataan hanya akan membingungkan.
     if (input.capacity !== null) {
       const { count } = await supabase
         .from("event_participants")

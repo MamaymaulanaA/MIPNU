@@ -42,21 +42,6 @@ export type OrganizationRow = OrganizationFieldValues & {
   levelCode: string;
 };
 
-/**
- * Daftar seluruh organisasi platform, beserta pembuatan dan penyuntingannya.
- *
- * Pembuatan DULU berupa halaman tersendiri di `/admin/organisasi/baru`.
- * Sekarang keduanya — buat dan ubah — memakai dialog, sama seperti seluruh
- * CRUD MIPNU lainnya, sehingga tidak ada lagi satu halaman yang berperilaku
- * berbeda dari dua puluh enam modul di sebelahnya.
- *
- * OTORISASI TIDAK BERGESER. Kedua aksi memakai server action yang sudah ada:
- * `createOrganization` memeriksa permission global `organization.create`,
- * `updateOrganization` memeriksa `organization.edit` PADA organisasi yang
- * dituju lewat `requireOrganizationPermission`. Super admin lolos pemeriksaan
- * kedua karena `mipnu_access_context` memang memberinya konteks pada
- * organisasi mana pun — bukan karena dialog ini melewatkan sesuatu.
- */
 export function OrganizationManager({
   organizations,
   types,
@@ -84,16 +69,6 @@ export function OrganizationManager({
   const [editing, setEditing] = useState<OrganizationRow | null>(null);
 
   return (
-    /*
-      Kepala halaman ikut dirender di sini, bukan di Server Component-nya.
-      Alasannya satu: aksi utama di kepala dan tombol pada keadaan kosong
-      membuka DIALOG YANG SAMA, dan keduanya perlu state yang sama. Memecahnya
-      menjadi dua komponen berarti dua dialog pembuatan yang hidup berdampingan
-      — persis "implementasi modal kedua" yang tidak boleh ada.
-
-      Pengambilan datanya tetap seluruhnya di server; yang pindah ke sini hanya
-      kerangka tampilannya.
-    */
     <div className="space-y-5">
       <PageHeader
         title="Organisasi"

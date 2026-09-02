@@ -29,14 +29,6 @@ const optionalDate = z
     "Tanggal tidak valid",
   );
 
-/**
- * Skema pembuatan anggota.
- *
- * `organization_id` SENGAJA TIDAK ada di sini. Tenant tidak pernah datang dari
- * form — ia diresolusi server dari access context. Menerimanya dari client
- * berarti membuka jalan menulis data ke organisasi lain
- * (docs/AUTHORIZATION.md §17).
- */
 export const createMemberSchema = z.object({
   fullName: z
     .string()
@@ -83,12 +75,6 @@ export const createMemberSchema = z.object({
 
 export type CreateMemberInput = z.infer<typeof createMemberSchema>;
 
-/**
- * Parameter listing.
- *
- * `sort` berupa enum, bukan string bebas: kolom pengurutan tidak boleh
- * ditentukan browser secara arbitrer (SYSTEM.md §65).
- */
 export const memberListParamsSchema = z.object({
   search: z.string().trim().max(100).optional().default(""),
   status: z

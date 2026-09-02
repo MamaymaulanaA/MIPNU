@@ -37,17 +37,6 @@ export type MemberAssignment = {
   endDate: string | null;
 };
 
-/**
- * Detail satu anggota.
- *
- * Tidak perlu memfilter organisasi secara manual — policy `members_select`
- * hanya meloloskan baris pada organisasi yang dapat diakses pemanggil,
- * sehingga id milik tenant lain menghasilkan NULL, bukan data
- * (docs/ARCHITECTURE.md §81).
- *
- * Kolom pribadi dipangkas di sini, bukan di RLS: RLS bekerja per baris,
- * bukan per kolom (docs/RLS.md §39).
- */
 export async function getMember(
   memberId: string,
   options: { includePrivate: boolean },

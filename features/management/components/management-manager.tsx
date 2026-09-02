@@ -79,14 +79,6 @@ export function ManagementManager({
   positions: Option[];
   permissions: { canAssign: boolean; canEdit: boolean; canEnd: boolean };
   daftar: KeadaanDaftar;
-  /**
-   * Aksi tambahan pada kepala halaman — tombol Ekspor.
-   *
-   * Dioper sebagai node, bukan dibangun di sini: ekspor terikat pada server
-   * action yang di-bind di Server Component beserta pemeriksaan
-   * `management.export`. Komponen klien ini tidak boleh memutuskan siapa yang
-   * boleh mengekspor.
-   */
   aksiTambahan?: React.ReactNode;
 }) {
   const { showToast } = useToast();

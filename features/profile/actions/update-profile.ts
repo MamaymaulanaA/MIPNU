@@ -16,16 +16,6 @@ const profileSchema = z.object({
     .max(100, "Nama maksimal 100 karakter"),
 });
 
-/**
- * Memperbarui profil sendiri.
- *
- * HANYA `display_name`. Kolom istimewa — `status` dan `auth_user_id` —
- * dijaga trigger `app_private.protect_profile_privileged_columns()`, jadi
- * membatasi daftar field di sini bukan satu-satunya pengaman: mengirim
- * payload tambahan pun akan ditolak database (docs/RLS.md §17).
- *
- * Baris yang disasar ditentukan `auth.uid()`, bukan id dari client.
- */
 export async function updateOwnProfile(
   _previousState: ActionResult<void> | null,
   formData: FormData,

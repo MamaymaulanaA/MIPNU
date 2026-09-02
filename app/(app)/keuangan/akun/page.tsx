@@ -37,9 +37,6 @@ export default async function FinanceAccountsPage({
     return <ForbiddenState />;
   }
 
-  // Kunci URL-nya berawalan nama bagiannya. Dua toolbar pada satu halaman
-  // tidak boleh berebut kunci `search` yang sama — mengetik di kotak pencarian
-  // akun akan ikut menyaring tabel kategori.
   const params = await searchParams;
   const satu = (nilai: string | string[] | undefined) =>
     typeof nilai === "string" ? nilai.trim() : "";

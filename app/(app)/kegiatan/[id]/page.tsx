@@ -38,8 +38,6 @@ export default async function EventDetailPage({
   const supabase = await createClient();
   const organizationId = context.organizationId;
 
-  // RLS sudah membatasi event yang terlihat; id milik tenant lain
-  // menghasilkan NULL, bukan data.
   const event = await getEvent(id);
   if (!event) notFound();
 

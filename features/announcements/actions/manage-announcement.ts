@@ -50,14 +50,6 @@ const ANNOUNCEMENT_FIELDS = [
   "expiresAt",
 ] as const;
 
-/**
- * Membuat pengumuman.
- *
- * Selalu lahir sebagai DRAF. Menerbitkan adalah tindakan terpisah dengan
- * permission terpisah — dan penegakannya tidak berhenti di sini: trigger
- * `guard_announcement_columns()` menolak perubahan status dari jalur mana pun
- * tanpa announcements.publish.
- */
 export async function createAnnouncement(
   organizationId: string,
   _previousState: ActionResult<{ id: string }> | null,

@@ -14,15 +14,6 @@ import type {
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/**
- * Bilik suara.
- *
- * Memilih kandidat tidak langsung mengirim suara: satu langkah konfirmasi wajib
- * menyebut nomor dan nama, karena ketukan tak sengaja tidak boleh menjadi suara
- * yang tak dapat ditarik (EVOTING §135). Yang dikirim hanya id pemilihan dan id
- * kandidat; identitas pemilih diselesaikan server. Tanda terima tidak disimpan
- * di mana pun — ia membuktikan suara tercatat, bukan suara mana.
- */
 export function VotePanel({
   organizationId,
   electionId,

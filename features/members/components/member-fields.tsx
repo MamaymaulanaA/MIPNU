@@ -4,16 +4,6 @@ import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { MEMBER_STATUSES } from "@/features/members/schemas/member.schema";
 import { memberStatus } from "@/lib/status";
 
-/**
- * Field data anggota, dipakai bersama dialog tambah dan sunting.
- *
- * Dua permission berlaku di sini: `members.view_private` menentukan email,
- * telepon, dan alamat TIDAK digambar sama sekali (bukan digambar lalu
- * disembunyikan); `members.manage_status` menonaktifkan select status dan
- * mengirim nilai lamanya lewat input tersembunyi agar server menerima status
- * yang tidak berubah, bukan kosong. Keduanya diperiksa ulang di server.
- */
-
 export type MemberFieldValues = {
   fullName: string;
   memberNumber: string;

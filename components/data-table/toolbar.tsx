@@ -7,18 +7,10 @@ import { Search } from "lucide-react";
 import { Input, Select } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
-/**
- * Lebar penyaring mengikuti isinya: `field-sizing: content` menyesuaikan kotak
- * dengan nilai yang sedang tampil, `max-w` menjaga satu nama panjang agar tidak
- * menelan toolbar. Tanpa lantai lebar — kenyamanan menekan ditentukan tinggi
- * kontrol, bukan lebarnya. Hanya untuk penyaring toolbar; field di dalam form
- * mengikuti kisi formnya.
- */
 const LEBAR_FILTER = "sm:field-sizing-content sm:w-auto sm:max-w-56";
 
 export type TableFilter = {
   key: string;
-  /** Untuk pembaca layar — labelnya tidak tampil. */
   label: string;
   value: string;
   allLabel: string;
@@ -27,7 +19,6 @@ export type TableFilter = {
 
 export type TableDateFilter = {
   key: string;
-  /** Untuk pembaca layar — labelnya tidak tampil. */
   label: string;
   value: string;
 };

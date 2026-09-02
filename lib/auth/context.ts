@@ -125,15 +125,6 @@ export async function requireProfile() {
   return profile;
 }
 
-/**
- * Organisasi yang dapat diakses user; sumbernya database, bukan kiriman browser.
- *
- * Dua jalan masuk: membership aktif, dan super admin global. Jalur kedua wajib
- * ada — tanpanya super admin membuat organisasi lalu terkunci di luar, karena
- * `organization_memberships_insert` melarang menambahkan diri sendiri. Jalur itu
- * tidak memberi wewenang operasional: permission efektifnya tetap dari
- * role_permissions (docs/PERMISSIONS.md §46-§47).
- */
 export const listAccessibleOrganizations = cache(
   async (): Promise<AccessibleOrganization[]> => {
     const bootstrap = await getBootstrap();
@@ -141,28 +132,11 @@ export const listAccessibleOrganizations = cache(
   },
 );
 
-/**
- * Menentukan organisasi aktif untuk request ini.
- *
- * Cookie hanyalah PREFERENSI, bukan otorisasi: nilainya selalu diadu dengan
- * daftar organisasi yang benar-benar boleh diakses. Cookie yang menunjuk
- * organisasi lain diabaikan begitu saja, bukan menyebabkan error — sehingga
- * mengutak-atik cookie tidak pernah menghasilkan akses lintas tenant
- * (docs/AUTHORIZATION.md §17).
- */
 export const resolveOrganizationId = cache(async (): Promise<string | null> => {
   const bootstrap = await getBootstrap();
   return bootstrap?.payload.organization_id ?? null;
 });
 
-/**
- * Konteks otorisasi lengkap untuk request ini.
- *
- * Permission TIDAK dihitung di TypeScript. Seluruhnya berasal dari RPC
- * `mipnu_access_context`, yang memakai resolver SQL yang sama dengan RLS —
- * jadi tidak mungkin UI dan database berbeda pendapat tentang siapa boleh
- * apa (docs/PERMISSIONS.md §93).
- */
 export const getAccessContext = cache(
   async (organizationId?: string | null): Promise<AccessContext | null> => {
     if (organizationId === undefined) {
@@ -192,9 +166,6 @@ export const getAccessContext = cache(
     const supabase = await createClient();
 
     const { data, error } = await supabase.rpc("mipnu_access_context", {
-      // Argumen dihilangkan (bukan dikirim null) ketika tidak ada organisasi
-      // aktif; default parameter di SQL sudah NULL, dan itulah jalur
-      // permission tingkat platform.
       p_organization_id: targetOrganizationId ?? undefined,
     });
 
@@ -226,12 +197,6 @@ export async function requireAccessContext(organizationId?: string | null) {
   return context;
 }
 
-/**
- * Pemeriksaan permission untuk menyusun UI (menyembunyikan menu/tombol).
- *
- * UI BUKAN batas keamanan. Setiap mutasi tetap wajib memanggil
- * `requirePermission()` di server (docs/PERMISSIONS.md §94-§95).
- */
 export function can(context: AccessContext | null, permission: Permission) {
   return context?.permissions.has(permission) ?? false;
 }
@@ -249,12 +214,6 @@ export async function requirePermission(
   return context;
 }
 
-/**
- * Gerbang tenant + permission sekaligus.
- *
- * Dipakai mutasi yang menyebut organisasi secara eksplisit: memastikan
- * organisasi target memang organisasi aktif user, sebelum permission diperiksa.
- */
 export async function requireOrganizationPermission(
   organizationId: string,
   permission: Permission,

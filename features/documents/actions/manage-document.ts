@@ -44,15 +44,6 @@ const metadataSchema = z.object({
   }),
 });
 
-/**
- * Nama berkas yang aman dipakai sebagai bagian path storage.
- *
- * Nama asli tetap disimpan di kolom `original_filename` supaya pengguna
- * mengunduh dengan nama yang ia kenali; yang dibersihkan hanya yang menjadi
- * PATH. Titik dua, garis miring, dan `..` dibuang di sini, dan segmen tenant
- * tetap dijaga policy storage — dua lapis, karena satu lapis untuk path
- * traversal tidak pernah cukup.
- */
 function safeFilename(name: string, fallbackExtension: string) {
   const base = name
     .replace(/\\/g, "/")
@@ -246,8 +237,6 @@ export async function createDocumentDownloadUrl(
 
     const supabase = await createClient();
 
-    // Baris ini melewati RLS `documents_select`, sehingga dokumen PRIVATE
-    // milik orang lain tidak pernah sampai ke sini sejak awal.
     const { data: document } = await supabase
       .from("documents")
       .select("storage_path, original_filename")

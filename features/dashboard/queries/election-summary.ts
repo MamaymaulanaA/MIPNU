@@ -2,15 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Ringkasan pemilihan untuk dashboard.
- *
- * TIDAK PERNAH membaca perolehan kandidat, dalam status apa pun. Hanya jumlah
- * pemilihan per status dan `mipnu_election_participation()` — satu-satunya yang
- * aman ditampilkan selagi pemungutan berlangsung (EVOTING §82).
- * `mipnu_election_result()` sengaja tidak dipanggil di sini.
- */
-
 export type ElectionParticipation = {
   eligible: number;
   voted: number;

@@ -15,17 +15,6 @@ export type AuditEntry = {
   metadata?: Record<string, Json>;
 };
 
-/**
- * Mencatat aktivitas sensitif ke `audit_logs`.
- *
- * Memakai admin client secara sengaja: tabel audit tidak punya INSERT policy
- * untuk `authenticated`, supaya browser tidak dapat mengarang event palsu
- * (docs/RLS.md §117). Aktor TIDAK diambil dari input pemanggil sembarangan —
- * pemanggil mengisinya dari access context yang sudah diresolusi server.
- *
- * Kegagalan audit tidak boleh menggagalkan operasi bisnis yang sudah
- * berhasil: kegagalannya dicatat ke log aplikasi, bukan dilempar ke pengguna.
- */
 export async function recordAudit(entry: AuditEntry): Promise<void> {
   try {
     const requestHeaders = await headers();

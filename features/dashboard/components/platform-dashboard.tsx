@@ -351,13 +351,6 @@ export function PlatformDashboard({
         ) : null}
       </div>
 
-      {/*
-        Panel akun hanya dirender bila barisnya memang ada. Pemanggil sudah
-        menahan query-nya bagi yang tidak berhak, jadi daftar kosong di sini
-        berarti "tidak boleh dilihat" atau "memang belum ada" — dan keduanya
-        lebih jujur diselesaikan dengan tidak menampilkan panelnya daripada
-        dengan kalimat yang menebak alasannya.
-      */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel
           title="Pengguna Platform"

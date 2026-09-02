@@ -10,22 +10,6 @@ import { recordAudit } from "@/services/audit/record";
 
 export type CsvExport = { filename: string; content: string };
 
-/**
- * Ekspor pemilihan.
- *
- * Tiga berkas, dan hanya tiga: DPT, partisipasi, hasil resmi (EVOTING
- * §153-§156).
- *
- * YANG TIDAK PERNAH DIEKSPOR, dan tidak punya fungsi di berkas ini:
- * baris surat suara, tanda terima, urutan waktu masuknya suara, dan apa pun
- * yang memasangkan seorang pemilih dengan sebuah pilihan (§154). Ekspor tidak
- * boleh menjadi pintu belakang yang memberikan apa yang layar menolak
- * menampilkannya.
- *
- * Ekspor DPT memuat siapa yang sudah memilih — itu memang bukan rahasia, dan
- * sudah terlihat di layar DPT. Yang rahasia adalah PILIHANNYA.
- */
-
 const MAX_EXPORT_ROWS = 20_000;
 
 function timestamp() {

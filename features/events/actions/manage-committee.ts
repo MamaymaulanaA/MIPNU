@@ -13,13 +13,6 @@ import { databaseFailure, formValues, parseForm } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/**
- * Menunjuk panitia event.
- *
- * Panitia adalah special assignment yang terikat pada SATU event — bukan role
- * permanen dan bukan role global. Permission yang diberikan di sini hanya
- * berlaku untuk event tersebut (PRD §13, §28).
- */
 export async function addCommitteeMember(
   organizationId: string,
   eventId: string,
@@ -98,8 +91,6 @@ export async function removeCommitteeMember(
 
     const supabase = await createClient();
 
-    // event_committee_permissions memakai ON DELETE CASCADE: permission
-    // panitia ikut hilang bersama penugasannya, sebagaimana mestinya.
     const { error } = await supabase
       .from("event_committees")
       .delete()
@@ -126,17 +117,6 @@ export async function removeCommitteeMember(
   }
 }
 
-/**
- * Menyetel permission seorang panitia.
- *
- * Permission ini scoped ke event: `app_private.has_event_permission()` hanya
- * mengakuinya bila event_id-nya sama. Panitia Event A tidak pernah memperoleh
- * akses ke Event B.
- *
- * Panitia tidak dapat mengatur permission dirinya sendiri — dijaga policy
- * `event_committee_permissions_write`, dan permission platform ditolak
- * trigger.
- */
 export async function setCommitteePermissions(
   organizationId: string,
   eventId: string,

@@ -2,21 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Data tambahan untuk dashboard administrator platform.
- *
- * Seluruhnya bersandar pada tiga tabel yang MEMANG terbaca oleh pemegang
- * wewenang platform: `organizations`, `profiles`, dan `audit_logs`. RLS yang
- * memutuskan, bukan berkas ini — dan itu terlihat pada hasilnya: `members`,
- * `announcements`, dan `meetings` mengembalikan nol baris bagi peran ini,
- * sehingga tidak satu pun angka di sini berasal dari sana.
- *
- * Konsekuensinya disengaja: dashboard platform TIDAK menampilkan "Total
- * Program" atau "Total Rapat" seperti dashboard organisasi, karena angka itu
- * tidak boleh dan tidak dapat dibacanya. Menampilkannya sebagai nol akan
- * menyatakan sesuatu yang tidak benar tentang platform.
- */
-
 const BULAN = [
   "Jan",
   "Feb",
@@ -272,19 +257,6 @@ export type AccountPreview = {
   status: string;
 };
 
-/**
- * Pratinjau akun platform.
- *
- * BUKAN pratinjau anggota. Tabel `members` mengembalikan nol baris bagi peran
- * ini — RLS-nya mengikat pada keanggotaan organisasi, dan administrator
- * platform tidak menjadi anggota di mana pun. Yang memang miliknya adalah
- * akun: `profiles` terbaca seluruhnya, dan itulah yang ditampilkan.
- *
- * Yang diambil hanya tiga kolom. Surel, telepon, dan tautan avatar tidak ikut:
- * deretan wajah pada dashboard tidak membutuhkannya, dan `profiles` tidak
- * menyimpan jenis kelamin — sehingga avatarnya netral, bukan hasil tebakan
- * dari nama.
- */
 export async function getAccountPreview(limit = 12): Promise<AccountPreview[]> {
   const supabase = await createClient();
 

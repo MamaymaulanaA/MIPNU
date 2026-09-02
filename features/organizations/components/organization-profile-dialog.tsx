@@ -11,23 +11,6 @@ import {
 } from "@/features/organizations/components/organization-fields";
 import { updateOrganization } from "@/features/organizations/actions/manage-organization";
 
-/**
- * Penyuntingan profil organisasi yang sedang aktif, di dalam dialog.
- *
- * Sebelumnya ini halaman tersendiri di `/organisasi/edit`. Dipindah ke dialog
- * agar sama dengan seluruh CRUD MIPNU lainnya.
- *
- * TIDAK ADA MODEL OTORISASI BARU DI SINI. Tombolnya hanya dirender ketika
- * pemanggil memegang `organization.edit` — tetapi itu urusan tampilan, bukan
- * keamanan. Yang menahan perubahan tetap `updateOrganization`, yang memanggil
- * `requireOrganizationPermission` sebelum menyentuh basis data, lalu RLS
- * memeriksanya sekali lagi. Menyembunyikan tombol bukan pengamanan
- * (AGENTS.md §56).
- *
- * Organisasi yang diubah juga tidak berasal dari form. Server action menulis
- * ke `context.organizationId` hasil pemeriksaan otorisasi, jadi memalsukan
- * payload tidak dapat mengarahkan perubahan ke tenant lain.
- */
 export function OrganizationProfileDialog({
   organizationId,
   values,

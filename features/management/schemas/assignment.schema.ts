@@ -10,13 +10,6 @@ const optionalDate = z
     "Tanggal tidak valid",
   );
 
-/**
- * Penugasan kepengurusan.
- *
- * Menghubungkan anggota, jabatan, dan periode. Ketiganya WAJIB berasal dari
- * organisasi yang sama — dijamin composite foreign key di database, jadi
- * skema ini tidak perlu (dan tidak bisa) memeriksanya sendiri.
- */
 export const assignmentSchema = z
   .object({
     organizationPeriodId: z.uuid({ error: "Periode wajib dipilih" }),

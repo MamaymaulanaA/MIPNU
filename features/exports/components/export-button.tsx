@@ -8,13 +8,6 @@ import { useToast } from "@/components/ui/toast";
 import type { CsvExport } from "@/features/exports/actions/export-csv";
 import type { ActionResult } from "@/lib/errors";
 
-/**
- * Tombol unduh CSV.
- *
- * Berkas disusun di server — di situlah permission dan tenant scope
- * ditegakkan — lalu diserahkan ke browser sebagai blob untuk disimpan.
- * Client tidak pernah membentuk isi berkasnya sendiri.
- */
 export function ExportButton({
   label = "Ekspor CSV",
   variant = "outline",

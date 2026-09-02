@@ -57,23 +57,6 @@ export type ProvisionResult = {
   accountExisted: boolean;
 };
 
-/**
- * Menyediakan akun untuk seorang anggota.
- *
- * USER != MEMBER dipertahankan: anggota tetap satu baris di `members`, dan
- * akun yang dibuat DITAUTKAN ke baris itu lewat
- * `organization_memberships.member_id` — bukan menduplikasi datanya
- * (docs/DATABASE.md §36, SYSTEM.md §20).
- *
- * Pembagian client di sini disengaja:
- *
- *   - Admin client hanya untuk yang memang tidak bisa dilakukan user biasa:
- *     membuat akun di Supabase Auth.
- *   - Membership ditulis dengan client user-scoped, sehingga RLS yang
- *     memutuskan apakah admin ini benar-benar boleh menautkan orang ke
- *     organisasi ini. Menulisnya dengan service role akan melewati satu-
- *     satunya pagar yang tidak dapat dilupakan.
- */
 export async function provisionUser(
   organizationId: string,
   _previousState: ActionResult<ProvisionResult> | null,
@@ -111,7 +94,6 @@ export async function provisionUser(
       };
     }
 
-    // ---- Anggota: wajib milik organisasi ini dan belum tertaut ------------
     if (input.memberId) {
       const { data: member } = await supabase
         .from("members")
@@ -121,8 +103,6 @@ export async function provisionUser(
         .is("deleted_at", null)
         .maybeSingle();
 
-      // RLS sudah menyaring lintas tenant; ini mengubah kegagalannya menjadi
-      // pesan yang dapat ditindaklanjuti.
       if (!member) {
         return {
           success: false,
@@ -217,10 +197,6 @@ export async function provisionUser(
       throw new AppError("INTERNAL", "Profile akun gagal disiapkan.");
     }
 
-    // ---- Membership -------------------------------------------------------
-    // Ditulis dengan client user-scoped: RLS memeriksa
-    // users.assign_organization DAN menolak profile_id milik pemanggil
-    // sendiri. Trigger menolak role ber-scope GLOBAL.
     const { error: membershipError } = await supabase
       .from("organization_memberships")
       .insert({

@@ -29,9 +29,6 @@ export async function createPeriod(
 
     const supabase = await createClient();
 
-    // Periode baru selalu lahir sebagai DRAFT. Mengaktifkannya adalah
-    // tindakan terpisah dengan permission tersendiri, karena ia menutup
-    // periode berjalan.
     const { data, error } = await supabase
       .from("organization_periods")
       .insert({
@@ -97,8 +94,6 @@ export async function updatePeriod(
         end_date: parsed.data.endDate,
       })
       .eq("id", periodId)
-      // Penyaring tenant eksplisit di samping RLS. RLS sudah cukup, tetapi
-      // menuliskannya membuat maksud query jelas saat dibaca ulang.
       .eq("organization_id", context.organizationId!);
 
     if (error) return databaseFailure(error);
@@ -154,13 +149,6 @@ export async function activatePeriod(
   }
 }
 
-/**
- * Menutup periode.
- *
- * Tindakan sensitif: struktur kepengurusan periode tersebut berhenti berlaku,
- * dan permission jabatan yang bersandar padanya ikut berhenti
- * (docs/PERMISSIONS.md §15).
- */
 export async function closePeriod(
   organizationId: string,
   periodId: string,

@@ -209,13 +209,6 @@ export async function recordAttendance(
   }
 }
 
-/**
- * Check-in mandiri.
- *
- * `member_id` diresolusi dari access context, tidak pernah dari client.
- * Sesi yang belum dibuka ditolak policy RLS lewat
- * `app_private.attendance_session_open()`.
- */
 export async function checkInSelf(
   organizationId: string,
   sessionId: string,

@@ -110,8 +110,6 @@ function escapeCell(value: unknown): string {
     text = `'${text}`;
   }
 
-  // Sel yang memuat pemisah, kutip, atau baris baru wajib dikutip; kutip di
-  // dalamnya digandakan.
   if (/[",\r\n]/.test(text)) {
     return `"${text.replace(/"/g, '""')}"`;
   }

@@ -6,12 +6,6 @@ const requiredDate = z
   .min(1, "Tanggal wajib diisi")
   .refine((value) => !Number.isNaN(Date.parse(value)), "Tanggal tidak valid");
 
-/**
- * Periode kepengurusan.
- *
- * `organization_id` tidak ada di sini — tenant selalu berasal dari access
- * context server, tidak pernah dari form.
- */
 export const periodSchema = z
   .object({
     name: z

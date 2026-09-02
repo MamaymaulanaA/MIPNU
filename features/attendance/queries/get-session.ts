@@ -11,13 +11,6 @@ export type AttendanceSessionDetail = {
   status: string;
   openAt: string | null;
   closeAt: string | null;
-  /**
-   * Apakah sesi sedang menerima presensi SAAT query dijalankan.
-   *
-   * Bergantung pada waktu sekarang, jadi dihitung di sini — bukan di dalam
-   * component, yang harus murni. Penjagaan sesungguhnya tetap
-   * `app_private.attendance_session_open()` pada policy RLS.
-   */
   isOpen: boolean;
   method: string;
   hasActiveQrToken: boolean;

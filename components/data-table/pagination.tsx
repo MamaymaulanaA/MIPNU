@@ -18,18 +18,6 @@ export function Pagination({
   pageCount: number;
   total: number;
   pageSize: number;
-  /**
-   * Nama parameter halaman di URL.
-   *
-   * Bawaannya `page`, dan hampir seluruh halaman memakainya. Yang perlu
-   * menggantinya adalah halaman berisi LEBIH DARI SATU daftar — dua daftar
-   * yang berbagi satu nomor halaman akan berpindah halaman bersama-sama,
-   * padahal panjangnya berbeda.
-   *
-   * Halaman seperti itu wajib menyebut kunci tambahannya pada `resetKeys`
-   * milik `TableToolbar`, supaya menyaring salah satu daftar tidak
-   * meninggalkan nomor halaman daftar lain pada nilai lamanya.
-   */
   pageKey?: string;
   label?: string;
 }) {

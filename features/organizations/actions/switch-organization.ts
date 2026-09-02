@@ -9,16 +9,6 @@ import {
 } from "@/lib/auth/context";
 import { ForbiddenError, fail, ok, type ActionResult } from "@/lib/errors";
 
-/**
- * Berpindah organisasi aktif.
- *
- * Organisasi tujuan diadu dengan daftar membership nyata SEBELUM cookie
- * ditulis. Tanpa langkah ini, seseorang cukup menyetel cookie ke UUID
- * organisasi lain untuk berpindah tenant.
- *
- * Cookie sendiri tetap bukan otorisasi — `resolveOrganizationId()` selalu
- * memvalidasinya ulang setiap request, dan RLS menutup lapisan terakhir.
- */
 export async function switchOrganization(
   organizationId: string,
 ): Promise<ActionResult> {

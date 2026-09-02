@@ -6,14 +6,6 @@ import {
 } from "@/features/members/schemas/member.schema";
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Baris anggota untuk tabel.
- *
- * Data pribadi (email, telepon, alamat, tanggal lahir) hanya ikut bila
- * pemanggil punya `members.view_private`. RLS bekerja per baris, bukan per
- * kolom, jadi privasi kolom ditegakkan di projection ini
- * (docs/RLS.md §39, PERMISSIONS.md §13).
- */
 export type MemberListRow = {
   id: string;
   memberNumber: string | null;

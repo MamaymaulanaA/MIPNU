@@ -156,13 +156,6 @@ export async function updateFinancialAccount(
   }
 }
 
-/**
- * Menonaktifkan / mengaktifkan akun kas.
- *
- * Tidak ada penghapusan akun: transaksi lama menunjuk kepadanya, dan akun yang
- * hilang membuat ledger tidak dapat dibaca. Nonaktif hanya berarti akun itu
- * tidak lagi ditawarkan untuk transaksi baru — saldonya tetap dihitung.
- */
 export async function setAccountActive(
   organizationId: string,
   accountId: string,
@@ -354,9 +347,6 @@ export async function createTransaction(
 
     const supabase = await createClient();
 
-    // Selalu lahir sebagai DRAFT. Memposting adalah tindakan tersendiri dengan
-    // permission tersendiri — tanpa pemisahan itu, siapa pun yang boleh
-    // mencatat otomatis juga yang memasukkannya ke pembukuan.
     const { data, error } = await supabase
       .from("financial_transactions")
       .insert({
@@ -464,15 +454,6 @@ export async function updateDraftTransaction(
   }
 }
 
-/**
- * Memposting draf ke ledger.
- *
- * `.eq("status", "DRAFT")` membuat operasi ini idempoten terhadap klik ganda:
- * permintaan kedua tidak menemukan baris dan tidak mengubah apa pun, alih-alih
- * memposting dua kali. Trigger database menolak transisi apa pun yang bukan
- * DRAFT -> POSTED, sehingga dua permintaan bersamaan pun tidak dapat
- * menghasilkan keadaan yang mustahil.
- */
 export async function postTransaction(
   organizationId: string,
   transactionId: string,
@@ -527,14 +508,6 @@ export async function postTransaction(
   }
 }
 
-/**
- * Membatalkan transaksi yang sudah diposting.
- *
- * Barisnya tetap ada; yang berubah hanya statusnya menjadi VOID beserta
- * alasannya. Saldo mengeluarkannya karena seluruh perhitungan hanya menjumlah
- * status POSTED — tidak ada transaksi pembalik yang perlu dibuat, dan tidak
- * ada baris yang hilang dari riwayat.
- */
 export async function voidTransaction(
   organizationId: string,
   transactionId: string,
@@ -851,9 +824,6 @@ export async function createProofUrl(
       };
     }
 
-    // Baris ini melewati RLS `documents_select`, yang kini mengenal jalur
-    // bukti transaksi. Kalau policy-nya menolak, tidak ada berkas untuk
-    // ditandatangani — bukan tautan yang gagal dibuka nanti.
     const { data: document } = await supabase
       .from("documents")
       .select("storage_path, original_filename")

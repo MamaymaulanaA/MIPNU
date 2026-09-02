@@ -13,13 +13,6 @@ import { databaseFailure, parseForm } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/**
- * Menugaskan anggota pada sebuah jabatan di sebuah periode.
- *
- * Penugasan inilah yang menghidupkan permission jabatan bagi orang tersebut —
- * karena itu ia diaudit, dan `management.assign` dipisahkan dari
- * `management.view`.
- */
 export async function createAssignment(
   organizationId: string,
   _previousState: ActionResult<{ id: string }> | null,
@@ -59,8 +52,6 @@ export async function createAssignment(
             "Anggota tersebut sudah ditugaskan pada jabatan yang sama di periode ini.",
           kind: "CONFLICT",
         },
-        // Composite FK gagal berarti periode/anggota/jabatan yang dipilih
-        // bukan milik organisasi ini — upaya lintas tenant, bukan salah ketik.
         "23503": {
           success: false,
           error:

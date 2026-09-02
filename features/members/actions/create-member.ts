@@ -9,16 +9,6 @@ import { AppError, fail, ok, type ActionResult } from "@/lib/errors";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/**
- * Menambah anggota.
- *
- * Mengikuti pola mutasi wajib (SYSTEM.md §13):
- *   Authenticate -> Authorize -> Validate -> Execute -> Audit -> Safe result
- *
- * Organisasi TIDAK dibaca dari form. Ia berasal dari access context yang
- * sudah diresolusi server, sehingga anggota tidak mungkin ditulis ke tenant
- * lain walau payload dimodifikasi.
- */
 export async function createMember(
   organizationId: string,
   _previousState: ActionResult<{ id: string }> | null,

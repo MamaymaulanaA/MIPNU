@@ -25,18 +25,6 @@ export const metadata: Metadata = {
 
 const BATAS_KEANGGOTAAN = 6;
 
-/**
- * Halaman swalayan.
- *
- * Setiap pengguna dapat membukanya tanpa permission apa pun — ia hanya
- * menampilkan data miliknya sendiri (docs/PERMISSIONS.md §60).
- *
- * SATU SUSUNAN UNTUK SEMUA PERAN. Yang berbeda antar peran hanyalah ISINYA:
- * super admin biasanya punya banyak keanggotaan dan tanpa data anggota,
- * seorang anggota punya satu keanggotaan dan satu data anggota. Susunannya
- * tidak bercabang menurut peran, dan tidak ada kartu yang dimunculkan hanya
- * agar kisinya terlihat penuh.
- */
 export default async function ProfilePage() {
   const [profile, context, organizations, avatarUrl, gender] =
     await Promise.all([

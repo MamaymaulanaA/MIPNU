@@ -24,13 +24,6 @@ const CAPACITY_FULL: ActionResult<never> = {
   kind: "CONFLICT",
 };
 
-/**
- * Mendaftarkan diri sendiri ke sebuah event.
- *
- * `member_id` TIDAK diterima dari client. Ia diresolusi dari access context,
- * sehingga tidak ada cara mendaftarkan orang lain lewat jalur ini
- * (docs/RLS.md §63).
- */
 export async function registerSelfForEvent(
   organizationId: string,
   eventId: string,

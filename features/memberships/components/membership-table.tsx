@@ -144,9 +144,6 @@ export function MembershipTable({
             {memberships.map((membership) => {
               const role = roleStatus(membership.roleCode);
 
-              // Membership sendiri tidak dapat disunting — dijaga policy RLS,
-              // dan kontrolnya memang tidak ditampilkan agar tidak menawarkan
-              // aksi yang pasti ditolak.
               const isSelf = membership.profileId === currentProfileId;
               const editable = canEdit && !isSelf;
 
@@ -278,14 +275,6 @@ export function MembershipTable({
   );
 }
 
-/**
- * Perubahan role satu akun.
- *
- * Memakai `changeMembershipRole` yang sudah ada — dialog ini hanya memindahkan
- * tempat pemicunya, bukan aturannya. Server action tetap memeriksa permission
- * dan organisasi sebelum menyentuh basis data, dan trigger database tetap
- * menolak pemberian role ber-scope GLOBAL dari sini.
- */
 function ChangeRoleDialog({
   open,
   onClose,
