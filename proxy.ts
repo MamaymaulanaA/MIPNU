@@ -51,15 +51,19 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  // getUser() memvalidasi token ke server Auth. getSession() hanya membaca
-  // cookie, sehingga tidak layak dipakai untuk keputusan apa pun.
+  // getClaims() memverifikasi tanda tangan JWT secara LOKAL memakai JWKS
+  // proyek (ES256), tanpa round-trip ke server Auth — tidak seperti getUser()
+  // yang memanggil jaringan pada setiap request, termasuk setiap prefetch.
+  // getSession() tetap tidak dipakai: ia hanya membaca cookie tanpa verifikasi.
   //
-  // Bila panggilan itu gagal (Auth tidak terjangkau, konfigurasi salah),
-  // request diperlakukan sebagai anonim — gagal menutup, bukan gagal membuka.
+  // Cukup untuk proxy, yang hanya menentukan "ada session yang sah atau tidak".
+  // Otorisasi sesungguhnya tetap per halaman + RLS (docs/AUTHORIZATION.md §4-§5).
+  //
+  // Bila verifikasi gagal, request diperlakukan anonim — gagal menutup.
   let user = null;
   try {
-    const result = await supabase.auth.getUser();
-    user = result.data.user;
+    const { data } = await supabase.auth.getClaims();
+    user = data?.claims ? { id: data.claims.sub } : null;
   } catch (error) {
     console.error("[mipnu] gagal memverifikasi session", error);
   }
