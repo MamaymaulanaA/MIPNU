@@ -2,9 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 
@@ -105,8 +104,8 @@ export type TableFilter = {
  * berarti tak dibatasi.
  *
  * Ada di sini, bukan sebagai form tersendiri di halaman yang membutuhkannya,
- * supaya ia ikut aturan yang sama: menulis ke URL, mengosongkan `page`, dan
- * ikut terhapus oleh tombol Reset. Halaman Transaksi sempat menuliskannya
+ * supaya ia ikut aturan yang sama: menulis ke URL dan mengosongkan `page`.
+ * Halaman Transaksi sempat menuliskannya
  * sendiri lengkap dengan tombol "Terapkan" — satu-satunya penyaring di seluruh
  * aplikasi yang menuntut klik kedua sebelum bekerja.
  */
@@ -154,7 +153,9 @@ export function TableToolbar({
   resetKeys?: string[];
 }) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  // Hanya `startTransition` yang dipakai: penanda tertunda dulu dibutuhkan
+  // untuk menonaktifkan tombol Reset, dan tombol itu sudah tidak ada.
+  const [, startTransition] = useTransition();
 
   const adaPencarian = searchValue !== undefined;
   const [search, setSearch] = useState(searchValue ?? "");
@@ -173,12 +174,11 @@ export function TableToolbar({
     const timer = setTimeout(() => {
       // Dibandingkan dengan URL SAAT INI, bukan dengan nilai dari closure.
       //
-      // Tanpa perbandingan ini, menekan Reset menghasilkan dua navigasi yang
-      // saling menimpa: Reset menghapus seluruh parameter, lalu 350ms kemudian
-      // debounce yang ikut tersulut oleh `setSearch("")` menyala membawa
-      // parameter versi lama dan MENGEMBALIKAN penyaring yang baru saja
-      // dihapus. Terlihat di peramban sebagai `?jenis=organization` yang
-      // muncul lagi sesudah Reset.
+      // Debounce yang tertunda memegang nilai dari render yang sudah lewat.
+      // Bila URL berpindah lebih dulu — tombol kembali peramban, atau
+      // penyaring yang diubah dalam 350ms itu — debounce menyala membawa
+      // keadaan lama dan mengembalikan parameter yang baru saja hilang.
+      // Perbandingan ini membuatnya diam ketika tidak ada yang berubah.
       const sekarang =
         new URLSearchParams(window.location.search).get(searchKey) ?? "";
       if (sekarang === search) return;
@@ -215,11 +215,6 @@ export function TableToolbar({
     });
   }
 
-  const adaFilter =
-    (adaPencarian && search !== "") ||
-    filters.some((filter) => filter.value !== "") ||
-    dateFilters.some((filter) => filter.value !== "");
-
   return (
     <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:flex-wrap sm:items-center sm:p-5">
       {/*
@@ -252,7 +247,7 @@ export function TableToolbar({
         </div>
       ) : null}
 
-      {filters.length > 0 || dateFilters.length > 0 || adaFilter ? (
+      {filters.length > 0 || dateFilters.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           {filters.map((filter) => (
             <Select
@@ -293,31 +288,6 @@ export function TableToolbar({
               className="w-full sm:w-40"
             />
           ))}
-
-          {adaFilter ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={isPending}
-              onClick={() => {
-                setSearch("");
-                updateParams({
-                  ...(adaPencarian ? { [searchKey]: null } : {}),
-                  page: null,
-                  ...kosongkanLain(),
-                  ...Object.fromEntries(
-                    [...filters, ...dateFilters].map((filter) => [
-                      filter.key,
-                      null,
-                    ]),
-                  ),
-                });
-              }}
-            >
-              <X size={15} aria-hidden="true" />
-              Reset
-            </Button>
-          ) : null}
         </div>
       ) : null}
     </div>
