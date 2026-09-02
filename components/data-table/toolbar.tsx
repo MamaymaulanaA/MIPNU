@@ -67,17 +67,23 @@ import { cn } from "@/lib/utils";
  * Sembilan halaman lain hanya punya satu atau dua penyaring.
  *
  * `max-w` tetap menjaga satu nama yang sangat panjang agar tidak menelan
- * toolbar, dan `min-w` menjaga lantai sasaran klik.
+ * toolbar.
  *
- *   min-w-28  112px  lantai — penyaring beropsi pendek tetap nyaman diklik
  *   max-w-56  224px  langit-langit — satu nama panjang tidak menelan toolbar
+ *
+ * TANPA lantai. Sebelumnya ada `min-w-28` (112px) dengan alasan sasaran klik,
+ * dan alasan itu keliru: yang menentukan kenyamanan menekan adalah TINGGI —
+ * 44px di desktop, 46px di ponsel — bukan lebar. Lantai itu justru menjadi
+ * satu-satunya hal yang tersisa yang menahan kotak agar tidak mengecil.
+ * Terukur pada halaman Periode: "Aktif" hanya butuh 77px tetapi mendapat
+ * 112px, "Draf" butuh 74px juga mendapat 112px. Status sebaris tidak pernah
+ * punya lantai dan turun sampai 67px tanpa masalah.
  *
  * Hanya untuk penyaring toolbar. Field di dalam form tetap mengikuti kisi
  * formnya; menyempitkannya menjadi selebar isi membuat form terbaca seperti
  * deretan chip.
  */
-const LEBAR_FILTER =
-  "sm:field-sizing-content sm:w-auto sm:min-w-28 sm:max-w-56";
+const LEBAR_FILTER = "sm:field-sizing-content sm:w-auto sm:max-w-56";
 
 export type TableFilter = {
   /** Nama parameter di URL. */
