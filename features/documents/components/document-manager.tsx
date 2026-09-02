@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Download, FolderClosed, Trash2, Upload } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -356,6 +357,8 @@ function UploadDialog({
     FormData
   >(uploadDocument.bind(null, organizationId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Dokumen diunggah.");
@@ -373,7 +376,7 @@ function UploadDialog({
       title="Unggah Dokumen"
       description="PDF, gambar, Word, atau Excel. Maksimal 20 MB."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field

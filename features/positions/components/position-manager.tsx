@@ -9,6 +9,7 @@ import {
 } from "react";
 import { KeyRound, Network, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { EmptyState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
@@ -313,6 +314,8 @@ function PositionDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Jabatan diperbarui." : "Jabatan dibuat.");
@@ -331,7 +334,7 @@ function PositionDialog({
       onClose={onClose}
       title={isEdit ? "Ubah Jabatan" : "Tambah Jabatan"}
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field
@@ -452,6 +455,8 @@ function PermissionDialog({
     null,
   );
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Permission jabatan diperbarui.");
@@ -479,7 +484,7 @@ function PermissionDialog({
       title={`Permission — ${position?.name ?? ""}`}
       description="Hak yang melekat pada jabatan ini, berlaku selama penugasan masih aktif."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={failed?.error} />
 
         {grouped.map(([resource, items]) => (

@@ -10,6 +10,7 @@ import {
   PlayCircle,
 } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
@@ -223,6 +224,8 @@ function CancelDialog({
     FormData
   >(cancelElection.bind(null, organizationId, electionId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Pemilihan dibatalkan.", "success");
@@ -237,7 +240,7 @@ function CancelDialog({
       title="Batalkan pemilihan?"
       description="Surat suara yang sudah masuk TIDAK dihapus. Pembatalan membuat hasilnya tidak resmi, dan alasannya tercatat pada jejak audit."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={state?.success === false ? state.error : ""} />
 
         <Field label="Alasan pembatalan" htmlFor="cancel-reason" required>

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { FileText, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { Card } from "@/components/ui/card";
 import { PageTabs } from "@/components/ui/tabs";
@@ -405,6 +406,8 @@ function IncomingDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Surat masuk diperbarui." : "Surat masuk dicatat.");
@@ -422,7 +425,7 @@ function IncomingDialog({
       title={isEdit ? "Ubah Surat Masuk" : "Catat Surat Masuk"}
       description="Nomor surat masuk berasal dari pengirim, sehingga tidak divalidasi formatnya."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field
@@ -805,6 +808,8 @@ function OutgoingDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Surat keluar diperbarui." : "Surat keluar dibuat.");
@@ -822,7 +827,7 @@ function OutgoingDialog({
       title={isEdit ? "Ubah Surat Keluar" : "Buat Surat Keluar"}
       description="Penomoran mengikuti aturan organisasi Anda. Sistem hanya memastikan nomornya belum terpakai."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field

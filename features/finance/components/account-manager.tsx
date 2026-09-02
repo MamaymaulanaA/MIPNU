@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Landmark, Pencil, Plus, Tags } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
@@ -227,6 +228,8 @@ function AccountDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Akun kas diperbarui." : "Akun kas dibuat.");
@@ -244,7 +247,7 @@ function AccountDialog({
       title={isEdit ? "Ubah Akun Kas" : "Tambah Akun Kas"}
       description="Saldo akun dihitung dari transaksi yang sudah diposting, ditambah saldo awal di bawah."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field
@@ -532,6 +535,8 @@ function CategoryDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Kategori diperbarui." : "Kategori dibuat.");
@@ -549,7 +554,7 @@ function CategoryDialog({
       title={isEdit ? "Ubah Kategori" : "Tambah Kategori"}
       description="Jenis kategori menentukan transaksi mana yang boleh memakainya, dan tidak dapat diubah setelah dibuat."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field

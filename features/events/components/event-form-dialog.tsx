@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -101,6 +102,8 @@ function EventDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Event diperbarui." : "Event dibuat.");
@@ -122,7 +125,7 @@ function EventDialog({
           : "Event baru ditautkan otomatis ke periode kepengurusan yang sedang aktif."
       }
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field

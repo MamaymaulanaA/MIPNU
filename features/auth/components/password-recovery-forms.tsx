@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Eye, EyeOff } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Field, Input } from "@/components/ui/field";
 import {
@@ -19,6 +20,8 @@ export function ForgotPasswordForm() {
     ActionResult<void> | null,
     FormData
   >(requestPasswordReset, null);
+
+  const jagaIsian = useJagaIsian(state);
 
   if (state?.success) {
     return (
@@ -48,7 +51,7 @@ export function ForgotPasswordForm() {
   const failed = state && !state.success ? state : null;
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form {...jagaIsian(formAction)} className="space-y-4">
       <FormAlert message={failed?.fieldErrors ? undefined : failed?.error} />
 
       <Field
@@ -90,6 +93,8 @@ export function ResetPasswordForm() {
     FormData
   >(resetPassword, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (!state?.success) return;
     const timer = setTimeout(() => router.push("/dashboard"), 1200);
@@ -119,7 +124,7 @@ export function ResetPasswordForm() {
   const fieldErrors = failed?.fieldErrors;
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form {...jagaIsian(formAction)} className="space-y-4">
       <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
       <Field

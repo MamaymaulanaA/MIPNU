@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Pencil, Plus, Trash2, UserRound } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
@@ -229,6 +230,8 @@ function CandidateDialog({
     FormData
   >(action, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(
@@ -246,7 +249,7 @@ function CandidateDialog({
       title={candidate ? "Ubah Kandidat" : "Tambah Kandidat"}
       description="Nama yang disimpan menjadi arsip pemilihan ini dan tidak ikut berubah bila profil anggota diperbarui kelak."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={state?.success === false ? state.error : ""} />
 
         <div className="grid gap-4 sm:grid-cols-[7rem_1fr]">

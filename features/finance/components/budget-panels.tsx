@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { PiggyBank, Plus, Trash2 } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
@@ -353,6 +354,8 @@ function BudgetDialog({
     FormData
   >(createBudget.bind(null, organizationId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Anggaran dibuat sebagai draf.");
@@ -370,7 +373,7 @@ function BudgetDialog({
       title="Tambah Anggaran"
       description="Anggaran lahir sebagai draf. Rinciannya hanya dapat diubah selama masih draf."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field
@@ -473,6 +476,8 @@ function BudgetItemDialog({
     FormData
   >(addBudgetItem.bind(null, organizationId, budgetId ?? ""), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Rincian ditambahkan.");
@@ -490,7 +495,7 @@ function BudgetItemDialog({
       title="Tambah Rincian Anggaran"
       description="Realisasi dihitung dari pengeluaran berstatus diposting pada kategori yang sama."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field

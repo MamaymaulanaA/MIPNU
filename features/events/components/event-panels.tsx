@@ -9,6 +9,7 @@ import {
 } from "react";
 import { KeyRound, Plus, Trash2, UserPlus, Users } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { EmptyState } from "@/components/feedback/states";
 import { Badge } from "@/components/ui/badge";
@@ -531,6 +532,8 @@ function AddCommitteeDialog({
     FormData
   >(addCommitteeMember.bind(null, organizationId, eventId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Panitia ditunjuk.");
@@ -543,7 +546,7 @@ function AddCommitteeDialog({
 
   return (
     <Dialog open={open} onClose={onClose} title="Tunjuk Panitia">
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field
@@ -624,6 +627,8 @@ function CommitteePermissionDialog({
     null,
   );
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Permission panitia diperbarui.");
@@ -651,7 +656,7 @@ function CommitteePermissionDialog({
       title={`Permission Panitia — ${committee?.memberName ?? ""}`}
       description="Hanya berlaku untuk event ini. Panitia event lain tidak terpengaruh."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={failed?.error} />
 
         {grouped.map(([resource, items]) => (

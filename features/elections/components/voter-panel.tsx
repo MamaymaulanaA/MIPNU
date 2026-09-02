@@ -9,6 +9,7 @@ import {
 } from "react";
 import { ShieldOff, Trash2, UserPlus, Users } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
@@ -369,6 +370,8 @@ function RevokeDialog({
     FormData
   >(setVoterEligibility.bind(null, organizationId, electionId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Hak pilih dicabut.", "success");
@@ -383,7 +386,7 @@ function RevokeDialog({
       title="Cabut hak pilih?"
       description={`${voter?.fullName ?? ""} tetap tercatat di DPT, tetapi tidak dapat memberikan suara. Alasannya disimpan agar koreksi ini dapat dipertanggungjawabkan.`}
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={state?.success === false ? state.error : ""} />
         <input type="hidden" name="voterId" value={voter?.id ?? ""} />
         <input type="hidden" name="eligible" value="false" />

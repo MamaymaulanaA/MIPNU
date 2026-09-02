@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -227,6 +228,8 @@ function ElectionDialog({
     FormData
   >(action, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(
@@ -250,7 +253,7 @@ function ElectionDialog({
           : "Pemilihan selalu lahir sebagai rancangan. Kandidat dan DPT disusun dulu sebelum suara dibuka."
       }
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={state?.success === false ? state.error : ""} />
         <ElectionFields periodOptions={periodOptions} election={election} />
 

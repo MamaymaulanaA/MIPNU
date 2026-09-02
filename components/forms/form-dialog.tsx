@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { Button } from "@/components/ui/button";
 import { Dialog, type DialogSize } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
@@ -47,6 +48,8 @@ export function FormDialog<T>({
     onClose();
   }, [state, successMessage, onClose, showToast]);
 
+  const jagaIsian = useJagaIsian(state);
+
   const failed = state && !state.success ? state : null;
   const fieldErrors = failed?.fieldErrors;
 
@@ -58,7 +61,7 @@ export function FormDialog<T>({
       description={description}
       size={size}
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         {children(fieldErrors)}

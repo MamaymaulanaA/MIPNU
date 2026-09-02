@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Pencil, Plus, Trash2, Users2 } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
@@ -126,6 +127,8 @@ function MeetingDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Rapat diperbarui." : "Rapat dibuat.");
@@ -143,7 +146,7 @@ function MeetingDialog({
       title={isEdit ? "Ubah Rapat" : "Buat Rapat"}
       description="Peserta dan notulen dikelola dari halaman detail rapat."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field
@@ -497,6 +500,8 @@ export function MeetingMinutes({
     FormData
   >(saveMeetingMinutes.bind(null, organizationId, meetingId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) showToast("Notulen disimpan.");
   }, [state, showToast]);
@@ -546,7 +551,7 @@ export function MeetingMinutes({
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form {...jagaIsian(formAction)} className="space-y-4">
       <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
       <Field

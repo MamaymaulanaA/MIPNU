@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { BadgeCheck, GraduationCap, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -395,6 +396,8 @@ function CadreshipDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Riwayat diperbarui." : "Riwayat ditambahkan.");
@@ -412,7 +415,7 @@ function CadreshipDialog({
       title={isEdit ? "Ubah Riwayat Kaderisasi" : "Tambah Riwayat Kaderisasi"}
       description="Satu baris untuk satu penempuhan. Mengulang jenjang yang sama berarti baris baru, bukan menimpa yang lama."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <div className="grid gap-4 sm:grid-cols-2">

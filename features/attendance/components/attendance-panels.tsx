@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { CheckCircle2, Pencil, Plus } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -127,6 +128,8 @@ function SessionDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Sesi presensi diperbarui." : "Sesi presensi dibuat.");
@@ -144,7 +147,7 @@ function SessionDialog({
       title={isEdit ? "Ubah Sesi Presensi" : "Buat Sesi Presensi"}
       description="Presensi dibuka dari sebuah event. Anggota hanya dapat melakukan presensi mandiri selama sesi berstatus dibuka."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field

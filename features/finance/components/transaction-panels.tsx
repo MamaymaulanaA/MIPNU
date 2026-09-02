@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
@@ -504,6 +505,8 @@ function TransactionDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(
@@ -525,7 +528,7 @@ function TransactionDialog({
       title={isEdit ? "Ubah Draf Transaksi" : "Catat Transaksi"}
       description="Transaksi tersimpan sebagai draf. Ia baru mempengaruhi saldo setelah diposting."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <div className="grid gap-4 sm:grid-cols-2">

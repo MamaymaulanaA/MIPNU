@@ -1,5 +1,6 @@
 import "server-only";
 
+import { deltaBulanTerakhir } from "@/features/dashboard/queries/growth-delta";
 import { createClient } from "@/lib/supabase/server";
 
 const BULAN = [
@@ -105,18 +106,13 @@ export async function getPlatformGrowth(
     };
   });
 
-  const delta = (deret: number[]) =>
-    deret.length >= 2
-      ? deret[deret.length - 1]! - deret[deret.length - 2]!
-      : null;
-
   return {
     points,
     range: `${titik[0]!.label} – ${titik[titik.length - 1]!.label}`,
     newOrganizations: baruOrg,
     newAccounts: baruAkun,
-    organizationDelta: delta(baruOrg),
-    accountDelta: delta(baruAkun),
+    organizationDelta: deltaBulanTerakhir(baruOrg),
+    accountDelta: deltaBulanTerakhir(baruAkun),
   };
 }
 

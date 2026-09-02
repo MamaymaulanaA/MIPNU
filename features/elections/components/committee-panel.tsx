@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { ShieldCheck, Trash2, UserPlus } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
@@ -201,6 +202,8 @@ function CommitteeDialog({
     FormData
   >(assignCommittee.bind(null, organizationId, electionId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Panitia ditugaskan.", "success");
@@ -215,7 +218,7 @@ function CommitteeDialog({
       title="Tugaskan Panitia"
       description="Hak yang dipilih berlaku pada pemilihan ini saja, dan berakhir bersama penugasannya."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={state?.success === false ? state.error : ""} />
 
         <Field label="Anggota" htmlFor="committee-member" required>

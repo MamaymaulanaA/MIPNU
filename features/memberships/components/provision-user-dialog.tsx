@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { Copy, Mail, UserPlus } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -67,6 +68,8 @@ function ProvisionDialog({
     FormData
   >(provisionUser.bind(null, organizationId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success && state.data.emailSent) {
       showToast("Undangan terkirim ke email pengguna.");
@@ -105,7 +108,7 @@ function ProvisionDialog({
       title="Buat Akun Pengguna"
       description="Akun tidak menduplikasi data anggota — ia ditautkan ke anggota yang sudah ada."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field

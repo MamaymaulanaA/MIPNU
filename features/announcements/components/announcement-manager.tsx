@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { Megaphone, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { EmptyState } from "@/components/feedback/states";
 import { PageHeader } from "@/components/layout/page-header";
 import { Pagination } from "@/components/data-table/pagination";
@@ -312,6 +313,8 @@ function AnnouncementDialog({
     FormData
   >(action as never, null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast(isEdit ? "Pengumuman diperbarui." : "Pengumuman dibuat.");
@@ -329,7 +332,7 @@ function AnnouncementDialog({
       title={isEdit ? "Ubah Pengumuman" : "Tulis Pengumuman"}
       description="Pengumuman baru tersimpan sebagai draf. Terbitkan lewat kolom status setelah siap."
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field

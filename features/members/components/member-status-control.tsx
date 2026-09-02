@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
+import { useJagaIsian } from "@/components/forms/use-jaga-isian";
 import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -60,6 +61,8 @@ function StatusDialog({
     FormData
   >(changeMemberStatus.bind(null, organizationId, memberId), null);
 
+  const jagaIsian = useJagaIsian(state);
+
   useEffect(() => {
     if (state?.success) {
       showToast("Status anggota diperbarui.");
@@ -77,7 +80,7 @@ function StatusDialog({
       title="Ubah Status Keanggotaan"
       description={`Perubahan status ${memberName} tercatat permanen pada riwayat anggota.`}
     >
-      <form action={formAction} className="space-y-4">
+      <form {...jagaIsian(formAction)} className="space-y-4">
         <FormAlert message={fieldErrors ? undefined : failed?.error} />
 
         <Field
