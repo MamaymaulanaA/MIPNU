@@ -66,7 +66,10 @@ export function AppShell({
               aria-label="Buka menu"
               aria-expanded={sidebarOpen}
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden"
+              // Latar diam, bukan hanya saat hover. Tombol ini `lg:hidden` —
+              // hanya ada di layar sentuh, tempat hover tidak pernah terjadi —
+              // jadi ikon telanjang tanpa latar tidak terbaca sebagai tombol.
+              className="bg-muted text-foreground lg:hidden"
             >
               <Menu size={18} aria-hidden="true" />
             </Button>
