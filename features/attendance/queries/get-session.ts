@@ -20,10 +20,8 @@ export type AttendanceSessionDetail = {
    */
   isOpen: boolean;
   method: string;
-  /** True bila sesi punya token QR yang belum kedaluwarsa. */
   hasActiveQrToken: boolean;
   qrExpiresAt: string | null;
-  /** Seluruh peserta event, digabung dengan catatan hadir yang sudah ada. */
   roster: AttendanceMemberRow[];
 };
 
@@ -61,9 +59,6 @@ export async function getAttendanceSession(
     events: { name: string };
   };
 
-  // Daftar hadir dibangun dari peserta event, bukan dari catatan yang sudah
-  // ada — sehingga yang belum hadir muncul sebagai baris menunggu, bukan
-  // menghilang begitu saja dari layar operator.
   const [participantsResult, recordsResult] = await Promise.all([
     supabase
       .from("event_participants")
@@ -113,8 +108,6 @@ export async function getAttendanceSession(
     openAt: row.open_at,
     closeAt: row.close_at,
     method: row.method,
-    // Hash-nya sendiri tidak pernah keluar dari query ini — hanya faktanya
-    // bahwa token aktif ada.
     hasActiveQrToken:
       row.qr_token_hash !== null &&
       row.qr_token_expires_at !== null &&

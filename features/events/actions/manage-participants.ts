@@ -18,7 +18,6 @@ import { databaseFailure } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/** Pesan seragam untuk kuota penuh, apa pun jalur pendaftarannya. */
 const CAPACITY_FULL: ActionResult<never> = {
   success: false,
   error: "Kuota peserta event sudah penuh.",
@@ -68,7 +67,6 @@ export async function registerSelfForEvent(
           error: "Anda sudah terdaftar pada event ini.",
           kind: "CONFLICT",
         },
-        // Dilempar trigger app_private.enforce_event_capacity().
         "23514": CAPACITY_FULL,
         "42501": {
           success: false,
@@ -95,7 +93,6 @@ export async function registerSelfForEvent(
   }
 }
 
-/** Membatalkan pendaftaran sendiri. */
 export async function cancelOwnRegistration(
   organizationId: string,
   eventId: string,
@@ -134,7 +131,6 @@ export async function cancelOwnRegistration(
   }
 }
 
-/** Menambahkan peserta oleh pengelola event. */
 export async function addParticipant(
   organizationId: string,
   eventId: string,
@@ -163,7 +159,6 @@ export async function addParticipant(
           kind: "CONFLICT",
         },
         "23514": CAPACITY_FULL,
-        // Composite FK: anggota bukan milik organisasi event ini.
         "23503": {
           success: false,
           error: "Anggota tidak valid untuk event ini.",
@@ -189,7 +184,6 @@ export async function addParticipant(
   }
 }
 
-/** Mengubah status pendaftaran seorang peserta. */
 export async function setParticipantStatus(
   organizationId: string,
   eventId: string,

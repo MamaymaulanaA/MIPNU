@@ -52,23 +52,6 @@ import type { PlatformStats } from "@/features/dashboard/queries/organization-su
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/**
- * Dashboard administrator platform.
- *
- * Terpisah dari dashboard organisasi, bukan variannya. Alasannya bukan
- * kerapian melainkan wewenang: peran ini membaca `organizations`, `profiles`,
- * dan `audit_logs`, sementara `members`, `announcements`, dan `meetings`
- * mengembalikan nol baris untuknya. Menyusun satu dashboard universal lalu
- * menyembunyikan bagiannya akan menampilkan "0 Program" — pernyataan yang
- * tidak benar tentang platform, hanya benar tentang haknya.
- *
- * Bahasa kartunya datang dari `components/cards.tsx`, sama dengan dashboard
- * organisasi. Yang berbeda hanya isinya.
- */
-
-/* -------------------------------------------------- informasi cepat */
-
-/** Ikon dan aksen per keterangan cepat, dicocokkan pada labelnya. */
 const INFO_RUPA: Record<string, { icon: LucideIcon; tone: Aksen }> = {
   "Organisasi Baru": { icon: Building2, tone: "blue" },
   "Akun Baru": { icon: UserRoundPlus, tone: "cyan" },
@@ -92,8 +75,6 @@ function barisInformasi(items: QuickInfo[]): SummaryRow[] {
     };
   });
 }
-
-/* ------------------------------------------------------- distribusi */
 
 function LevelBars({
   rows,
@@ -142,8 +123,6 @@ function LevelBars({
   );
 }
 
-/* ----------------------------------------------------- aktivitas */
-
 const RANAH_RUPA: Record<ActivityDomain, { icon: LucideIcon; tone: Aksen }> = {
   pemilihan: { icon: Vote, tone: "purple" },
   keanggotaan: { icon: UserRoundPlus, tone: "cyan" },
@@ -152,13 +131,11 @@ const RANAH_RUPA: Record<ActivityDomain, { icon: LucideIcon; tone: Aksen }> = {
   lainnya: { icon: Activity, tone: "slate" },
 };
 
-/** Baris mendatar dan pendek: satu baris judul, satu baris keterangan. */
 export function ActivityList({
   items,
   columns = 2,
 }: {
   items: ActivityItem[];
-  /** Satu kolom untuk kolom sempit, tiga hanya ketika selebar halaman. */
   columns?: 1 | 2 | 3;
 }) {
   return (
@@ -187,8 +164,6 @@ export function ActivityList({
   );
 }
 
-/* -------------------------------------------------------- komposisi */
-
 export function PlatformDashboard({
   displayName,
   stats,
@@ -215,15 +190,10 @@ export function PlatformDashboard({
         : 0,
   }));
 
-  // Dua pembanding pengganti tren. Keduanya dihitung dari angka yang sudah ada
-  // di layar, bukan dari deret yang tidak dapat dibaca peran ini.
   const porsiTanpaOrganisasi =
     stats.accounts.total > 0
       ? Math.round((stats.accounts.unassigned / stats.accounts.total) * 100)
       : 0;
-  // Koma, bukan titik: `toFixed` selalu memakai titik desimal, dan angka
-  // berbahasa Indonesia di sebelah kartu lain yang memakai koma akan terbaca
-  // sebagai pemisah ribuan.
   const rerataAnggota =
     stats.organizations.total > 0
       ? (stats.members_total / stats.organizations.total)
@@ -233,14 +203,6 @@ export function PlatformDashboard({
 
   return (
     <div className="space-y-4">
-      {/*
-        Kepala halaman memakai `PageHeader` yang sama dengan seluruh aplikasi.
-        Sebelumnya dashboard menuliskan kepalanya sendiri — h1 21px, keterangan
-        12,5px, dan sebuah `<Link>` yang DIGAMBAR seperti tombol lewat kelas
-        inline. Akibatnya dashboard menjadi satu-satunya halaman dengan ukuran
-        judul tersendiri, dan "tombol"-nya tidak ikut aturan tinggi kontrol
-        mana pun karena ia memang bukan `Button` (AGENTS.md §37, §54).
-      */}
       <PageHeader
         title={`Selamat datang, ${displayName}`}
         description="Pantau kondisi dan aktivitas platform MIPNU dari satu dashboard."
@@ -254,9 +216,6 @@ export function PlatformDashboard({
         }
       />
 
-      {/* ------------------------------------------------ kartu metrik */}
-      {/* `auto-rows-fr`: keterangan kartu boleh turun ke baris kedua, dan
-          baris kartu di bawahnya tetap setinggi baris di atasnya. */}
       <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Total Organisasi"
@@ -296,7 +255,6 @@ export function PlatformDashboard({
         />
       </div>
 
-      {/* ------------------------------- grafik utama + informasi cepat */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
         {growth ? (
           <Panel
@@ -342,7 +300,6 @@ export function PlatformDashboard({
         </Panel>
       </div>
 
-      {/* ------------------------------------------------- distribusi */}
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.55fr)]">
         <Panel
           title="Jenis Organisasi"
@@ -394,18 +351,12 @@ export function PlatformDashboard({
         ) : null}
       </div>
 
-      {/* -------------------------------------- akun + aktivitas audit */}
       {/*
         Panel akun hanya dirender bila barisnya memang ada. Pemanggil sudah
         menahan query-nya bagi yang tidak berhak, jadi daftar kosong di sini
         berarti "tidak boleh dilihat" atau "memang belum ada" — dan keduanya
         lebih jujur diselesaikan dengan tidak menampilkan panelnya daripada
         dengan kalimat yang menebak alasannya.
-      */}
-      {/*
-        Dua kolom tetap, bukan satu kolom ketika daftar akunnya kosong: jumlah
-        kolom yang berubah mengikuti isi tabel adalah cara paling langsung
-        membuat tata letak bergantung pada data.
       */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel

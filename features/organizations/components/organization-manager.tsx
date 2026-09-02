@@ -73,7 +73,6 @@ export function OrganizationManager({
   types: ReferenceOption[];
   levels: ReferenceOption[];
   parents: ReferenceOption[];
-  /** Keadaan toolbar, seluruhnya berasal dari URL dan diproses di server. */
   cari: string;
   status: string;
   statusOptions: { value: string; label: string }[];
@@ -171,11 +170,6 @@ export function OrganizationManager({
                       </TableCell>
 
                       <TableCell>
-                        {/* IPNU dan IPPNU dibedakan oleh KODENYA yang tertulis
-                            di sini, bukan oleh warna. Menyandikannya sebagai
-                            hijau/ungu menuntut pembaca menghafal arti warna,
-                            dan tidak menyampaikan apa pun kepada pembaca yang
-                            tidak dapat membedakannya (docs/UI.md §8). */}
                         <span className="inline-flex items-center rounded-sm border border-primary-border bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary-hover">
                           {organization.typeCode}
                         </span>
@@ -268,13 +262,6 @@ export function OrganizationManager({
   );
 }
 
-/**
- * Slug, jenis, tingkat, dan induk — hanya ada saat pembuatan.
- *
- * Keempatnya menentukan identitas organisasi. Slug dipakai sebagai identifier
- * stabil, dan mengubahnya setelah beredar akan memutus tautan yang sudah ada;
- * `updateOrganizationSchema` memang tidak menerimanya.
- */
 function IdentityFields({
   types,
   levels,

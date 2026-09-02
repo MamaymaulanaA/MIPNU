@@ -2,19 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Berkas dan pengumuman terbaru organisasi.
- *
- * Satu daftar pendek untuk dua modul administrasi yang paling sering
- * disentuh operator. Dipisah dari agregat karena bentuknya memang berbeda:
- * kartu metrik menjawab "berapa", daftar ini menjawab "yang mana".
- *
- * Setiap sumber hanya ikut bila haknya ada, dan penggabungannya terjadi
- * SETELAH penyaringan — jadi tidak ada berkas yang bocor lewat daftar
- * gabungan. Kolom yang diambil pun seminimal mungkin: judul dan waktu, tanpa
- * deskripsi, tanpa lampiran, tanpa pengunggahnya.
- */
-
 export type AdministrationKind = "document" | "announcement";
 
 export type AdministrationItem = {

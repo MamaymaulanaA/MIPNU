@@ -55,13 +55,6 @@ const baseOrganizationFields = {
   description: optionalText(1000),
 };
 
-/**
- * Pembuatan organisasi.
- *
- * `slug` dan hierarki hanya dapat ditentukan saat pembuatan. Slug dipakai
- * sebagai identifier stabil; mengubahnya setelah dipakai akan memutus tautan
- * yang sudah beredar, jadi ia sengaja tidak ada di skema update.
- */
 export const createOrganizationSchema = z.object({
   ...baseOrganizationFields,
 
@@ -81,14 +74,6 @@ export const createOrganizationSchema = z.object({
   parentOrganizationId: optionalUuid,
 });
 
-/**
- * Perubahan organisasi.
- *
- * Jenis, tingkat, dan slug tidak ikut: ketiganya menentukan identitas
- * organisasi dan mengubahnya akan membuat riwayat lama membingungkan.
- * Perubahan semacam itu adalah keputusan administratif, bukan penyuntingan
- * profil biasa.
- */
 export const updateOrganizationSchema = z.object({
   ...baseOrganizationFields,
 });

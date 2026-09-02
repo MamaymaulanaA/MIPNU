@@ -74,8 +74,6 @@ export default async function AttendancePage({
     label: `${event.name} · ${formatShortDate(event.start_at)}`,
   }));
 
-  // Pencarian dan penyaringan di database, dengan `.range()` — bukan
-  // `.limit(50)` yang menyembunyikan sesi lama tanpa cara menjangkaunya.
   let sesiQuery = supabase
     .from("attendance_sessions")
     .select(

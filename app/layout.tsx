@@ -22,7 +22,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Target dukungan minimum 320px (docs/UI.md §103).
   themeColor: "#1F356B",
 };
 

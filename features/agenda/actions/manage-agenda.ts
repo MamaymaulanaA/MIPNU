@@ -119,7 +119,6 @@ export async function updateAgendaItem(
   }
 }
 
-/** Soft delete — agenda lampau tetap menjadi bagian riwayat organisasi. */
 export async function deleteAgendaItem(
   organizationId: string,
   agendaId: string,

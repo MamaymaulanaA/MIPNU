@@ -106,8 +106,6 @@ export default async function ElectionDetailPage({
     new Date(election.startAt) <= new Date() &&
     new Date(election.endAt) >= new Date();
 
-  // Tab yang tidak berhak dilihat tidak ditawarkan — dan tetap ditolak lagi di
-  // bawah bila URL-nya diketik langsung.
   const visibleTabs: ElectionTab[] = ["ringkasan", "kandidat"];
   if (canManageVoters) visibleTabs.push("dpt");
   if (canAssignCommittee) visibleTabs.push("panitia");
@@ -130,13 +128,6 @@ export default async function ElectionDetailPage({
           ELECTION_TYPE_LABEL[election.electionType as ElectionType] ??
           election.electionType
         }
-        /*
-          Aksi ekspor mengikuti tab yang sedang dibuka, dan berdiri di sini —
-          bukan sebagai baris `flex justify-end` melayang di atas isi tabnya.
-          Sebelumnya tiap seksi menaruh tombolnya sendiri di sana, dengan
-          `size="sm"` pula: 36px di DPT dan Partisipasi, 44px di Panitia, pada
-          halaman yang sama.
-        */
         actions={
           <>
             {tab === "dpt" && canManageVoters ? (
@@ -162,13 +153,6 @@ export default async function ElectionDetailPage({
               />
             ) : null}
 
-            {/*
-              Ekspor hasil hanya ditawarkan bila hasilnya memang sudah boleh
-              dilihat. Menawarkannya lebih awal berarti menjanjikan berkas yang
-              pasti ditolak server. Query hasilnya hanya dipanggil pada tab
-              ini, dan `getElectionResult` di-cache sehingga seksinya tidak
-              menanyakannya untuk kedua kali.
-            */}
             {tab === "hasil" && (await getElectionResult(id)).result ? (
               <ExportButton
                 label={
@@ -216,19 +200,6 @@ export default async function ElectionDetailPage({
         </div>
       ) : null}
 
-      {/*
-        SATU kartu untuk seluruh permukaan tab: deretan tab menjadi kepalanya,
-        isi tab menjadi badannya.
-
-        Sebelumnya deretan tab mengambang sendiri di atas halaman, dan tiap tab
-        menyusun pembungkusnya masing-masing — Kandidat memakai kisi telanjang,
-        DPT sebuah `space-y-4` tanpa kartu, Hasil sebuah baris aksi melayang
-        di atas isi telanjang. Enam tab, enam bentuk.
-
-        Dengan tab sebagai kepala kartu, setiap tab mewarisi padding yang sama
-        dan tidak perlu memikirkan pembungkusnya sendiri — bentuk yang sama
-        dengan `TableToolbar` yang menjadi kepala kartu tabel.
-      */}
       <Card>
         <ElectionTabs electionId={id} active={tab} visible={visibleTabs} />
 
@@ -289,8 +260,6 @@ export default async function ElectionDetailPage({
   );
 }
 
-/* ------------------------------------------------------------------ data */
-
 async function periodOptions(organizationId: string) {
   const supabase = await createClient();
   const { data } = await supabase
@@ -302,10 +271,6 @@ async function periodOptions(organizationId: string) {
   return (data ?? []).map((row) => ({ id: row.id, label: row.name }));
 }
 
-/**
- * Di-cache: dipanggil kepala halaman dan seksi tabnya pada render yang sama.
- * Tanpa `cache`, satu tab memicu dua query anggota yang jawabannya identik.
- */
 const memberOptions = cache(async (organizationId: string) => {
   const supabase = await createClient();
   const { data } = await supabase
@@ -323,8 +288,6 @@ const memberOptions = cache(async (organizationId: string) => {
     memberNumber: row.member_number,
   }));
 });
-
-/* ------------------------------------------------------------- ringkasan */
 
 async function SummaryTab({
   organizationId,
@@ -503,8 +466,6 @@ function Check({ ok, label }: { ok: boolean; label: string }) {
   );
 }
 
-/* ------------------------------------------------------------- tab lain */
-
 async function VoterPanelSection({
   organizationId,
   electionId,
@@ -601,7 +562,6 @@ async function ParticipationSection({
 }
 
 async function ResultSection({ electionId }: { electionId: string }) {
-  // Tombol ekspornya ada di kepala halaman — lihat catatannya di sana.
   const { result, reason } = await getElectionResult(electionId);
 
   return <ResultView result={result} reason={reason} />;
@@ -614,13 +574,6 @@ async function AuditSection({
   electionId: string;
   supabase: Awaited<ReturnType<typeof createClient>>;
 }) {
-  // Jejak audit pemilihan. Perhatikan yang TIDAK pernah muncul di sini:
-  // kandidat pilihan seorang pemilih. Baris `elections.vote_cast` mencatat
-  // bahwa seseorang memilih, tidak pernah apa yang ia pilih.
-  // Kolomnya `display_name`, bukan `full_name` — profil bukan anggota. Salah
-  // sebut membuat PostgREST menolak seluruh query, dan karena hasilnya hanya
-  // dibaca sebagai "tidak ada baris", tab audit tampak kosong padahal
-  // jejaknya ada. Error-nya karena itu ikut dicatat.
   const { data, error } = await supabase
     .from("audit_logs")
     .select("id, action, created_at, metadata, profiles ( display_name )")
@@ -652,10 +605,6 @@ async function AuditSection({
   }
 
   return (
-    // Tabelnya sudah berada di dalam kartu permukaan tab; yang perlu di sini
-    // hanya batas tingginya. `-mx-4 sm:-mx-5` menarik guliran mendatarnya
-    // sampai tepi kartu, supaya kolom yang terpotong tidak berhenti di tengah
-    // padding.
     <TableScroll bounded className="-mx-4 sm:-mx-5">
       <Table>
         <TableHead>

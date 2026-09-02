@@ -77,10 +77,6 @@ export default async function FinanceBudgetsPage() {
 
   const rows = (budgetsResult.data as unknown as BudgetQueryRow[] | null) ?? [];
 
-  // Rencana vs realisasi dihitung database per anggaran. Menjumlahkannya di
-  // sini akan berarti mengambil seluruh transaksi ke server hanya untuk
-  // dijumlah ulang — dan berisiko memakai definisi realisasi yang berbeda dari
-  // laporan.
   const comparisons = await Promise.all(
     rows.map((row) =>
       supabase.rpc("mipnu_budget_vs_actual", { p_budget_id: row.id }),

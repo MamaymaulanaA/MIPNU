@@ -3,23 +3,12 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Hal yang menunggu tindakan operator.
+ * Daftar pekerjaan, bukan ringkasan keadaan.
  *
- * Aturannya dua, dan keduanya menentukan bentuk berkas ini.
- *
- * PERTAMA: sebuah baris hanya muncul bila pemanggil memang BERWENANG
- * menanganinya, bukan sekadar boleh melihatnya. Daftar ini bukan ringkasan
- * keadaan — itu tugas kartu metrik — melainkan daftar pekerjaan. Menampilkan
- * "dua anggota belum punya akun" kepada orang yang tidak dapat menautkan akun
- * hanya memindahkan kegelisahan tanpa memindahkan kemampuan.
- *
- * KEDUA: baris bernilai nol TIDAK ditampilkan, dan bila tidak ada satu pun
- * baris tersisa, seluruh panelnya tidak dirender. Daftar tindak lanjut yang
- * berisi tiga baris "0" adalah kartu kosong dengan hiasan angka.
- *
- * Karena itu panel ini muncul pada dashboard operator dan tidak pada dashboard
- * peran lain — bukan karena rolenya diperiksa, melainkan karena permission
- * penanganannya memang hanya dimiliki operator.
+ * Sebuah baris hanya muncul bila pemanggil BERWENANG menanganinya, bukan
+ * sekadar boleh melihatnya. Baris bernilai nol tidak ditampilkan, dan panelnya
+ * tidak dirender bila kosong. Karena itu panel ini efektif hanya muncul untuk
+ * operator — karena permission penanganannya, bukan karena rolenya diperiksa.
  */
 
 export type AttentionKey =
@@ -38,22 +27,16 @@ export type AttentionItem = {
 };
 
 export type AttentionGates = {
-  /** users.assign_organization — menautkan akun ke anggota. */
   linkAccounts: boolean;
-  /** members.manage_status — mengubah status keanggotaan. */
   memberStatus: boolean;
-  /** attendance.manage — menutup sesi presensi. */
   attendance: boolean;
-  /** announcements.publish — menerbitkan pengumuman. */
   announcements: boolean;
-  /** events.publish — menerbitkan event. */
   events: boolean;
 };
 
 export async function getOperationalAttention(
   organizationId: string,
   gates: AttentionGates,
-  /** Jumlah anggota dari agregat; NULL bila pemanggil tidak berhak melihatnya. */
   memberTotal: number | null,
 ): Promise<AttentionItem[]> {
   const perlu =
@@ -69,10 +52,6 @@ export async function getOperationalAttention(
 
   const [tertaut, akunLepas, nonAktif, sesiTerbuka, pengumumanDraf, eventDraf] =
     await Promise.all([
-      // Anggota yang sudah punya akun dihitung dari sisi keanggotaan: kunci
-      // gabungan (id, organization_id) menjamin `member_id` selalu menunjuk
-      // anggota pada organisasi yang sama, jadi selisihnya terhadap jumlah
-      // anggota adalah anggota yang belum punya akun.
       gates.linkAccounts && memberTotal !== null
         ? supabase
             .from("organization_memberships")

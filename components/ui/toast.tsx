@@ -11,14 +11,6 @@ import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Toast untuk umpan balik singkat: berhasil menyimpan, gagal menyimpan,
- * status berubah.
- *
- * TIDAK dipakai untuk error validasi field — itu milik pesan inline di bawah
- * field yang bersangkutan (SYSTEM.md §81).
- */
-
 type ToastTone = "success" | "error" | "info";
 
 type Toast = {

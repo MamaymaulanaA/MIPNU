@@ -64,12 +64,9 @@ export default async function ManagementPage({
             ].filter(Boolean) as [string, string][],
           ),
         )
-        // `members!inner` yang membuat penyaringan atas nama anggota dapat
-        // dilakukan di database, bukan setelah barisnya sampai ke aplikasi.
         .ilike("members.full_name", daftar.cari ? polaCari(daftar.cari) : "%")
         .range(daftar.dari, daftar.sampai),
 
-      // Pilihan form hanya dimuat bila pengguna memang boleh menugaskan.
       canAssign
         ? supabase
             .from("organization_periods")
@@ -119,8 +116,6 @@ export default async function ManagementPage({
   const rows =
     (assignmentsResult.data as unknown as AssignmentQueryRow[] | null) ?? [];
 
-  // Diurutkan penugasan aktif dulu, lalu mengikuti urutan jabatan — sehingga
-  // struktur terbaca dari Ketua ke bawah, bukan menurut waktu input.
   const assignments = rows
     .map((row) => ({
       id: row.id,
@@ -177,10 +172,6 @@ export default async function ManagementPage({
         cari: daftar.cari,
         periode: daftar.saring.periode,
         jabatan: daftar.saring.jabatan,
-        // Pilihan saringan berasal dari daftar yang SUDAH dimuat halaman
-        // ini untuk formnya — bukan query tambahan. Bila pemanggil tidak
-        // berhak menugaskan, daftarnya kosong dan saringannya tidak
-        // dirender sama sekali.
         periodeOptions: (periodsResult.data ?? []).map((period) => ({
           value: period.id,
           label: period.name,

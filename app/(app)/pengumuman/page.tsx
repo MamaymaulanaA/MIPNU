@@ -16,16 +16,6 @@ export const metadata: Metadata = {
   title: "Pengumuman",
 };
 
-/**
- * Satu halaman, dua pembaca.
- *
- * Pengelola melihat draf, terbit, dan arsip; anggota hanya menerima yang
- * sudah terbit, belum kedaluwarsa, dan memang ditujukan kepadanya.
- *
- * Penyaringan itu SELURUHNYA di policy `announcements_select`. Halaman ini
- * tidak menyaring apa pun — mengirim semuanya lalu menyembunyikan sebagian di
- * browser tetap berarti isinya sudah sampai ke sana.
- */
 const UKURAN_HALAMAN = 20;
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -53,9 +43,6 @@ export default async function AnnouncementsPage({
 
   const supabase = await createClient();
 
-  // Penyaringan hak tetap sepenuhnya di policy `announcements_select`; yang
-  // ditambahkan di sini hanya penyaringan yang DIMINTA pengguna, di atas apa
-  // pun yang sudah diloloskan policy itu.
   let query = supabase
     .from("announcements")
     .select(

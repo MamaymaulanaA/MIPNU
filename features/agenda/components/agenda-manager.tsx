@@ -50,13 +50,6 @@ const VISIBILITY_LABELS: Record<string, string> = {
   PUBLIC: "Publik",
 };
 
-/**
- * Satu bagian berlabel di dalam kartu daftar.
- *
- * Judulnya memakai garis pemisah di atas, bukan `CardHeader`: kepala kartu
- * sudah dipakai toolbar, dan dua kepala kartu di dalam satu kartu terbaca
- * sebagai dua kartu yang gagal dipisah.
- */
 function SeksiDaftar({
   judul,
   children,
@@ -74,14 +67,11 @@ function SeksiDaftar({
   );
 }
 
-/** Keadaan toolbar — seluruhnya dari URL, disaring di server. */
 export type KeadaanDaftar = {
   cari: string;
   jenis: string;
   jenisOptions: { value: string; label: string }[];
-  /** Ukuran halaman yang sama untuk kedua bagian. */
   ukuranHalaman: number;
-  /** Nomor halaman dan jumlah baris per bagian, keduanya dari server. */
   mendatang: { halaman: number; total: number };
   lampau: { halaman: number; total: number };
 };
@@ -99,7 +89,6 @@ export function AgendaManager({
   past: AgendaRow[];
   permissions: AgendaPermissions;
   daftar: KeadaanDaftar;
-  /** Pengalih tampilan daftar/kalender, dirender Server Component. */
   aksiTambahan?: React.ReactNode;
 }) {
   const { showToast } = useToast();
@@ -141,15 +130,6 @@ export function AgendaManager({
         }
       />
 
-      {/*
-        Toolbar berdiri di kartunya sendiri, di ATAS kedua daftar.
-
-        Agenda sengaja dibaca sebagai dua daftar — mendatang untuk
-        direncanakan, lampau untuk ditelusuri — dan itu tidak diubah di sini.
-        Konsekuensinya satu: pencarian dan penyaringnya berlaku untuk KEDUANYA,
-        jadi ia tidak dapat duduk di dalam salah satu kartu tanpa terbaca
-        seolah hanya menyaring kartu itu.
-      */}
       <Card>
         <TableToolbar
           searchValue={daftar.cari}
@@ -164,19 +144,9 @@ export function AgendaManager({
               options: daftar.jenisOptions,
             },
           ]}
-          // Dua daftar berarti dua nomor halaman. Tanpa ini, menyaring akan
-          // meninggalkan `pageLampau` pada nilai lamanya dan bagian "Sudah
-          // Berlalu" tampil kosong padahal hasilnya ada di halaman pertama.
           resetKeys={["pageLampau"]}
         />
 
-        {/*
-          Dua bagian berlabel DI DALAM kartu yang sama, bukan tiga kartu
-          berjajar. Agenda memang dibaca sebagai dua daftar — mendatang untuk
-          direncanakan, lampau untuk ditelusuri — tetapi keduanya disaring oleh
-          toolbar yang sama, jadi memisahkannya menjadi kartu sendiri membuat
-          toolbar itu terbaca seolah hanya berlaku bagi salah satunya.
-        */}
         <SeksiDaftar judul="Mendatang">
           {upcoming.length === 0 ? (
             <EmptyState
@@ -205,14 +175,6 @@ export function AgendaManager({
             </ul>
           )}
 
-          {/*
-            Kaki halaman per bagian.
-
-            Sebelumnya kedua daftar dipotong `.limit(50)` dan `.limit(20)`
-            tanpa penghitungan, jadi agenda ke-51 tidak dapat dijangkau dari
-            URL mana pun — dan tidak ada apa pun di layar yang memberi tahu
-            bahwa daftarnya terpotong.
-          */}
           <Pagination
             page={daftar.mendatang.halaman}
             pageCount={Math.max(

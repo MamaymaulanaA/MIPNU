@@ -76,7 +76,6 @@ function ProvisionDialog({
   const failed = state && !state.success ? state : null;
   const fieldErrors = failed?.fieldErrors;
 
-  // Berhasil TANPA email terkirim: tautan aktivasi diserahkan ke admin.
   if (state?.success && !state.data.emailSent) {
     return (
       <Dialog
@@ -197,12 +196,6 @@ function ProvisionDialog({
   );
 }
 
-/**
- * Tautan aktivasi sekali pakai.
- *
- * Ditampilkan sekali kepada admin yang memang berwenang dan tidak disimpan
- * di mana pun — bukan di database, bukan di audit log.
- */
 export function InviteLinkBox({ link }: { link: string }) {
   const { showToast } = useToast();
 

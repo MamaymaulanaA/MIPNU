@@ -44,12 +44,6 @@ export function OrganizationProfileDialog({
         Ubah Profil
       </Button>
 
-      {/*
-        `key` mengikuti keadaan terbuka supaya isinya benar-benar dimuat ulang
-        setiap kali dibuka. Tanpa itu, form yang pernah gagal validasi akan
-        dibuka kembali lengkap dengan pesan error lamanya, dan field yang
-        sempat diketik lalu dibatalkan tetap membawa nilai yang batal itu.
-      */}
       <FormDialog
         key={open ? "terbuka" : "tertutup"}
         open={open}

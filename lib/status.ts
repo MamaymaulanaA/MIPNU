@@ -1,12 +1,5 @@
 import type { BadgeTone } from "@/components/ui/badge";
 
-/**
- * Pemetaan status → label & nada, terpusat.
- *
- * Warna status TIDAK ditulis ulang di setiap halaman. Kalau sebuah status
- * berganti makna, ia berganti di sini saja (docs/UI.md §114).
- */
-
 type StatusPresentation = { label: string; tone: BadgeTone };
 
 function present(
@@ -88,8 +81,6 @@ export const agendaType = present({
   OTHER: { label: "Lainnya", tone: "neutral" },
 });
 
-/* ----------------------------------------------------------------- Phase 2 */
-
 export const cadreshipStatus = present({
   REGISTERED: { label: "Terdaftar", tone: "info" },
   PARTICIPATED: { label: "Mengikuti", tone: "primary" },
@@ -149,8 +140,6 @@ export const announcementAudience = present({
   ALL_MEMBERS: { label: "Semua anggota", tone: "info" },
   PENGURUS: { label: "Pengurus", tone: "primary" },
 });
-
-/* --------------------------------------------------------------- Phase 3 */
 
 export const transactionStatus = present({
   DRAFT: { label: "Draf", tone: "neutral" },

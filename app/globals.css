@@ -1,54 +1,8 @@
 @import "tailwindcss";
 
-/*
- * MIPNU — Design Tokens
- * Source of truth: docs/UI.md
- *
- * Aturan yang dijaga di berkas ini:
- *  1. Warna produk TIDAK PERNAH ditulis sebagai hex di component.
- *     Component memakai token semantik (bg-primary, text-muted-foreground,
- *     border-border). Rebranding cukup mengubah berkas ini.
- *  2. Radius 8px untuk semua persegi-membulat. Lingkaran hanya untuk elemen
- *     yang memang bulat secara makna (avatar, titik status).
- *  3. Satu tinggi kontrol, RESPONSIF: 46px di ponsel, 44px pada tablet dan
- *     desktop. Button, input, select, dan trigger dropdown pada baris yang
- *     sama otomatis sejajar karena semuanya membaca konstanta yang sama di
- *     `components/ui/control.ts` — bukan karena penulisnya ingat.
- *  4. Bayangan seminimal mungkin. Card memakai border 1px ditambah
- *     `raised` — tingkat paling tipis yang ada, 4% hitam. Tingkat di
- *     atasnya, `floating` dan `overlay`, tetap hanya untuk lapisan yang
- *     benar-benar mengambang: dropdown, popover, dialog.
- *  5. Warna status (success/warning/destructive/info) hanya dipakai untuk
- *     keadaan yang benar-benar bermakna — bukan untuk memberi variasi warna.
- */
-
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* ---- Semantic surface & text ----
-     Background nyaris putih, card putih. Hierarki TIDAK lagi datang dari
-     perbedaan itu — pada jarak tiga tingkat rgb, perbedaan itu di bawah
-     ambang lihat. Yang membentuknya border 1px ditambah bayangan `raised`
-     (UI.md, aturan 4 di atas). */
-  /*
-   * Nyaris putih, dan hampir tanpa warna.
-   *
-   * Sebelumnya 23% saturasi pada hue 220 — cukup biru untuk terbaca dingin di
-   * samping kartu putih murni. Yang diturunkan lebih dulu saturasinya, bukan
-   * terangnya: warna yang mengganggu di sini birunya.
-   *
-   * Terangnya kini 99%, tinggal tiga tingkat rgb dari kartu — ΔL* 1,01,
-   * di bawah ambang lihat. Isian latar karena itu berhenti menjadi pemisah,
-   * dan tugas itu pindah seluruhnya ke kartu: border 1px rgb(222,228,237)
-   * ditambah bayangan `raised`. Latar tidak lagi dituntut mengangkat kartu;
-   * ia hanya perlu berhenti terbaca abu-abu.
-   *
-   * Konsekuensinya harus dijaga di tempat lain: apa pun yang menandai keadaan
-   * dengan mengisi `bg-background` di atas permukaan lain akan pudar bersama
-   * angka ini. Tab Surat dulu begitu, dan pada 98.5% penandanya sudah tinggal
-   * berselisih satu tingkat dari jalurnya sendiri. Penanda keadaan memakai
-   * `--primary`, bukan token latar.
-   */
   --background: 220 14% 99%; /* #FCFCFD */
   --foreground: 221 39% 11%; /* #111827 */
 
@@ -58,9 +12,6 @@
   --popover: 0 0% 100%;
   --popover-foreground: 221 39% 11%;
 
-  /* ---- Biru institusional ----
-     Royal blue #2F6FED sebagai aksi utama; navy #1F356B disimpan terpisah
-     karena perannya berbeda — lihat --navy di bawah. */
   --primary: 220 84% 56%; /* #2F6FED */
   --primary-foreground: 0 0% 100%;
   --primary-hover: 220 70% 49%; /* #255ED3 */
@@ -68,9 +19,6 @@
   --primary-soft: 219 100% 97%; /* #EEF4FF */
   --primary-border: 223 100% 89%; /* #C9D8FF */
 
-  /* Navy pekat. DIPAKAI TERBATAS: panel login, Live layar penuh, konteks
-     institusional yang memang menuntut bobot. Bukan latar aplikasi
-     (UI.md §83) — seluruh halaman navy membuat aplikasi terasa berat. */
   --navy: 223 55% 27%; /* #1F356B */
   --navy-foreground: 0 0% 100%;
 
@@ -84,8 +32,6 @@
   --accent: 219 100% 97%;
   --accent-foreground: 220 70% 49%;
 
-  /* Dua biru pendukung dari palet final, untuk bidang yang menuntut biru
-     lebih pekat atau lebih tenang daripada primary. */
   --blue-strong: 217 76% 37%; /* #174EA6 */
   --blue-muted: 219 43% 55%; /* #5B7DBE */
 
@@ -116,7 +62,6 @@
 
   --ring: 220 84% 56%;
 
-  /* ---- Soft status backgrounds (badge, chip ikon) ---- */
   --success-soft: 214 100% 97%; /* #EFF6FF */
   --success-border: 213 97% 87%; /* #BFDBFE */
   --warning-soft: 40 92% 94%;
@@ -143,10 +88,6 @@
   --accent-slate: 215 16% 47%; /* #64748B */
   --accent-slate-soft: 210 40% 96%;
 
-  /* ---- Sidebar ----
-     Token terpisah supaya sidebar dapat diubah tanpa menyentuh
-     seluruh halaman. Sengaja PUTIH, bukan navy penuh: sidebar gelap
-     membuat aplikasi harian terasa berat (UI.md §13). */
   --sidebar: 0 0% 100%;
   --sidebar-foreground: 218 24% 27%;
   --sidebar-muted: 221 13% 46%;
@@ -155,28 +96,15 @@
   --sidebar-border: 216 28% 90%;
   --sidebar-ring: 220 84% 56%;
 
-  /* ---- Identitas organisasi ----
-     Keputusan sebelumnya — hijau untuk IPNU, ungu untuk IPPNU — DIBATALKAN.
-     Aplikasi ini satu brand: MIPNU, biru.
-
-     IPNU dan IPPNU tetap dibedakan, tetapi lewat hal yang memang membedakan
-     keduanya: LABEL. Nama jenis organisasi ditulis apa adanya, bukan
-     disandikan menjadi warna yang harus dihafal pembacanya. Itu juga lebih
-     baik bagi pembaca yang tidak dapat mengandalkan warna sama sekali. */
   --ipnu: 220 84% 56%;
   --ippnu: 217 76% 37%;
 
-  /* ---- Bayangan ----
-     Tiga tingkat, dan hanya tiga. Border yang membentuk hierarki; shadow
-     hanya menandai lapisan yang benar-benar mengambang. */
   --elevation-raised: 0 1px 2px rgb(15 23 42 / 0.04);
   --elevation-floating: 0 2px 6px rgb(15 23 42 / 0.06);
   --elevation-overlay: 0 8px 24px rgb(15 23 42 / 0.1);
 
-  /* ---- Radius ---- */
   --radius: 0.5rem;
 
-  /* ---- Layout ---- */
   --sidebar-width: 248px;
   --sidebar-width-collapsed: 68px;
   --header-height: 60px;
@@ -185,14 +113,11 @@
   --content-padding-tablet: 20px;
   --content-padding-desktop: 24px;
 
-  /* Nilai acuan; sumber sebenarnya ada di components/ui/control.ts karena
-     tingginya responsif dan Tailwind yang menerapkannya. */
   --control-height: 44px;
   --control-height-mobile: 46px;
   --control-height-sm: 36px;
   --control-height-lg: 48px;
 
-  /* ---- Z-index ---- */
   --z-dropdown: 40;
   --z-sticky: 30;
   --z-overlay: 50;
@@ -200,11 +125,6 @@
   --z-toast: 70;
 }
 
-/*
- * Dark mode disiapkan tetapi bukan prioritas MVP.
- * Bukan sekadar inversi: primary dinaikkan luminansinya supaya tetap
- * terbaca di atas permukaan gelap.
- */
 .dark {
   --background: 222 42% 8%;
   --foreground: 213 30% 95%;
@@ -215,8 +135,6 @@
   --popover: 222 36% 11%;
   --popover-foreground: 213 30% 95%;
 
-  /* Primary dinaikkan luminansinya: #2F6FED terlalu gelap di atas
-     permukaan gelap dan gagal kontras terhadap teks putih. */
   --primary: 217 91% 65%;
   --primary-foreground: 222 47% 10%;
   --primary-hover: 217 91% 72%;
@@ -224,8 +142,6 @@
   --primary-soft: 220 45% 17%;
   --primary-border: 220 40% 28%;
 
-  /* Navy nyaris menyatu dengan latar gelap, jadi dinaikkan agar panel
-     institusional tetap terbaca sebagai bidang tersendiri. */
   --navy: 223 45% 20%;
   --navy-foreground: 213 30% 95%;
 
@@ -288,7 +204,6 @@
   --sidebar-border: 217 22% 20%;
   --sidebar-ring: 217 91% 65%;
 
-  /* Bayangan pada latar gelap harus lebih pekat agar tetap terbaca. */
   --elevation-raised: 0 1px 2px rgb(0 0 0 / 0.3);
   --elevation-floating: 0 2px 6px rgb(0 0 0 / 0.4);
   --elevation-overlay: 0 8px 24px rgb(0 0 0 / 0.5);
@@ -394,19 +309,6 @@
   html {
     -webkit-text-size-adjust: 100%;
 
-    /*
-     * Tempat batang gulir selalu disediakan, dipakai atau tidak.
-     *
-     * Tanpa ini lebar isi halaman berubah 15px begitu halamannya lebih tinggi
-     * dari layar. Diukur di peramban pada 1440px: kartu Audit Log berakhir di
-     * 1401 sementara kartu di seluruh halaman lain berakhir di 1416 — dan
-     * berpindah halaman menggeser seluruh tata letak, termasuk sidebar dan
-     * kepala halaman.
-     *
-     * Harganya 15px yang tetap kosong pada halaman pendek. Itu jauh lebih
-     * murah daripada tata letak yang melompat setiap kali daftar bertambah
-     * satu baris.
-     */
     scrollbar-gutter: stable;
   }
 
@@ -417,11 +319,9 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Angka pada tabel data harus sejajar per kolom */
     font-variant-numeric: tabular-nums;
   }
 
-  /* Fokus keyboard: satu ring tegas, bukan glow bertumpuk. */
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 1px;
@@ -450,7 +350,6 @@
 }
 
 @layer utilities {
-  /* Scrollbar tipis untuk area yang menggulir sendiri (sidebar, dropdown). */
   /* Scrollbar yang hampir tidak terasa ada.
    *
    * Dua jalur, dan pemisahannya DISENGAJA: sejak Chromium mendukung properti
@@ -464,19 +363,6 @@
    * `thin` dengan warna yang sama halusnya. Kemampuan menggulung tidak
    * dikurangi sedikit pun — hanya penampakannya yang mundur, karena batang
    * gulir bukan informasi yang perlu dibaca setiap saat (docs/UI.md §14). */
-  /*
-   * Menggulir tanpa batang gulir yang terlihat.
-   *
-   * Untuk deretan tab: ia navigasi, bukan data. Pada layar lebar seluruh tab
-   * muat sekaligus dan batangnya tidak pernah dibutuhkan; pada layar sempit
-   * yang menggerakkannya adalah sapuan jari, bukan batang yang ditarik.
-   *
-   * `overflow-y: hidden` bukan hiasan. Menurut spesifikasi, sumbu yang masih
-   * `visible` ikut menjadi `auto` begitu sumbu lain diberi `auto` — jadi
-   * `overflow-x: auto` diam-diam menyalakan guliran VERTIKAL juga, dan deretan
-   * tab yang tingginya meleset satu piksel memunculkan batang gulir vertikal
-   * lengkap dengan tombol panah di ujung kanannya.
-   */
   /*
    * Panah pada select.
    *
@@ -501,7 +387,6 @@
     background-size: 16px 16px;
   }
 
-  /* Slate-500 terlalu redup di atas permukaan gelap. */
   .dark .select-chevron {
     background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%2394a3b8'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%209%206%206%206-6'/%3E%3C/svg%3E");
   }
@@ -515,20 +400,6 @@
     display: none;
   }
 
-  /*
-   * Kartu di dalam kartu tidak ikut terangkat.
-   *
-   * `raised` menyatakan "permukaan ini naik dari latar halaman". Kartu yang
-   * bersarang di dalam kartu lain tidak melakukan itu — ia baris di dalam
-   * wadah, dan bayangannya hanya menumpuk di atas bayangan induknya. Terukur
-   * pada halaman Program Kerja: enam kartu program bersarang, enam bayangan
-   * ganda.
-   *
-   * Dicabut lewat aturan turunan, bukan lewat `shadow-none` yang ditulis satu
-   * per satu di tiap pemakai — supaya kartu bersarang berikutnya benar tanpa
-   * penulisnya harus ingat. `floating` dan `overlay` tidak tersentuh: dropdown
-   * dan dialog memang mengambang di atas apa pun yang menampungnya.
-   */
   .shadow-raised .shadow-raised {
     box-shadow: none;
   }
@@ -538,34 +409,18 @@
     scroll-behavior: smooth;
   }
 
-  /* Menghormati pengguna yang meminta gerak dikurangi. */
   @media (prefers-reduced-motion: reduce) {
     .scroll-area {
       scroll-behavior: auto;
     }
   }
 
-  /*
-   * Batang gulir HALAMAN, bukan hanya kontainer di dalamnya.
-   *
-   * `.scroll-area` sudah menata guliran sidebar, dialog, dan tabel sejak awal
-   * — tetapi batang gulir halaman itu sendiri tidak pernah ditata, jadi yang
-   * muncul adalah batang bawaan sistem: lebar, berlatar abu, lengkap dengan
-   * tombol panah di kedua ujungnya. Pada Windows ia setebal 15px dan terlihat
-   * dari peramban lain sama sekali.
-   *
-   * Sejak `scrollbar-gutter: stable` menyediakan tempatnya secara permanen,
-   * batang itu selalu terlihat — jadi menatanya bukan lagi kosmetik. Dengan
-   * lebar 4px, tempat yang dipesan pun tinggal 4px, bukan 15px.
-   */
   html::-webkit-scrollbar,
   .scroll-area::-webkit-scrollbar {
     width: 4px;
     height: 4px;
   }
 
-  /* Tombol panah di ujung batang gulir. Tidak ada di macOS, ada di Windows,
-     dan tidak pernah menjadi bagian dari rancangan ini. */
   html::-webkit-scrollbar-button,
   .scroll-area::-webkit-scrollbar-button {
     display: none;

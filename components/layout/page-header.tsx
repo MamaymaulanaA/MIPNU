@@ -1,11 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/**
- * Kepala halaman: judul, deskripsi opsional, aksi.
- *
- * Desktop menyusun horizontal; mobile menumpuk vertikal supaya judul panjang
- * dan tombol aksi tidak saling mendorong pada 320px (docs/UI.md §81).
- */
 export function PageHeader({
   title,
   description,

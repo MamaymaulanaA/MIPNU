@@ -76,14 +76,6 @@ export type LetterPermissions = {
   canDelete: boolean;
 };
 
-/**
- * Surat masuk dan surat keluar dalam satu halaman, dua tab.
- *
- * Tab dipilih lewat URL (`?tab=keluar`), bukan state komponen: menyegarkan
- * halaman setelah menyimpan surat keluar harus mengembalikan pengguna ke tab
- * yang sama, dan tautan ke tab tertentu harus dapat dibagikan.
- */
-/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
 export type KeadaanDaftar = {
   cari: string;
   status: string;
@@ -94,18 +86,6 @@ export type KeadaanDaftar = {
   ukuranHalaman: number;
 };
 
-/**
- * Tombol "Catat Surat" beserta dialognya, mengikuti tab yang sedang dibuka.
- *
- * Berdiri di kepala halaman, sebaris dengan tombol Ekspor. Sebelumnya ia
- * melayang rata kanan DI ANTARA deretan tab dan kartu tabel — satu baris
- * tersendiri yang bukan bagian dari kepala halaman maupun bagian dari
- * kartunya, dan satu-satunya aksi primer di aplikasi ini yang mendarat di
- * sana.
- *
- * Labelnya ikut tab karena arsipnya memang dua: mencatat surat masuk dan
- * membuat surat keluar bukan tindakan yang sama.
- */
 export function LetterCreateDialog({
   organizationId,
   activeTab,
@@ -168,9 +148,6 @@ export function LetterTabs({
   permissions: LetterPermissions;
   daftar: KeadaanDaftar;
 }) {
-  // Disusun DI LUAR percabangan: di dalam cabang `masuk`, TypeScript
-  // mempersempit `activeTab` menjadi `"masuk"` saja, sehingga pemeriksaan
-  // `=== "keluar"` di sana tak pernah bisa benar.
   const tabs = (
     <PageTabs
       label="Jenis surat"
@@ -190,12 +167,6 @@ export function LetterTabs({
   );
 
   return (
-    /*
-      Tab dikirim ke dalam kartu panel sebagai kepalanya, bukan berdiri
-      sebagai bilah terpisah di atasnya. Bentuknya kini sama persis dengan
-      halaman Pemilihan, dan halaman ini berhenti memakai kotak pil yang
-      penanda aktifnya memudar setiap kali latar halaman dinaikkan.
-    */
     <>
       {activeTab === "masuk" ? (
         <IncomingPanel
@@ -223,8 +194,6 @@ export function LetterTabs({
   );
 }
 
-/* ------------------------------------------------------------ surat masuk */
-
 function IncomingPanel({
   organizationId,
   rows,
@@ -249,7 +218,6 @@ function IncomingPanel({
 
   return (
     <div className="space-y-4">
-      {/* Tab, toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
       <Card>
         {tabs}
         <TableToolbar
@@ -586,8 +554,6 @@ function IncomingDialog({
   );
 }
 
-/* ----------------------------------------------------------- surat keluar */
-
 function OutgoingPanel({
   organizationId,
   rows,
@@ -617,7 +583,6 @@ function OutgoingPanel({
 
   return (
     <div className="space-y-4">
-      {/* Tab, toolbar, tabel, dan kaki halaman dalam SATU kartu. */}
       <Card>
         {tabs}
         <TableToolbar

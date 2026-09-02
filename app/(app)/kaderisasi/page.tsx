@@ -18,15 +18,6 @@ export const metadata: Metadata = {
   title: "Kaderisasi",
 };
 
-/**
- * Satu halaman, dua pembaca.
- *
- * Pemegang cadreship.view melihat riwayat seluruh anggota; anggota biasa
- * hanya melihat riwayatnya sendiri. Perbedaannya TIDAK dikerjakan di sini —
- * policy `cadreship_records_select` yang menyaringnya. Halaman ini hanya
- * menyesuaikan tampilan terhadap apa yang lolos, sehingga tidak ada dua
- * pendapat tentang siapa boleh melihat apa.
- */
 const UKURAN_HALAMAN = 20;
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -166,8 +157,6 @@ export default async function CadreshipPage({
         cari: daftar.cari,
         jenjang: daftar.saring.jenjang,
         status: daftar.saring.status,
-        // Pilihan jenjang berasal dari katalog yang SUDAH dimuat halaman ini
-        // untuk formnya — bukan query tambahan.
         jenjangOptions: (
           (typesResult.data as { id: string; name: string }[] | null) ?? []
         ).map((type) => ({ value: type.id, label: type.name })),

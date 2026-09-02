@@ -17,19 +17,11 @@ import { cn } from "@/lib/utils";
 /**
  * Bilik suara.
  *
- * Tiga hal yang membuat layar ini berbeda dari form biasa:
- *
- * 1. Memilih kandidat TIDAK langsung mengirim suara. Diperlukan satu langkah
- *    konfirmasi yang menyebut nomor dan nama kandidat, karena satu ketukan
- *    tidak sengaja pada layar ponsel tidak boleh menjadi suara yang tidak
- *    dapat ditarik (EVOTING §135).
- *
- * 2. Yang dikirim hanya id pemilihan dan id kandidat. Identitas pemilih
- *    diselesaikan server.
- *
- * 3. Tanda terima ditampilkan sekali dan tidak disimpan di mana pun — bukan di
- *    localStorage, bukan di audit. Ia membuktikan suara tercatat, bukan suara
- *    mana.
+ * Memilih kandidat tidak langsung mengirim suara: satu langkah konfirmasi wajib
+ * menyebut nomor dan nama, karena ketukan tak sengaja tidak boleh menjadi suara
+ * yang tak dapat ditarik (EVOTING §135). Yang dikirim hanya id pemilihan dan id
+ * kandidat; identitas pemilih diselesaikan server. Tanda terima tidak disimpan
+ * di mana pun — ia membuktikan suara tercatat, bukan suara mana.
  */
 export function VotePanel({
   organizationId,

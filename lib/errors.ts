@@ -1,12 +1,3 @@
-/**
- * Taksonomi error aplikasi.
- *
- * Dipisah supaya lapisan pemanggil dapat membedakan "belum login" dari
- * "login tapi tidak berhak" tanpa mengurai string pesan, dan supaya pesan
- * yang sampai ke pengguna tidak pernah membocorkan struktur internal
- * (SYSTEM.md §58, PERMISSIONS.md §96-§97).
- */
-
 export type AppErrorKind =
   | "UNAUTHENTICATED"
   | "FORBIDDEN"
@@ -19,10 +10,6 @@ export type AppErrorKind =
 export class AppError extends Error {
   readonly kind: AppErrorKind;
 
-  /**
-   * Alasan internal untuk log/audit, mis. "cross_tenant".
-   * Tidak pernah ditampilkan ke pengguna.
-   */
   readonly reason?: string;
 
   constructor(kind: AppErrorKind, message: string, reason?: string) {
@@ -54,19 +41,12 @@ export class NotFoundError extends AppError {
   }
 }
 
-/**
- * Hasil operasi yang dikembalikan Server Action ke UI.
- *
- * Satu bentuk untuk seluruh fitur supaya form dapat menangani error dengan
- * cara yang sama (SYSTEM.md §59).
- */
 export type ActionResult<T = void> =
   | { success: true; data: T }
   | {
       success: false;
       error: string;
       kind: AppErrorKind;
-      /** Error per field dari validasi Zod, untuk ditampilkan inline. */
       fieldErrors?: Record<string, string[]>;
     };
 
@@ -89,8 +69,6 @@ export function fail(
     };
   }
 
-  // Error tak terduga: catat detailnya untuk operator, kembalikan pesan aman
-  // ke pengguna. Stack trace, SQL, dan token tidak pernah keluar.
   console.error("[mipnu] unexpected error", error);
 
   return {

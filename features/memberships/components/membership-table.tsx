@@ -168,24 +168,6 @@ export function MembershipTable({
                     ) : null}
                   </TableCell>
 
-                  {/*
-                    Role SELALU tampil sebagai lencana, baik dapat diubah
-                    maupun tidak.
-
-                    Sebelumnya baris yang dapat disunting menampilkan `Select`
-                    selebar `min-w-40` — 160px tetap, berapa pun panjang
-                    rolenya. Akibatnya "Anggota" duduk di dalam kotak yang
-                    lebarnya lebih dari dua kali teksnya, dan satu kolom tabel
-                    terbaca sebagai deretan form field alih-alih deretan status
-                    (docs/UI.md §20-§21).
-
-                    Perubahannya sendiri pindah ke dialog lewat tombol di kolom
-                    Aksi. Bukan sekadar demi kerapian: menetapkan role adalah
-                    perubahan wewenang, dan sebuah `select` yang menyimpan
-                    seketika saat nilainya bergeser memberi nol kesempatan
-                    membatalkan — salah pilih satu baris langsung menjadi
-                    mutasi.
-                  */}
                   <TableCell>
                     <Badge tone={role.tone}>{role.label}</Badge>
                   </TableCell>

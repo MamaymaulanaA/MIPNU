@@ -49,7 +49,6 @@ export type AnnouncementPermissions = {
   canDelete: boolean;
 };
 
-/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
 export type KeadaanDaftar = {
   cari: string;
   status: string;
@@ -69,7 +68,6 @@ export function AnnouncementManager({
   organizationId: string;
   announcements: AnnouncementRow[];
   permissions: AnnouncementPermissions;
-  /** Pembaca biasa: hanya menerima pengumuman yang sudah terbit untuknya. */
   readOnly: boolean;
   daftar: KeadaanDaftar;
 }) {
@@ -100,17 +98,6 @@ export function AnnouncementManager({
         }
       />
 
-      {/*
-        SATU kartu: toolbar, daftar, dan kaki halaman.
-
-        Sempat saya pisah menjadi tiga kartu dengan alasan tiap pengumuman
-        sudah berupa kartu sendiri, sehingga membungkusnya berarti kartu di
-        dalam kartu. Alasan itu tidak berdiri: kartu luar memberi kerangka —
-        toolbar di atas, kaki di bawah — sementara kartu dalam memberi batas
-        antar-item. Keduanya menjelaskan hal yang berbeda, dan memisahkannya
-        justru membuat halaman ini satu-satunya yang berbeda dari sembilan
-        halaman manajemen lain.
-      */}
       <Card>
         <TableToolbar
           searchValue={daftar.cari}
@@ -144,8 +131,6 @@ export function AnnouncementManager({
             }
           />
         ) : (
-          /* Daftar ikut aturan data panjang: dibatasi tingginya dan menggulir
-             di dalam kartunya, memakai `.scroll-area` yang sama dengan tabel. */
           <div className="scroll-area max-h-[calc(100dvh-22rem)] space-y-3 p-4 sm:p-5">
             {announcements.map((row) => {
               const status = announcementStatus(row.status);
@@ -307,8 +292,6 @@ export function AnnouncementManager({
     </div>
   );
 }
-
-/* ========================================================================== */
 
 function AnnouncementDialog({
   open,

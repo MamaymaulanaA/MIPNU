@@ -53,18 +53,11 @@ export async function recordAudit(entry: AuditEntry): Promise<void> {
   }
 }
 
-/**
- * Menyimpan hash, bukan IP mentah (docs/DATABASE.md §128).
- *
- * Cukup untuk mengelompokkan aktivitas dari sumber yang sama saat menyelidiki
- * insiden, tanpa menyimpan alamat yang dapat langsung mengidentifikasi orang.
- */
 function hashIp(ip: string | null): string | null {
   if (!ip) return null;
   return createHash("sha256").update(ip).digest("hex").slice(0, 32);
 }
 
-/** Ringkasan kasar user agent. String mentah terlalu panjang dan bising. */
 function summarizeUserAgent(userAgent: string | null): string | null {
   if (!userAgent) return null;
   return userAgent.slice(0, 120);

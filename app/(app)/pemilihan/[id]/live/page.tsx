@@ -22,14 +22,6 @@ export const metadata: Metadata = {
   title: "Partisipasi Langsung",
 };
 
-/**
- * Mode layar penuh untuk ditampilkan di ruang sidang.
- *
- * Yang tampil hanya partisipasi. Tidak ada perolehan kandidat di sini bukan
- * karena dihilangkan dari tampilan, melainkan karena halaman ini tidak pernah
- * memanggil fungsi hasil sama sekali — dan fungsi itu pun menolak selama
- * pemungutan suara berlangsung.
- */
 export default async function ElectionLivePage({
   params,
 }: {
@@ -46,9 +38,6 @@ export default async function ElectionLivePage({
   const participation = await getParticipation(id);
   if (!participation) return <ForbiddenState />;
 
-  // Hasil hanya diminta setelah pemungutan selesai. Selama OPEN fungsi ini
-  // menolak, jadi tidak ada perolehan yang bisa terkirim ke layar — bukan
-  // sekadar tidak dirender.
   const { result } = await getElectionResult(id);
   const resmi = result?.official ?? false;
 

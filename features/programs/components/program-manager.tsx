@@ -56,31 +56,12 @@ export type ProgramPermissions = {
   canDelete: boolean;
 };
 
-/**
- * Kolom kisi kartu, dipilih menurut JUMLAH kartunya.
- *
- * Sebelumnya tetap `lg:grid-cols-2`, berapa pun isinya. Satu program berarti
- * satu kartu selebar setengah layar dengan separuh baris menganga di
- * sebelahnya — ruang kosong yang bukan keputusan siapa pun, hanya akibat
- * angka kolom yang ditulis sekali lalu tidak pernah ditinjau lagi.
- *
- * Satu kartu kini selebar barisnya. Itu bukan kompromi: kartu program berisi
- * deskripsi, capaian, dan metadata: melebar justru membuatnya lebih terbaca,
- * bukan lebih kosong.
- */
 function KOLOM_PROGRAM(jumlah: number) {
   if (jumlah <= 1) return "";
   if (jumlah === 2) return "md:grid-cols-2";
   return "md:grid-cols-2 xl:grid-cols-3";
 }
 
-/**
- * Tombol "Tambah Program" beserta dialognya.
- *
- * Berdiri di kepala halaman, sebaris dengan judul — bukan melayang rata kanan
- * di atas kisi kartu, di dalam kartu yang sama dengan daftarnya. Aksi primer
- * halaman manajemen lain semuanya di sana.
- */
 export function ProgramCreateDialog({
   organizationId,
   periodOptions,
@@ -160,10 +141,6 @@ export function ProgramManager({
           description="Program kerja terikat pada periode kepengurusan. Buat periode lebih dulu bila belum ada."
         />
       ) : (
-        // `p-4 sm:p-5`: kisinya berada DI DALAM kartu, jadi ia butuh jarak ke
-        // tepi kartu itu. Tanpa ini kartu program menempel rata pada garis
-        // toolbar di atasnya dan pada tepi kiri-kanan pembungkusnya — diukur
-        // di peramban, padding kisinya benar-benar 0 di keempat sisi.
         <div
           className={cn(
             "grid gap-4 p-4 sm:p-5",
@@ -208,8 +185,6 @@ export function ProgramManager({
   );
 }
 
-/* ========================================================================== */
-
 function ProgramCard({
   organizationId,
   program,
@@ -241,12 +216,6 @@ function ProgramCard({
               {program.positionName ? ` · ${program.positionName}` : ""}
             </p>
           </div>
-          {/*
-            Lencana hanya untuk yang TIDAK dapat mengubah status. Yang dapat
-            mengubahnya melihat daftar pilihan di kaki kartu, dan lencana di
-            sudut atas hanya mengulang isi daftar itu — dua kontrol untuk satu
-            hal yang sama, persis seperti yang sudah dibereskan di Anggaran.
-          */}
           {permissions.canManage ? null : (
             <Badge tone={status.tone} dot>
               {status.label}
@@ -410,8 +379,6 @@ function ProgramCard({
     </Card>
   );
 }
-
-/* ========================================================================== */
 
 function ProgramDialog({
   open,

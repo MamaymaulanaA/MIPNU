@@ -21,7 +21,6 @@ export const metadata: Metadata = {
 
 const UKURAN_HALAMAN = 20;
 
-/** Label status program. Nilainya sama dengan kolom `status`. */
 const STATUS_PROGRAM = [
   { value: "DRAFT", label: "Draf" },
   { value: "PLANNED", label: "Direncanakan" },
@@ -41,8 +40,6 @@ export default async function WorkProgramsPage({
     return <ForbiddenState />;
   }
 
-  // Kunci pencarian mengikuti toolbar bersama (`search`). Sebelumnya halaman
-  // ini memakai `cari` beserta form buatan tangan setinggi 40px.
   const daftar = bacaParamDaftar(await searchParams, {
     ukuranHalaman: UKURAN_HALAMAN,
     kunciSaring: ["periode", "status"],
@@ -66,8 +63,6 @@ export default async function WorkProgramsPage({
     .eq("organization_id", context.organizationId)
     .is("deleted_at", null);
 
-  // Penyaringan terjadi di database. Mengirim seluruh baris lalu menyaring di
-  // browser akan tetap membocorkan yang tersaring itu.
   if (daftar.saring.periode) {
     query = query.eq("organization_period_id", daftar.saring.periode);
   }
@@ -175,7 +170,6 @@ export default async function WorkProgramsPage({
         }
       />
 
-      {/* Toolbar, daftar, dan kaki halaman dalam SATU kartu. */}
       <Card>
         <TableToolbar
           searchValue={daftar.cari}

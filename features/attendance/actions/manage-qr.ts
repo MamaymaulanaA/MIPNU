@@ -15,9 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
 export type IssuedQr = {
-  /** URL lengkap yang dikodekan ke dalam QR. */
   checkInUrl: string;
-  /** SVG QR, dirender server. */
   svg: string;
   expiresAt: string;
 };
@@ -29,18 +27,6 @@ function siteUrl() {
   );
 }
 
-/**
- * Menerbitkan token QR untuk sebuah sesi presensi.
- *
- * Token dibuat dari `randomBytes` — bukan dari id sesi, waktu, atau apa pun
- * yang dapat ditebak. Yang disimpan database hanya hash-nya; token mentah
- * hidup sekali saja di dalam QR yang ditampilkan sekarang.
- *
- * QR TIDAK memuat identitas siapa pun. Ia hanya menunjuk sesi. Siapa yang
- * hadir diputuskan server dari auth.uid() saat tautannya dibuka — sehingga
- * memotret QR orang lain tidak mencatatkan kehadiran orang itu
- * (docs/DATABASE.md §76).
- */
 export async function issueAttendanceQr(
   organizationId: string,
   sessionId: string,
@@ -52,7 +38,6 @@ export async function issueAttendanceQr(
       PERMISSIONS.attendance.manage,
     );
 
-    // 32 byte acak, base64url — 256 bit entropi, tidak dapat ditebak.
     const token = randomBytes(32).toString("base64url");
 
     const supabase = await createClient();
@@ -80,7 +65,6 @@ export async function issueAttendanceQr(
       action: "attendance.qr_issued",
       resourceType: "attendance_session",
       resourceId: sessionId,
-      // Token TIDAK pernah masuk audit — audit dibaca banyak orang.
       metadata: { valid_minutes: validMinutes },
     });
 
@@ -96,7 +80,6 @@ export async function issueAttendanceQr(
   }
 }
 
-/** Mencabut token QR. Sesi kembali ke metode manual. */
 export async function revokeAttendanceQr(
   organizationId: string,
   sessionId: string,

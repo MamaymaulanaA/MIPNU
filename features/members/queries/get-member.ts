@@ -14,7 +14,6 @@ export type MemberDetail = {
   status: string;
   notes: string | null;
   createdAt: string;
-  /** Terisi hanya bila pemanggil memiliki `members.view_private`. */
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -92,7 +91,6 @@ export async function getMember(
   };
 }
 
-/** Riwayat perubahan status. Ditulis otomatis oleh trigger database. */
 export async function getMemberStatusHistory(
   memberId: string,
 ): Promise<MemberStatusHistoryEntry[]> {
@@ -130,7 +128,6 @@ export async function getMemberStatusHistory(
   }));
 }
 
-/** Riwayat jabatan anggota lintas periode. */
 export async function getMemberAssignments(
   memberId: string,
 ): Promise<MemberAssignment[]> {
@@ -161,19 +158,16 @@ export async function getMemberAssignments(
     organization_periods: { name: string; start_date: string };
   };
 
-  return (
-    (data as unknown as Row[])
-      .map((row) => ({
-        id: row.id,
-        positionName: row.positions.name,
-        periodName: row.organization_periods.name,
-        periodStart: row.organization_periods.start_date,
-        status: row.status,
-        startDate: row.start_date,
-        endDate: row.end_date,
-      }))
-      // Periode terbaru lebih dulu: yang dicari orang biasanya jabatan terkini.
-      .sort((a, b) => b.periodStart.localeCompare(a.periodStart))
-      .map(({ periodStart: _periodStart, ...rest }) => rest)
-  );
+  return (data as unknown as Row[])
+    .map((row) => ({
+      id: row.id,
+      positionName: row.positions.name,
+      periodName: row.organization_periods.name,
+      periodStart: row.organization_periods.start_date,
+      status: row.status,
+      startDate: row.start_date,
+      endDate: row.end_date,
+    }))
+    .sort((a, b) => b.periodStart.localeCompare(a.periodStart))
+    .map(({ periodStart: _periodStart, ...rest }) => rest);
 }

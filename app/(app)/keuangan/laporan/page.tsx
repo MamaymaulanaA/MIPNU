@@ -47,15 +47,6 @@ type Summary = {
   categories: CategoryLine[];
 };
 
-/**
- * Laporan keuangan.
- *
- * Arus kas memakai definisi yang sama persis dengan dashboard dan halaman
- * ringkasan — karena ketiganya memanggil mipnu_finance_summary(), bukan
- * karena rumusnya disalin dengan hati-hati ke tiga tempat.
- *
- *     opening + posted income − posted expense = closing
- */
 export default async function FinanceReportPage({
   searchParams,
 }: {
@@ -80,7 +71,6 @@ export default async function FinanceReportPage({
 
   const supabase = await createClient();
 
-  // Rentang tanggal divalidasi di server; RPC menolaknya sekali lagi.
   const invalidRange = Boolean(
     mulai && sampai && Date.parse(mulai) > Date.parse(sampai),
   );
@@ -132,22 +122,6 @@ export default async function FinanceReportPage({
         }
       />
 
-      {/*
-        SATU kartu: penyaring, arus kas, dan catatannya.
-
-        Sebelumnya ketiganya tiga blok terpisah — kartu penyaring setinggi 87px
-        yang isinya menumpuk di kiri dan menyisakan 790px kosong, lalu kisi
-        kartu statistik telanjang, lalu satu paragraf yang mengambang sendiri
-        di antara kartu. Diukur di peramban: lima blok tingkat atas dengan
-        satu di antaranya bukan kartu sama sekali.
-
-        Penyaringnya memang menyaring arus kas ini, jadi ia menempel padanya —
-        bentuk yang sama dengan toolbar di atas tabel pada halaman daftar.
-
-        TANPA kotak pencarian: `mipnu_finance_summary()` menerima rentang
-        tanggal dan akun, tidak ada argumen untuk kata pencarian, dan penyaring
-        yang tidak didukung backend adalah penyaring palsu.
-      */}
       <Card>
         <TableToolbar
           dateFilters={[
@@ -171,14 +145,6 @@ export default async function FinanceReportPage({
           </p>
         ) : (
           <div className="space-y-3 p-4 sm:p-5">
-            {/*
-              Arus kas sebagai kartu statistik, bukan daftar definisi. Empat
-              angka inilah alasan halaman ini dibuka; sebelumnya keempatnya
-              berbaris sebagai `<dl>` setinggi satu baris — terbaca sebagai
-              catatan kaki, bukan sebagai jawaban. Komponennya sama dengan
-              halaman Ringkasan, jadi angka yang sama terbaca dengan cara yang
-              sama di dua tempat.
-            */}
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
                 label="Saldo Awal"
@@ -244,9 +210,6 @@ function CategoryCard({
   emptyLabel: string;
 }) {
   return (
-    // Kepala kartu memakai garis pemisah dan padding yang sama dengan kepala
-    // toolbar di halaman daftar, bukan `CardHeader` — supaya tabel di
-    // bawahnya menempel pada kepalanya persis seperti pada halaman Transaksi.
     <Card>
       <div className="border-b border-border px-4 py-3 sm:px-5">
         <h2 className="text-[15px] font-semibold text-foreground">{title}</h2>

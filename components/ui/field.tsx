@@ -1,16 +1,6 @@
 import { TINGGI_KONTROL } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
 
-/**
- * Primitive form MIPNU.
- *
- * Field TIDAK PERNAH memakai bayangan. Pembeda state hanya border 1px —
- * hover, fokus, dan error dibedakan warna border, bukan glow (docs/UI.md §48-§52).
- *
- * Tinggi mengikuti TINGGI_KONTROL, konstanta yang sama dengan tombol:
- * 46px di ponsel, 44px pada tablet dan desktop.
- */
-
 const controlBase = cn(
   "w-full rounded-md border border-border bg-card text-sm text-foreground",
   "transition-colors duration-150",
@@ -55,8 +45,6 @@ export function Select({
       className={cn(
         controlBase,
         TINGGI_KONTROL,
-        // `pr-8` memberi tempat bagi panah: ikon 16px yang duduk 12px dari
-        // tepi kanan, menyisakan 4px jarak dari teks terpanjang.
         "cursor-pointer appearance-none py-0 pr-8 pl-3",
         "select-chevron",
         className,
@@ -117,11 +105,6 @@ export function FieldError({
   );
 }
 
-/**
- * Pembungkus satu field: label, kontrol, hint, error.
- *
- * Label selalu terlihat — placeholder bukan pengganti label (SYSTEM.md §75).
- */
 export function Field({
   label,
   htmlFor,

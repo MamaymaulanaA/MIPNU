@@ -30,13 +30,6 @@ import { formatNumber } from "@/lib/format";
 const TEMPLATE_HEADER =
   "nama_lengkap,nomor_anggota,jenis_kelamin,tempat_lahir,tanggal_lahir,email,telepon,alamat,tanggal_bergabung,status,catatan";
 
-/**
- * Wisaya impor anggota.
- *
- * Alurnya sengaja bertahap: unggah → pratinjau → konfirmasi. Berkas tidak
- * pernah langsung masuk database, karena kesalahan impor jauh lebih mahal
- * untuk dibereskan daripada satu langkah tambahan (SYSTEM.md §66).
- */
 export function MemberImport({ organizationId }: { organizationId: string }) {
   const router = useRouter();
   const { showToast } = useToast();

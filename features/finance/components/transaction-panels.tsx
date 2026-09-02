@@ -52,10 +52,6 @@ export type TransactionRow = {
   description: string;
   referenceNumber: string | null;
   periodId: string | null;
-  /**
-   * Ada-tidaknya bukti. Id dokumennya TIDAK dikirim ke browser kecuali
-   * pemanggil berhak menyentuhnya — lihat halaman transaksi.
-   */
   hasProof: boolean;
   proofDocumentId: string | null;
   status: string;
@@ -77,19 +73,6 @@ export type TransactionPermissions = {
   canViewProofs: boolean;
 };
 
-/**
- * Tombol "Catat Transaksi" beserta dialognya.
- *
- * Terpisah dari `TransactionManager` supaya aksi primernya dapat berdiri di
- * KEPALA HALAMAN, sebaris dengan judul dan tombol ekspor — tempat yang sama
- * dengan aksi primer sembilan halaman manajemen lain. Sebelumnya ia melayang
- * sendiri di atas tabel, di dalam kartu, dan halaman Transaksi menjadi
- * satu-satunya yang menaruhnya di sana.
- *
- * Bentuknya sengaja sama dengan `MeetingFormDialog` dan sejenisnya: satu
- * komponen membawa pemicu sekaligus dialognya, jadi halaman cukup
- * menempatkannya tanpa mengurus keadaan buka-tutup.
- */
 export function TransactionCreateDialog({
   organizationId,
   accountOptions,
@@ -149,7 +132,6 @@ export function TransactionManager({
   periodOptions: FinanceOption[];
   documentOptions: FinanceOption[];
   permissions: TransactionPermissions;
-  /** Ada pencarian atau penyaring aktif — mengubah kalimat kosongnya. */
   disaring?: boolean;
 }) {
   const { showToast } = useToast();
@@ -228,8 +210,6 @@ export function TransactionManager({
                     </TableCell>
 
                     <TableCell className="text-right">
-                      {/* Tanda hanya untuk dibaca; yang tersimpan selalu
-                          positif dan arahnya ditentukan jenis transaksi. */}
                       <span
                         className={
                           row.status === "VOID"
@@ -425,8 +405,6 @@ export function TransactionManager({
   );
 }
 
-/* ========================================================================== */
-
 function VoidDialog({
   open,
   onClose,
@@ -508,8 +486,6 @@ function VoidDialog({
   );
 }
 
-/* ========================================================================== */
-
 function TransactionDialog({
   open,
   onClose,
@@ -534,9 +510,6 @@ function TransactionDialog({
   const { showToast } = useToast();
   const isEdit = Boolean(transaction);
 
-  // Jenis transaksi disimpan sebagai state karena daftar kategori mengikutinya:
-  // kategori pengeluaran tidak pernah ditawarkan untuk pemasukan, dan foreign
-  // key komposit di database akan menolaknya bila tetap dipaksakan.
   const [type, setType] = useState(transaction?.transactionType ?? "INCOME");
 
   const action = isEdit
@@ -738,9 +711,6 @@ function TransactionDialog({
             </Select>
           </Field>
         ) : transaction?.hasProof ? (
-          // Bukti yang ada tetap disebut keberadaannya, tanpa membocorkan
-          // berkasnya. Server juga tidak akan menyentuh kolomnya saat
-          // penyunting tanpa hak menyimpan draf ini.
           <p className="text-[13px] text-muted-foreground">
             Transaksi ini memiliki bukti. Anda belum berhak membukanya, dan
             menyimpan perubahan tidak akan menghapusnya.
@@ -758,7 +728,6 @@ function TransactionDialog({
   );
 }
 
-/** Ringkasan tampilan yang dipakai halaman ringkasan & laporan. */
 export function TransactionSummaryRow({
   label,
   value,

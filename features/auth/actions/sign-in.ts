@@ -7,12 +7,6 @@ import { signInSchema } from "@/features/auth/schemas/auth.schema";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/errors";
 
-/**
- * Masuk dengan email + kata sandi.
- *
- * Pesan gagal sengaja seragam untuk email tidak dikenal maupun sandi salah,
- * supaya form ini tidak dapat dipakai memetakan email mana yang terdaftar.
- */
 export async function signIn(
   _previousState: ActionResult<void> | null,
   formData: FormData,
@@ -52,15 +46,11 @@ export async function signIn(
     };
   }
 
-  // Tujuan redirect dibatasi ke path internal. Tanpa ini, `?redirect=` dapat
-  // dipakai mengarahkan pengguna yang baru login ke situs luar.
   const requested = formData.get("redirect");
   const isSafeInternalPath =
     typeof requested === "string" &&
     requested.startsWith("/") &&
     !requested.startsWith("//");
 
-  // Cast diperlukan karena typedRoutes tidak dapat memverifikasi string
-  // runtime. Keamanannya berasal dari pemeriksaan di atas, bukan dari tipe.
   redirect(isSafeInternalPath ? (requested as Route) : "/dashboard");
 }

@@ -14,24 +14,8 @@ export const metadata: Metadata = {
   title: "Organisasi",
 };
 
-/**
- * Daftar seluruh organisasi platform.
- *
- * Berbeda dari organization switcher, yang hanya memuat organisasi tempat
- * pengguna benar-benar punya membership. Halaman ini administrasi platform:
- * super admin dapat melihat semua organisasi tanpa menjadi pengurus di
- * dalamnya (docs/PERMISSIONS.md §46-§47).
- *
- * Jenis, tingkat, dan calon induk ikut dimuat di sini karena dialog pembuatan
- * membutuhkannya. Dulu ketiganya dimuat halaman `/admin/organisasi/baru`
- * tersendiri; setelah pembuatan pindah ke dialog, halaman itu tidak ada lagi
- * dan datanya ikut ke sini — satu kali muat untuk satu layar, bukan satu
- * perjalanan tambahan setiap kali dialog dibuka.
- */
-/** Ukuran halaman daftar organisasi. */
 const UKURAN_HALAMAN = 20;
 
-/** Status organisasi yang benar-benar tersimpan pada kolomnya. */
 const STATUS_ORGANISASI = [
   { value: "ACTIVE", label: "Aktif" },
   { value: "INACTIVE", label: "Tidak aktif" },
@@ -53,10 +37,6 @@ export default async function AdminOrganizationsPage({
     return <ForbiddenState />;
   }
 
-  // Pembaca bersama, bukan salinan lokal. Versi sebelumnya menuliskan ulang
-  // `satuNilai`, penghitungan offset, dan pembersihan pola pencariannya
-  // sendiri — tiga hal yang justru ada di `lib/list-params.ts` supaya tidak
-  // perlahan berbeda antar-halaman.
   const daftar = bacaParamDaftar(await searchParams, {
     ukuranHalaman: UKURAN_HALAMAN,
     kunciSaring: ["status"],
@@ -82,10 +62,6 @@ export default async function AdminOrganizationsPage({
 
   if (status) daftarQuery = daftarQuery.eq("status", status);
   if (cari) {
-    // `polaCariOr`, bukan pembersih lokal. Yang lama hanya membuang `%`, `_`,
-    // dan koma — tanda kurung dan garis miring terbalik tetap lolos ke dalam
-    // string filter `.or()`, dan PostgREST mengurai keduanya sebagai sintaks
-    // sebelum SQL melihatnya.
     const aman = polaCariOr(cari);
     if (aman)
       daftarQuery = daftarQuery.or(`name.ilike.%${aman}%,slug.ilike.%${aman}%`);

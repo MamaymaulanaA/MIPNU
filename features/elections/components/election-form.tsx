@@ -33,13 +33,6 @@ export type ElectionFormValues = {
   resultVisibility: string;
 };
 
-/**
- * Nilai untuk `<input type="datetime-local">`.
- *
- * Input itu menuntut waktu LOKAL tanpa zona. `toISOString()` mengembalikan UTC,
- * jadi memakainya langsung menggeser jadwal sebanyak offset zona — di Indonesia
- * tujuh jam, cukup untuk membuat pemilihan tampak dibuka sebelum waktunya.
- */
 function toLocalInput(value: string | null | undefined): string {
   if (!value) return "";
   const date = new Date(value);
@@ -152,14 +145,6 @@ function ElectionFields({
   );
 }
 
-/**
- * Pemicu + dialog dipisah dengan sengaja.
- *
- * Yang memiliki state `open` adalah pemicunya; dialognya hanya menerima
- * `onClose`. Memanggil `setOpen(false)` langsung dari dalam effect memicu
- * render berantai — pola yang sama dipakai seluruh dialog lain di aplikasi
- * ini.
- */
 export function ElectionCreateDialog({
   organizationId,
   periodOptions,

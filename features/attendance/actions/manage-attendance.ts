@@ -30,14 +30,6 @@ const optionalDateTime = z
     "Waktu tidak valid",
   );
 
-/**
- * Sesi presensi.
- *
- * Sesi selalu lahir sebagai MANUAL. Metode berubah menjadi QR hanya ketika
- * token diterbitkan lewat `mipnu_issue_attendance_qr()`, karena CHECK
- * constraint menuntut sesi QR selalu memiliki token — menyetel method='QR'
- * dari form ini akan membuat sesi yang tidak dapat disimpan.
- */
 const sessionSchema = z
   .object({
     eventId: z.uuid({ error: "Event wajib dipilih" }),
@@ -181,13 +173,6 @@ export async function updateAttendanceSession(
   }
 }
 
-/**
- * Mencatat kehadiran seorang anggota.
- *
- * Presensi ganda dicegah unique constraint
- * `(attendance_session_id, member_id)`, bukan oleh tombol yang di-disable —
- * karena itu operasi ini memakai upsert dan aman diulang.
- */
 export async function recordAttendance(
   organizationId: string,
   sessionId: string,
@@ -208,7 +193,6 @@ export async function recordAttendance(
         organization_id: organizationId,
         member_id: memberId,
         status,
-        // CHECK menuntut PRESENT selalu punya waktu check-in.
         check_in_at: status === "PRESENT" ? new Date().toISOString() : null,
         recorded_by: context.profileId,
       },

@@ -6,19 +6,6 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/**
- * Bagian form yang berulang di seluruh modul.
- *
- * Tujuannya satu: setiap form MIPNU punya loading state, disabled state, dan
- * error state tanpa harus diingat ulang tiap kali (SYSTEM.md §75).
- */
-
-/**
- * Tombol submit yang tahu sendiri kapan form-nya sedang dikirim.
- *
- * `useFormStatus` membaca status dari `<form>` induk, sehingga tombol tidak
- * perlu dioper prop `pending` dari komponen di atasnya.
- */
 export function SubmitButton({
   children,
   pendingLabel = "Menyimpan…",
@@ -46,7 +33,6 @@ export function SubmitButton({
   );
 }
 
-/** Ringkasan error tingkat form — untuk kegagalan yang bukan milik satu field. */
 export function FormAlert({
   message,
   className,

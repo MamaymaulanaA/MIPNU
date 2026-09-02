@@ -15,10 +15,8 @@ export const metadata: Metadata = {
   title: "Pengguna",
 };
 
-/** Ukuran halaman daftar pengguna. */
 const UKURAN_HALAMAN = 20;
 
-/** Status membership yang benar-benar tersimpan pada kolomnya. */
 const STATUS_MEMBERSHIP = [
   { value: "ACTIVE", label: "Aktif" },
   { value: "INACTIVE", label: "Tidak aktif" },
@@ -54,10 +52,6 @@ export default async function UsersPage({
     can(context, PERMISSIONS.users.create) &&
     can(context, PERMISSIONS.users.assignOrganization);
 
-  // Pencarian, penyaringan, dan pembagian halaman seluruhnya di database.
-  // `!inner` pada `profiles` yang membuat penyaringan atas nama tampilan
-  // dapat dilakukan di sana, bukan dengan menarik seluruh baris lalu
-  // menyaringnya di aplikasi (AGENTS.md §57).
   let daftarQuery = supabase
     .from("organization_memberships")
     .select(
@@ -86,8 +80,6 @@ export default async function UsersPage({
       .order("id", { ascending: true })
       .range(dari, dari + UKURAN_HALAMAN - 1),
 
-    // Hanya role ber-scope ORGANIZATION yang dapat diberikan di sini.
-    // SUPER_ADMIN ber-scope GLOBAL dan ditolak trigger database.
     canEdit || canProvision
       ? supabase
           .from("roles")
@@ -143,7 +135,6 @@ export default async function UsersPage({
       : member.full_name,
   }));
 
-  // Anggota yang belum punya akun — itulah yang masuk akal untuk dibuatkan.
   const unlinkedMembers = memberOptions.filter(
     (member) => !linkedMemberIds.has(member.id),
   );

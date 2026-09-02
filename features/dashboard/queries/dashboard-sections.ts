@@ -13,15 +13,6 @@ import { createClient } from "@/lib/supabase/server";
  * sekadar disembunyikan CSS.
  */
 
-/* ---------------------------------------------------------- aktivitas */
-
-/**
- * Ranah peristiwa, diturunkan dari awalan kode aksi.
- *
- * Dipakai HANYA untuk mewarnai ikon pada dashboard administrator platform.
- * Nilainya tidak menambah informasi apa pun yang tidak sudah ada pada
- * labelnya, jadi dashboard lain boleh mengabaikannya tanpa kehilangan apa pun.
- */
 export type ActivityDomain =
   "kegiatan" | "administrasi" | "keanggotaan" | "pemilihan" | "lainnya";
 
@@ -63,15 +54,6 @@ function ranah(action: string): ActivityDomain {
  */
 const DIKECUALIKAN = ["elections.vote_cast"];
 
-/**
- * Label manusiawi untuk peristiwa audit.
- *
- * Hanya peristiwa yang ada di sini yang ditampilkan. Peristiwa lain — termasuk
- * yang belum sempat diberi label — sengaja dilewati: aliran aktivitas bukan
- * tempat menumpahkan seluruh jejak audit, dan kode mentah seperti
- * `finance.proof_viewed` di dashboard hanya membingungkan sekaligus
- * membocorkan lebih banyak daripada yang dibutuhkan.
- */
 const LABEL: Record<string, string> = {
   "agenda.created": "Agenda baru ditambahkan",
   "agenda.updated": "Agenda diperbarui",

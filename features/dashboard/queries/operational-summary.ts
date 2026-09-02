@@ -24,11 +24,8 @@ export type OperationalRow = {
 };
 
 export type OperationalGates = {
-  /** positions.edit */
   positions: boolean;
-  /** periods.edit */
   periods: boolean;
-  /** users.view */
   accounts: boolean;
 };
 

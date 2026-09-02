@@ -7,7 +7,6 @@ import { AppError, fail, ok, type ActionResult } from "@/lib/errors";
 import { databaseFailure } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 
-/** Sengaja sempit: format yang dapat ditampilkan browser mana pun. */
 const ALLOWED_TYPES = new Map([
   ["image/png", "png"],
   ["image/jpeg", "jpg"],
@@ -16,17 +15,6 @@ const ALLOWED_TYPES = new Map([
 
 const MAX_BYTES = 2 * 1024 * 1024;
 
-/**
- * Mengganti avatar sendiri.
- *
- * Berkas diunggah dengan client milik pengguna, bukan service role, sehingga
- * policy storage yang menentukan boleh-tidaknya — bukan pemeriksaan di sini.
- * Pemeriksaan di bawah hanya menghasilkan pesan yang enak dibaca; pagarnya
- * tetap di database (docs/ARCHITECTURE.md §51).
- *
- * Path selalu diawali auth user id pemilik. Nama berkas dibuat baru setiap
- * unggah supaya cache browser tidak menampilkan avatar lama.
- */
 export async function updateOwnAvatar(
   _previousState: ActionResult<void> | null,
   formData: FormData,
@@ -80,15 +68,10 @@ export async function updateOwnAvatar(
       .eq("id", profile.id);
 
     if (error) {
-      // Berkas sudah terlanjur naik tetapi tidak jadi dipakai; membuangnya
-      // mencegah bucket menumpuk berkas yatim.
       await supabase.storage.from("avatars").remove([path]);
       return databaseFailure(error);
     }
 
-    // Avatar lama dibuang setelah yang baru tercatat, bukan sebelumnya:
-    // urutan ini membuat kegagalan di tengah menyisakan avatar lama yang
-    // masih utuh, bukan profil tanpa gambar sama sekali.
     if (previousPath && previousPath !== path) {
       await supabase.storage.from("avatars").remove([previousPath]);
     }
@@ -102,12 +85,6 @@ export async function updateOwnAvatar(
   }
 }
 
-/**
- * Menghapus avatar.
- *
- * Berkasnya ikut dibuang, bukan sekadar dilepas dari profil — avatar yang
- * "dihapus" tetapi masih tersimpan bukan penghapusan.
- */
 export async function removeOwnAvatar(): Promise<ActionResult<void>> {
   try {
     const profile = await requireProfile();

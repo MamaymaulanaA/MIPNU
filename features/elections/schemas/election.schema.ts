@@ -1,13 +1,5 @@
 import { z } from "zod";
 
-/**
- * Konstanta & skema pemilihan.
- *
- * Tinggal di sini, BUKAN di berkas action: setiap export dari berkas
- * `"use server"` diperlakukan Next sebagai endpoint dan harus berupa fungsi
- * async (lihat tests/server-action-exports.test.ts).
- */
-
 export const ELECTION_STATUSES = [
   "DRAFT",
   "REGISTRATION",
@@ -38,7 +30,6 @@ export type ElectionType = (typeof ELECTION_TYPES)[number];
 export type ResultVisibility = (typeof RESULT_VISIBILITIES)[number];
 export type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
 
-/** Label Indonesia untuk tiap status. Dipakai badge dan judul halaman. */
 export const ELECTION_STATUS_LABEL: Record<ElectionStatus, string> = {
   DRAFT: "Rancangan",
   REGISTRATION: "Pendaftaran",
@@ -68,20 +59,12 @@ export const CANDIDATE_STATUS_LABEL: Record<CandidateStatus, string> = {
   DISQUALIFIED: "Didiskualifikasi",
 };
 
-/**
- * Status yang masih menerima penyuntingan biasa.
- *
- * Sama persis dengan daftar di trigger `app_private.guard_election()`. Kalau
- * keduanya berbeda, yang menang tetap database — ini hanya supaya tombolnya
- * tidak menawarkan sesuatu yang pasti ditolak.
- */
 export const EDITABLE_STATUSES: readonly ElectionStatus[] = [
   "DRAFT",
   "REGISTRATION",
   "SCHEDULED",
 ];
 
-/** Alasan penolakan dari `mipnu_cast_vote`, diterjemahkan seadanya. */
 export const VOTE_FAILURE_MESSAGE: Record<string, string> = {
   NOT_AUTHENTICATED: "Sesi Anda berakhir. Masuk kembali untuk memilih.",
   INVALID_INPUT: "Permintaan tidak lengkap.",
@@ -115,22 +98,12 @@ const optionalUuid = z
     "Pilihan tidak valid",
   );
 
-/**
- * Waktu dari `<input type="datetime-local">`.
- *
- * Nilainya waktu lokal tanpa zona ("2026-09-01T08:00"). Diubah menjadi ISO
- * lengkap memakai zona peramban, bukan diperlakukan sebagai UTC — kalau tidak,
- * jadwal pemilihan bergeser tujuh jam dan tak seorang pun menyadarinya sampai
- * suara ditolak karena "belum dimulai".
- */
 const localDateTime = z
   .string()
   .trim()
   .min(1, "Waktu wajib diisi")
   .refine((value) => !Number.isNaN(Date.parse(value)), "Waktu tidak valid")
   .transform((value) => new Date(value).toISOString());
-
-/* --------------------------------------------------------------- pemilihan */
 
 export const electionSchema = z
   .object({
@@ -163,12 +136,8 @@ export const ELECTION_FIELDS = [
   "resultVisibility",
 ] as const;
 
-/* ---------------------------------------------------------------- kandidat */
-
 export const candidateSchema = z.object({
   memberId: optionalUuid,
-  // Nomor urut ditentukan penyelenggara, bukan urutan input: undian nomor urut
-  // adalah bagian dari prosesnya.
   candidateNumber: z
     .string()
     .trim()
@@ -196,8 +165,6 @@ export const CANDIDATE_FIELDS = [
   "status",
 ] as const;
 
-/* --------------------------------------------------------------- panitia */
-
 export const committeeSchema = z.object({
   memberId: z.uuid({ error: "Anggota wajib dipilih" }),
   positionName: z
@@ -207,23 +174,8 @@ export const committeeSchema = z.object({
     .max(100, "Jabatan panitia maksimal 100 karakter"),
 });
 
-/**
- * Hanya dua field yang dibaca `parseForm`.
- *
- * Daftar hak panitia datang sebagai checkbox berulang dan diambil terpisah
- * lewat `formValues`, lalu disaring terhadap
- * ASSIGNABLE_COMMITTEE_PERMISSIONS di bawah.
- */
 export const COMMITTEE_FIELDS = ["memberId", "positionName"] as const;
 
-/**
- * Hak yang boleh dilekatkan pada penugasan panitia.
- *
- * Sengaja TIDAK memuat elections.publish_result: PERMISSIONS.md §57 menyebutnya
- * secara khusus sebagai hal yang tidak otomatis diperoleh penyelenggara
- * pemilihan. Mempublikasikan hasil tetap keputusan organisasi, bukan panitia
- * teknis.
- */
 export const ASSIGNABLE_COMMITTEE_PERMISSIONS = [
   "elections.view",
   "elections.manage_candidates",
@@ -234,8 +186,6 @@ export const ASSIGNABLE_COMMITTEE_PERMISSIONS = [
   "elections.close",
 ] as const;
 
-/* ------------------------------------------------------------------- DPT */
-
 export const voterSchema = z.object({
   memberIds: z.array(z.uuid()).min(1, "Pilih minimal satu anggota"),
 });
@@ -245,8 +195,6 @@ export const voterEligibilitySchema = z.object({
   eligible: z.enum(["true", "false"]).transform((value) => value === "true"),
   reason: optionalText(500),
 });
-
-/* ------------------------------------------------------------- pembatalan */
 
 export const cancelSchema = z.object({
   reason: z

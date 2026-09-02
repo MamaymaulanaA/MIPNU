@@ -14,7 +14,6 @@ import { recordAudit } from "@/services/audit/record";
 
 export type CsvExport = { filename: string; content: string };
 
-/** Batas baris per ekspor. Menahan permintaan yang tidak masuk akal. */
 const MAX_EXPORT_ROWS = 20_000;
 
 function timestamp() {
@@ -99,8 +98,6 @@ export async function exportMembers(
         : []),
     ];
 
-    // Kolom pribadi dibuang dari data, bukan sekadar tidak dicantumkan di
-    // daftar kolom — supaya tidak ada jalan nilainya ikut terbawa.
     const rows = (data ?? []).map((row) => {
       if (includePrivate) return row;
       const { email: _e, phone: _p, address: _a, ...safe } = row;
@@ -207,7 +204,6 @@ export async function exportManagement(
   }
 }
 
-/** Ekspor rekap presensi satu sesi. */
 export async function exportAttendance(
   organizationId: string,
   sessionId: string,
@@ -298,20 +294,6 @@ export async function exportAttendance(
   }
 }
 
-/* ------------------------------------------------------------- Phase 2 -- */
-
-/**
- * Ekspor riwayat kaderisasi.
- *
- * Yang ikut terekspor persis yang boleh DILIHAT pemanggil: policy
- * `cadreship_records_select` sudah membedakan pemegang cadreship.view dari
- * pemegang cadreship.view_own, dan query ini tidak menambahkan penyaringan
- * sendiri. Anggota yang mengekspor mendapat riwayatnya sendiri, bukan berkas
- * kosong dan bukan riwayat orang lain.
- *
- * Filter yang sedang aktif ikut diterapkan, sehingga yang diunduh sama dengan
- * yang dilihat.
- */
 export async function exportCadreship(
   organizationId: string,
   filters: { typeId?: string; status?: string; search?: string } = {},
@@ -413,14 +395,6 @@ export async function exportCadreship(
   }
 }
 
-/**
- * Ekspor daftar rapat.
- *
- * Berisi RINGKASAN rapat berikut jumlah peserta dan yang hadir — bukan daftar
- * nama peserta. Nama anggota adalah data anggota, dan meetings.export tidak
- * pernah dimaksudkan menjadi jalan memutar untuk membaca direktori anggota
- * tanpa members.view (docs/PERMISSIONS.md §76).
- */
 export async function exportMeetings(
   organizationId: string,
   filters: { status?: string } = {},
@@ -514,14 +488,6 @@ export async function exportMeetings(
   }
 }
 
-/**
- * Ekspor arsip surat.
- *
- * Lampiran dilaporkan sebagai ADA/TIDAK saja. Menuliskan storage_path akan
- * membocorkan struktur penyimpanan ke berkas yang beredar bebas, dan
- * menuliskan signed URL akan membuat tautan berumur pendek menjadi abadi di
- * dalam sebuah CSV — dua hal yang justru dihindari seluruh desain dokumen.
- */
 export async function exportLetters(
   organizationId: string,
   kind: "incoming" | "outgoing",
@@ -679,19 +645,6 @@ export async function exportLetters(
   }
 }
 
-/* ------------------------------------------------------------- Phase 3 -- */
-
-/**
- * Ekspor transaksi keuangan.
- *
- * TIDAK memuat metadata bukti: nama berkas, path storage, maupun tautan apa
- * pun. Kolomnya hanya menyatakan ada atau tidak adanya bukti. Sebuah CSV
- * beredar bebas begitu diunduh, dan tautan berumur pendek yang tertulis di
- * dalamnya berhenti berumur pendek.
- *
- * Nilai yang diketik pengguna — keterangan dan nomor referensi — melewati
- * escapeCell() yang melindungi dari formula spreadsheet (lihat lib/csv.ts).
- */
 export async function exportTransactions(
   organizationId: string,
   filters: {
@@ -781,9 +734,6 @@ export async function exportTransactions(
       transaction_type: row.transaction_type,
       account: row.financial_accounts?.name ?? "",
       category: row.financial_categories?.name ?? "",
-      // Angka ditulis apa adanya sebagai bilangan bulat rupiah, bukan
-      // "Rp150.000": berkas ini dibaca mesin sebelum dibaca orang, dan
-      // pemisah ribuan akan membuatnya berhenti menjadi angka.
       amount: String(row.amount),
       description: row.description,
       reference_number: row.reference_number ?? "",

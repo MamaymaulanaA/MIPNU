@@ -108,7 +108,6 @@ export const EVENT_FIELDS = [
   "visibility",
 ] as const;
 
-/** Penugasan panitia. Terikat pada satu event, bukan role permanen. */
 export const committeeSchema = z.object({
   memberId: z.uuid({ error: "Anggota wajib dipilih" }),
   positionName: z

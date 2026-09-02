@@ -30,24 +30,12 @@ const MONTH_NAMES = [
   "Desember",
 ];
 
-/** `YYYY-MM` -> komponen tahun & bulan. Dipakai untuk navigasi lewat URL. */
 function shiftMonth(monthKey: string, delta: number) {
   const [year, month] = monthKey.split("-").map(Number);
   const date = new Date(year!, month! - 1 + delta, 1);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-/**
- * Kalender agenda.
- *
- * Ditulis dengan CSS grid dan aritmetika tanggal biasa alih-alih menambah
- * pustaka kalender: yang dibutuhkan hanya kisi bulan, dan pustaka kalender
- * membawa serta pemilih rentang, zona waktu, dan gaya visualnya sendiri yang
- * justru harus dilawan agar cocok dengan design token MIPNU (SYSTEM.md §115).
- *
- * Bulan yang ditampilkan hidup di URL, sehingga tautannya dapat dibagikan dan
- * datanya diambil server per bulan — bukan seluruh agenda ditarik ke browser.
- */
 export function AgendaCalendar({
   monthKey,
   items,
@@ -64,9 +52,6 @@ export function AgendaCalendar({
   const daysInMonth = new Date(year!, month!, 0).getDate();
   const leadingBlanks = firstOfMonth.getDay();
 
-  // Kunci hari memakai waktu LOKAL, bukan potongan string ISO: agenda pukul
-  // 23.00 WIB adalah hari berikutnya dalam UTC, dan akan jatuh di kotak yang
-  // salah kalau dipotong dari ISO.
   const byDay = new Map<string, AgendaRow[]>();
   for (const item of items) {
     const date = new Date(item.startAt);
@@ -138,8 +123,6 @@ export function AgendaCalendar({
                 role="columnheader"
                 className="pb-1 text-center text-[11px] font-medium text-muted-foreground"
               >
-                {/* Layar 320px: satu huruf sudah cukup, tiga huruf memaksa
-                    kolom melebar dan mendorong kisi keluar layar. */}
                 <span className="sm:hidden">{weekday.charAt(0)}</span>
                 <span className="hidden sm:inline">{weekday}</span>
               </div>
@@ -183,8 +166,6 @@ export function AgendaCalendar({
                     {day}
                   </span>
 
-                  {/* Desktop: judul agenda. Mobile: titik saja — judul pada
-                      kolom selebar 40px hanya menjadi bubur. */}
                   <span className="flex flex-wrap justify-center gap-0.5 sm:hidden">
                     {dayItems.slice(0, 3).map((item) => (
                       <span
@@ -268,7 +249,6 @@ export function AgendaCalendar({
   );
 }
 
-/** Pengalih tampilan daftar / kalender. */
 export function AgendaViewToggle({
   current,
 }: {
@@ -293,10 +273,6 @@ export function AgendaViewToggle({
     <div
       role="group"
       aria-label="Tampilan agenda"
-      // Tinggi dari konstanta bersama, bukan `h-10` yang ditulis sendiri.
-      // Diukur di peramban pada 1440px: pengalih ini 40px sementara tombol di
-      // sebelahnya 44px — dua kontrol pada satu grup aksi yang tidak berdiri
-      // di garis yang sama.
       className={cn(
         TINGGI_KONTROL,
         "inline-flex items-center rounded-md border border-border bg-muted p-1",

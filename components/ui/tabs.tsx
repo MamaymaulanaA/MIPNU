@@ -10,20 +10,6 @@ export type PageTabItem = {
   active: boolean;
 };
 
-/**
- * Deretan tab halaman: kepala kartu, bukan bilah mengambang.
- *
- * Sebelumnya aplikasi ini punya DUA bentuk tab. Pemilihan memakai garis bawah
- * setinggi kontrol lain; Surat memakai pil di dalam jalur `bg-muted/40`, dan
- * pil aktifnya diisi `bg-background`. Bentuk kedua itu rapuh: warna isinya
- * adalah token latar halaman, jadi setiap kali latar dinaikkan mendekati
- * putih, penanda "tab ini sedang aktif" ikut memudar. Pada 98.5% ia tinggal
- * berselisih satu level dari jalurnya sendiri — praktis tak terlihat.
- *
- * Bentuk garis bawah tidak punya kelemahan itu: penandanya `--primary`, warna
- * yang tidak pernah ikut bergerak bersama latar. Ia juga memberi tab tinggi
- * yang sama dengan tombol dan kolom cari di sebelahnya.
- */
 export function PageTabs({
   label,
   items,
@@ -34,9 +20,6 @@ export function PageTabs({
   className?: string;
 }) {
   return (
-    // <nav> dengan `aria-current`, bukan `role="tablist"`: setiap tab di sini
-    // adalah tautan yang mengubah URL, jadi ini navigasi halaman. `role="tab"`
-    // menjanjikan panel yang bertukar tanpa berpindah alamat.
     <nav
       aria-label={label}
       className={cn(

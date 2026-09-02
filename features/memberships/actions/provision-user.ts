@@ -52,11 +52,6 @@ const PROVISION_FIELDS = [
 ] as const;
 
 export type ProvisionResult = {
-  /**
-   * Tautan aktivasi, HANYA terisi bila pengiriman email tidak tersedia di
-   * environment ini. Ditampilkan sekali kepada admin yang memang berwenang,
-   * tidak disimpan di mana pun.
-   */
   inviteLink: string | null;
   emailSent: boolean;
   accountExisted: boolean;
@@ -90,7 +85,6 @@ export async function provisionUser(
       PERMISSIONS.users.create,
     );
 
-    // Membuat akun dan menautkannya ke organisasi adalah dua kewenangan.
     if (!context.permissions.has(PERMISSIONS.users.assignOrganization)) {
       throw new ForbiddenError("missing_permission:users.assign_organization");
     }
@@ -101,9 +95,6 @@ export async function provisionUser(
     const input = parsed.data;
     const supabase = await createClient();
 
-    // ---- Role: hanya scope ORGANIZATION -----------------------------------
-    // SUPER_ADMIN ber-scope GLOBAL. Trigger database sudah menolaknya, tetapi
-    // diperiksa di sini juga agar pesannya jelas, bukan error constraint.
     const { data: role, error: roleError } = await supabase
       .from("roles")
       .select("id, code, scope")
@@ -157,7 +148,6 @@ export async function provisionUser(
       }
     }
 
-    // ---- Akun autentikasi -------------------------------------------------
     const admin = createAdminClient();
     const siteUrl =
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
@@ -184,10 +174,6 @@ export async function provisionUser(
         authUserId = invited.data.user.id;
         emailSent = true;
       } else {
-        // Pengiriman email belum dikonfigurasi di environment ini. Akun tetap
-        // dibuat, dan tautan aktivasinya diserahkan ke admin untuk
-        // disampaikan lewat kanal lain — lebih jujur daripada berpura-pura
-        // email terkirim.
         const created = await admin.auth.admin.createUser({
           email: input.email,
           email_confirm: true,
@@ -221,8 +207,6 @@ export async function provisionUser(
       throw new AppError("INTERNAL", "Gagal menyiapkan akun autentikasi.");
     }
 
-    // ---- Profile ----------------------------------------------------------
-    // Dibuat trigger on_auth_user_created; dibaca ulang, bukan dibuat lagi.
     const { data: profile } = await admin
       .from("profiles")
       .select("id")
@@ -269,8 +253,6 @@ export async function provisionUser(
       action: "user.provisioned",
       resourceType: "organization_membership",
       resourceId: profile.id,
-      // Email dicatat karena itulah identitas akun. Kata sandi dan tautan
-      // aktivasi TIDAK pernah masuk audit.
       metadata: {
         email: input.email,
         role: role.code,
@@ -287,7 +269,6 @@ export async function provisionUser(
   }
 }
 
-/** Mencari akun auth berdasarkan email tanpa memuat seluruh daftar sekaligus. */
 async function findAuthUserByEmail(
   admin: ReturnType<typeof createAdminClient>,
   email: string,
@@ -311,23 +292,6 @@ async function findAuthUserByEmail(
   }
 }
 
-/**
- * Mengirim ulang undangan / tautan aktivasi.
- *
- * Tidak membuat akun baru dan tidak mengubah kata sandi apa pun — hanya
- * menerbitkan ulang tautan pemulihan.
- */
-/**
- * Tautan pemulihan yang menunjuk ke aplikasi, bukan ke endpoint Supabase.
- *
- * `action_link` bawaan mengarah ke /auth/v1/verify milik Supabase, yang
- * mengembalikan token pada FRAGMENT url. Fragment tidak pernah sampai ke
- * server, sementara session aplikasi ini hidup di cookie — sehingga tautan
- * bawaan berakhir pada formulir yang mustahil berhasil.
- *
- * Menyusunnya sendiri dari `hashed_token` membuat penukaran terjadi di
- * /auth/konfirmasi, di server, tempat cookie memang dapat ditulis.
- */
 function recoveryLink(siteUrl: string, hashedToken: string | undefined) {
   if (!hashedToken) return null;
 

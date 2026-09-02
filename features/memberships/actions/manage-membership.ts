@@ -9,18 +9,6 @@ import { databaseFailure } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/**
- * Mengubah role seseorang di dalam organisasi.
- *
- * Tiga pagar bekerja bersamaan, dan tidak satu pun bergantung pada UI:
- *
- *   1. Policy `organization_memberships_update` menuntut `users.edit` DAN
- *      menolak baris milik pemanggil sendiri — jadi tidak ada yang dapat
- *      menaikkan role dirinya.
- *   2. Trigger `enforce_organization_role_scope` menolak role ber-scope
- *      GLOBAL, sehingga SUPER_ADMIN mustahil masuk lewat jalur ini.
- *   3. `role_id` dicocokkan ke tabel roles, bukan diterima apa adanya.
- */
 export async function changeMembershipRole(
   organizationId: string,
   membershipId: string,
@@ -119,13 +107,6 @@ export async function endMembership(
   }
 }
 
-/**
- * Menautkan akun ke data anggota.
- *
- * Tanpa tautan ini, akun tidak dapat mendaftar event atau melakukan presensi
- * mandiri — keduanya bersandar pada `current_member_id()`. Composite FK
- * memastikan anggota yang ditautkan memang milik organisasi yang sama.
- */
 export async function linkMembershipToMember(
   organizationId: string,
   membershipId: string,

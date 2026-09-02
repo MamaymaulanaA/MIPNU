@@ -74,8 +74,6 @@ export default async function OrganizationPage() {
       <Card>
         <CardHeader>
           <div className="flex min-w-0 items-center gap-3">
-            {/* Satu perlakuan untuk semua jenis organisasi. Jenisnya sudah
-                tertulis pada baris di bawah judul (docs/UI.md §8). */}
             <span
               aria-hidden="true"
               className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground"

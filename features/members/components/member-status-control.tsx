@@ -13,17 +13,6 @@ import { MEMBER_STATUSES } from "@/features/members/schemas/member.schema";
 import type { ActionResult } from "@/lib/errors";
 import { memberStatus } from "@/lib/status";
 
-/**
- * Perubahan status keanggotaan.
- *
- * Dipisahkan dari form penyuntingan biasa karena akibatnya berbeda: status
- * menentukan apakah seseorang masih anggota aktif, dan setiap perubahannya
- * menjadi riwayat permanen yang ditulis trigger database.
- *
- * Kepemilikan state dipisah dari isi dialog — sama seperti modul lain —
- * supaya penutupan setelah sukses menjadi pemanggilan callback, bukan
- * setState di dalam effect yang memicu render berantai.
- */
 export function MemberStatusControl(props: {
   organizationId: string;
   memberId: string;
@@ -40,7 +29,6 @@ export function MemberStatusControl(props: {
       </Button>
 
       <StatusDialog
-        // Form direset setiap kali dialog dibuka ulang.
         key={open ? "open" : "closed"}
         open={open}
         onClose={() => setOpen(false)}

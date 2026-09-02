@@ -13,21 +13,6 @@ import {
 import { createMember } from "@/features/members/actions/create-member";
 import { updateMember } from "@/features/members/actions/manage-member";
 
-/**
- * Penambahan dan penyuntingan anggota, di dalam dialog.
- *
- * Sebelumnya keduanya halaman tersendiri — `/anggota/baru` dan
- * `/anggota/[id]/edit`. Setelah Profil Organisasi dan Semua Organisasi pindah
- * ke dialog, Data Anggota tinggal satu-satunya modul yang masih memindahkan
- * pengguna ke halaman lain untuk mengisi form, lalu memulangkannya.
- *
- * `organizationId` diikat di server lewat `bind`, BUKAN dikirim sebagai input
- * tersembunyi. Field tersembunyi dapat disunting di browser; argumen yang
- * di-bind tidak — dan server tetap memvalidasinya ulang terhadap access
- * context. Perpindahan ke dialog tidak mengubah satu pun dari itu.
- */
-
-/** Tombol tambah beserta dialognya. Dipakai di kepala halaman dan keadaan kosong. */
 export function MemberCreateDialog({
   organizationId,
   canEditPrivate,
@@ -37,7 +22,6 @@ export function MemberCreateDialog({
   organizationId: string;
   canEditPrivate: boolean;
   canEditStatus: boolean;
-  /** `ringkas` untuk tombol pada keadaan kosong. */
   trigger?: "utama" | "ringkas";
 }) {
   const [open, setOpen] = useState(false);
@@ -78,7 +62,6 @@ export function MemberCreateDialog({
   );
 }
 
-/** Tombol ubah beserta dialognya. Dipakai di baris tabel dan halaman rincian. */
 export function MemberEditDialog({
   organizationId,
   memberId,
@@ -94,7 +77,6 @@ export function MemberEditDialog({
   values: MemberFieldValues;
   canEditPrivate: boolean;
   canEditStatus: boolean;
-  /** `baris` untuk aksi di dalam tabel, `utama` untuk kepala halaman rincian. */
   variant?: "baris" | "utama";
 }) {
   const [open, setOpen] = useState(false);
@@ -113,12 +95,6 @@ export function MemberEditDialog({
         </Button>
       )}
 
-      {/*
-        `key` mengikuti keadaan terbuka supaya isinya benar-benar dimuat ulang
-        setiap kali dibuka. Tanpa itu, dialog yang pernah gagal validasi akan
-        dibuka kembali lengkap dengan pesan error lamanya — dan pada tabel,
-        baris berikutnya akan membawa data baris sebelumnya.
-      */}
       <FormDialog
         key={open ? `ubah-${memberId}` : "ubah-tertutup"}
         open={open}

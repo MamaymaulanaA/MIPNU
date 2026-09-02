@@ -119,13 +119,6 @@ export async function updatePeriod(
   }
 }
 
-/**
- * Mengaktifkan periode.
- *
- * Menutup periode berjalan dan mengaktifkan yang dipilih harus terjadi
- * bersamaan, jadi keduanya dikerjakan oleh `mipnu_activate_period()` di
- * database, bukan dua UPDATE berurutan dari sini.
- */
 export async function activatePeriod(
   organizationId: string,
   periodId: string,
@@ -206,17 +199,6 @@ export async function closePeriod(
   }
 }
 
-/**
- * Mengarsipkan periode.
- *
- * Hanya periode yang sudah DITUTUP yang dapat diarsipkan: mengarsipkan
- * periode aktif akan menghilangkan struktur kepengurusan yang sedang berjalan
- * dari layar tanpa pernah menutupnya lebih dulu.
- *
- * Arsip TIDAK menghapus apa pun. Penugasan kepengurusan periode tersebut
- * tetap ada dan tetap terbaca sebagai riwayat (PRD §21); yang berubah hanya
- * bahwa periode itu tidak lagi ikut ditawarkan pada pekerjaan sehari-hari.
- */
 export async function archivePeriod(
   organizationId: string,
   periodId: string,
@@ -234,8 +216,6 @@ export async function archivePeriod(
       .update({ status: "ARCHIVED" })
       .eq("id", periodId)
       .eq("organization_id", context.organizationId!)
-      // Syarat status ditulis pada query, bukan diperiksa lebih dulu lalu
-      // ditulis: dua langkah terpisah menyisakan celah di antaranya.
       .eq("status", "CLOSED");
 
     if (error) return databaseFailure(error);

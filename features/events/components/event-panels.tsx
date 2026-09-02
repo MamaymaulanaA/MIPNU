@@ -69,16 +69,6 @@ export type PermissionOption = {
   description: string | null;
 };
 
-/* ========================================================================== */
-/* Pendaftaran mandiri                                                        */
-/* ========================================================================== */
-
-/**
- * Tombol daftar/batal untuk anggota yang melihat event.
- *
- * Tidak mengirim member_id apa pun — server meresolusinya dari access
- * context, sehingga tombol ini tidak dapat dipakai mendaftarkan orang lain.
- */
 export function SelfRegistrationControl({
   organizationId,
   eventId,
@@ -147,10 +137,6 @@ export function SelfRegistrationControl({
     </Button>
   );
 }
-
-/* ========================================================================== */
-/* Peserta                                                                    */
-/* ========================================================================== */
 
 export function ParticipantPanel({
   organizationId,
@@ -378,10 +364,6 @@ function AddParticipantDialog({
     </Dialog>
   );
 }
-
-/* ========================================================================== */
-/* Panitia                                                                    */
-/* ========================================================================== */
 
 export function CommitteePanel({
   organizationId,

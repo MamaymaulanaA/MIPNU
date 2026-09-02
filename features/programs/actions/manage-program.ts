@@ -266,7 +266,6 @@ export async function updateProgramProgress(
   }
 }
 
-/** Mengubah status tanpa menyentuh isi program. */
 export async function updateProgramStatus(
   organizationId: string,
   programId: string,

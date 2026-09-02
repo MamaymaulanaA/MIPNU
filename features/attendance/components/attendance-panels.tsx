@@ -50,15 +50,11 @@ export type AttendanceMemberRow = {
   memberId: string;
   memberName: string;
   memberNumber: string | null;
-  /** NULL berarti belum ada catatan sama sekali untuk anggota ini. */
   status: string | null;
   checkInAt: string | null;
 };
 
-/** Label status sesi berasal dari berkas skema — satu daftar untuk semua. */
 const SESSION_STATUSES = SESSION_STATUS_OPTIONS;
-
-/* ========================================================================== */
 
 export function SessionFormDialog({
   organizationId,
@@ -162,8 +158,6 @@ function SessionDialog({
             name="eventId"
             required
             defaultValue={session?.eventId ?? ""}
-            // Event sebuah sesi tidak diubah setelah sesi berjalan; catatan
-            // presensi yang sudah ada terikat pada event tersebut.
             disabled={isEdit}
           >
             <option value="">Pilih event</option>
@@ -255,9 +249,6 @@ function SessionDialog({
   );
 }
 
-/* ========================================================================== */
-
-/** Presensi mandiri untuk anggota. */
 export function SelfCheckInButton({
   organizationId,
   sessionId,
@@ -295,15 +286,6 @@ export function SelfCheckInButton({
   );
 }
 
-/* ========================================================================== */
-
-/**
- * Daftar hadir.
- *
- * Menampilkan SELURUH peserta event, bukan hanya yang sudah tercatat —
- * sehingga yang belum hadir terlihat sebagai baris kosong yang menunggu,
- * bukan sekadar tidak ada.
- */
 export function AttendanceRoster({
   organizationId,
   sessionId,

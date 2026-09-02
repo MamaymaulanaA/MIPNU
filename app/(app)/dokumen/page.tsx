@@ -17,7 +17,6 @@ export const metadata: Metadata = {
 
 const UKURAN_HALAMAN = 20;
 
-/** Label kategori. Nilainya sama persis dengan `DOCUMENT_CATEGORIES`. */
 const KATEGORI_DOKUMEN = [
   { value: "LETTER", label: "Surat" },
   { value: "PROPOSAL", label: "Proposal" },
@@ -42,10 +41,6 @@ export default async function DocumentsPage({
     return <ForbiddenState />;
   }
 
-  // Kunci pencarian mengikuti toolbar bersama (`search`). Sebelumnya halaman
-  // ini memakai `cari` beserta form buatan tangan: penyaringnya SUDAH bekerja
-  // di server, tetapi kontrolnya berupa <input>/<select> mentah setinggi 40px
-  // yang tidak mengikuti tinggi kontrol MIPNU mana pun.
   const daftar = bacaParamDaftar(await searchParams, {
     ukuranHalaman: UKURAN_HALAMAN,
     kunciSaring: ["kategori"],

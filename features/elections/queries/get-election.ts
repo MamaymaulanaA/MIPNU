@@ -94,22 +94,9 @@ export const getElection = cache(
 
 export type ElectionListPage = {
   rows: ElectionRow[];
-  /** Jumlah SELURUH baris yang cocok, bukan yang terkirim. */
   total: number;
 };
 
-/**
- * Daftar pemilihan, dipenggal di server.
- *
- * Sebelumnya fungsi ini mengambil SELURUH pemilihan organisasi tanpa batas.
- * Sebuah organisasi yang sudah berjalan bertahun-tahun mengirim seluruh
- * arsipnya ke peramban setiap kali halaman dibuka — dan yang menahannya dari
- * memanjang tak terbatas hanyalah batas tinggi guliran pada tampilannya, yang
- * menyembunyikan barisnya setelah terkirim, bukan mencegahnya terkirim.
- *
- * Penyaringnya memakai kolom yang memang ada: `name` untuk pencarian dan
- * `status` untuk saringan. Tidak ada penyaring yang tidak didukung querynya.
- */
 export const listElections = cache(
   async (
     organizationId: string,
@@ -143,8 +130,6 @@ export const listElections = cache(
     };
   },
 );
-
-/* -------------------------------------------------------------- kandidat */
 
 export type CandidateRow = {
   id: string;
@@ -181,8 +166,6 @@ export const listCandidates = cache(
     }));
   },
 );
-
-/* ------------------------------------------------------------------- DPT */
 
 export type VoterRow = {
   id: string;
@@ -231,8 +214,6 @@ export const listVoters = cache(
   },
 );
 
-/* --------------------------------------------------------------- panitia */
-
 export type CommitteeRow = {
   id: string;
   memberId: string;
@@ -273,8 +254,6 @@ export const listCommittee = cache(
     }));
   },
 );
-
-/* ---------------------------------------------------- partisipasi & hasil */
 
 export type Participation = {
   eligibleCount: number;
@@ -326,13 +305,6 @@ export type ElectionResult = {
   }[];
 };
 
-/**
- * Hasil pemilihan, atau alasan mengapa belum boleh dilihat.
- *
- * Halaman TIDAK menebak sendiri kapan hasil boleh tampil. Ia menanyakannya ke
- * database dan menampilkan apa adanya — sehingga aturan "tidak ada perolehan
- * selama OPEN" hidup di satu tempat saja.
- */
 export async function getElectionResult(
   electionId: string,
 ): Promise<{ result: ElectionResult | null; reason: string | null }> {
@@ -383,8 +355,6 @@ export async function getElectionResult(
     },
   };
 }
-
-/* ------------------------------------------------------------- integritas */
 
 export type IntegrityReport = {
   status: string;
@@ -437,8 +407,6 @@ export async function getIntegrity(
     readyToPublish: payload.ready_to_publish ?? false,
   };
 }
-
-/* ------------------------------------------------------- hak pilih sendiri */
 
 export type OwnVoterState = {
   inDpt: boolean;

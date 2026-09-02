@@ -16,7 +16,6 @@ import { databaseFailure } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/** Harus sama dengan allowed_mime_types bucket `documents` (migration 0027). */
 const ALLOWED_MIME = new Map<string, string>([
   ["application/pdf", "pdf"],
   ["image/png", "png"],
@@ -103,8 +102,6 @@ export async function uploadDocument(
       };
     }
 
-    // Visibilitas hanya boleh ditentukan oleh yang berhak mengaturnya; sisanya
-    // mendapat ORGANIZATION, bukan PUBLIC.
     const visibility = context.permissions.has(
       PERMISSIONS.documents.manageVisibility,
     )
@@ -131,9 +128,6 @@ export async function uploadDocument(
 
     const supabase = await createClient();
 
-    // Baris metadata dibuat lebih dulu supaya id-nya dapat menjadi bagian
-    // path — sehingga dua berkas bernama sama tidak pernah bertabrakan, dan
-    // setiap berkas dapat ditelusuri balik ke barisnya.
     const documentId = crypto.randomUUID();
     const filename = safeFilename(file.name, extension);
     const path = `${organizationId}/${documentId}/${filename}`;
@@ -169,8 +163,6 @@ export async function uploadDocument(
       .single();
 
     if (error) {
-      // Berkas terlanjur naik tetapi tidak jadi tercatat; membuangnya mencegah
-      // bucket menumpuk berkas yatim yang tidak dapat ditemukan siapa pun.
       await supabase.storage.from("documents").remove([path]);
       return databaseFailure(error);
     }
@@ -181,7 +173,6 @@ export async function uploadDocument(
       action: "document.uploaded",
       resourceType: "document",
       resourceId: data.id,
-      // Nama berkas dan ukurannya dicatat; ISINYA tidak pernah.
       metadata: {
         category: parsed.data.category,
         visibility,
@@ -243,13 +234,6 @@ export async function updateDocumentVisibility(
   }
 }
 
-/**
- * Tautan unduh berumur pendek.
- *
- * Bucket-nya privat, jadi tidak ada URL yang dapat ditempel begitu saja.
- * Signed URL berlaku lima menit — cukup untuk satu klik, tidak cukup untuk
- * menjadi tautan yang beredar.
- */
 export async function createDocumentDownloadUrl(
   organizationId: string,
   documentId: string,
@@ -336,8 +320,6 @@ export async function deleteDocument(
 
     if (error) return databaseFailure(error);
 
-    // Metadata disimpan sebagai riwayat, berkas fisiknya tidak: dokumen yang
-    // "dihapus" tetapi berkasnya masih dapat diunduh bukan penghapusan.
     if (document?.storage_path) {
       await supabase.storage.from("documents").remove([document.storage_path]);
     }

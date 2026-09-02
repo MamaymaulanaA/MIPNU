@@ -210,16 +210,6 @@ export async function deleteMeeting(
   }
 }
 
-/* -------------------------------------------------------------- peserta -- */
-
-/**
- * Menambahkan peserta.
- *
- * Peserta ganda ditolak unique constraint `(meeting_id, member_id)`, dan
- * anggota organisasi lain ditolak composite foreign key — bukan oleh
- * pemeriksaan di sini. Yang ada di sini hanya penerjemahan kode galat menjadi
- * kalimat yang dapat dibaca.
- */
 export async function addMeetingParticipant(
   organizationId: string,
   meetingId: string,
@@ -337,8 +327,6 @@ export async function removeMeetingParticipant(
   }
 }
 
-/* -------------------------------------------------------------- notulen -- */
-
 const minutesSchema = z.object({
   content: z
     .string()
@@ -349,13 +337,6 @@ const minutesSchema = z.object({
   followUp: optionalText(10000),
 });
 
-/**
- * Menyimpan notulen.
- *
- * Satu rapat satu notulen, dijaga unique constraint pada `meeting_id`. Karena
- * itu operasinya upsert: menyimpan dua kali tidak menghasilkan dua notulen,
- * dan menyimpan ulang tidak perlu tahu apakah sebelumnya sudah ada.
- */
 export async function saveMeetingMinutes(
   organizationId: string,
   meetingId: string,

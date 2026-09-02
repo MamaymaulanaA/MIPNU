@@ -3,13 +3,6 @@ import { AlertCircle, Inbox, Lock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Empty, loading, dan error state.
- *
- * Empty state menjelaskan keadaan, bukan sekadar mengatakan "kosong", dan
- * menawarkan aksi HANYA bila pengguna memang berhak melakukannya
- * (SYSTEM.md §79, AGENTS.md §35).
- */
 export function EmptyState({
   icon: Icon = Inbox,
   title,
@@ -107,7 +100,6 @@ export function ForbiddenState({
   );
 }
 
-/** Skeleton baris tabel — meniru struktur konten, bukan spinner layar penuh. */
 export function TableSkeleton({
   rows = 6,
   columns = 4,
@@ -138,7 +130,6 @@ export function TableSkeleton({
   );
 }
 
-/** Skeleton kartu statistik dashboard. */
 export function StatSkeleton({ count = 4 }: { count?: number }) {
   return (
     <>

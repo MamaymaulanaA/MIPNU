@@ -23,8 +23,6 @@ export default async function AppLayout({
 }) {
   const profile = await getCurrentProfile();
 
-  // Proxy sudah menahan pengunjung anonim. Pemeriksaan ini menangani
-  // kasus lain: sudah punya session Auth tetapi profilnya nonaktif/hilang.
   if (!profile) redirect("/login");
 
   const [organizations, context, avatarUrl, gender] = await Promise.all([
@@ -43,8 +41,6 @@ export default async function AppLayout({
       email={profile.email}
       avatarUrl={avatarUrl}
       gender={gender}
-      // Id anggota lebih dulu: orang yang sama harus berwajah sama di header
-      // dan di daftar anggota, dan daftar itu hanya mengenal member.id.
       identity={context?.memberId ?? profile.id}
     >
       {children}

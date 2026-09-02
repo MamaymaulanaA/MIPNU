@@ -25,7 +25,6 @@ export const metadata: Metadata = {
   title: "Pemilihan",
 };
 
-/** Sembilan: tiga baris penuh pada kisi tiga kolom. */
 const UKURAN_HALAMAN = 9;
 
 export default async function ElectionsPage({
@@ -88,27 +87,7 @@ export default async function ElectionsPage({
         }
       />
 
-      {/*
-        Kartu pembungkus, sama seperti halaman daftar lainnya.
-
-        Sebelumnya kisi pemilihan berdiri telanjang di atas halaman — satu-
-        satunya daftar di aplikasi ini yang isinya tidak berada di dalam kartu.
-        Kartu LUAR memberi kerangka halaman; kartu DALAM memisahkan antar-
-        pemilihan. Keduanya menjelaskan hal yang berbeda, dan itu sebabnya
-        keduanya ada.
-
-        Barisnya dipenggal di SERVER — sembilan per halaman, tiga baris penuh
-        pada kisi tiga kolom. Batas tinggi guliran tetap ada sebagai jaring
-        kedua untuk layar pendek, tetapi yang benar-benar menahan halaman ini
-        dari memanjang adalah `.range()` di querynya, bukan `max-height` yang
-        menyembunyikan baris setelah terkirim.
-      */}
       <Card>
-        {/*
-          Toolbar memakai kolom yang MEMANG ada: `name` untuk pencarian dan
-          `status` untuk saringan. Tidak ada penyaring yang tidak didukung
-          querynya.
-        */}
         <TableToolbar
           searchValue={daftar.cari}
           searchPlaceholder="Cari pemilihan…"

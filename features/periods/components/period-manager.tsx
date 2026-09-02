@@ -50,14 +50,6 @@ export type PeriodPermissions = {
   canArchive: boolean;
 };
 
-/**
- * Pengelolaan periode kepengurusan.
- *
- * Form berada di dialog, bukan halaman terpisah: entitasnya kecil (tiga
- * field) dan selalu dibaca dalam konteks daftar periode lain — memindahkan
- * pengguna ke halaman lain justru memutus konteks itu.
- */
-/** Keadaan toolbar dan pagination — seluruhnya berasal dari URL dan server. */
 export type KeadaanDaftar = {
   cari: string;
   status: string;
@@ -132,11 +124,6 @@ export function PeriodManager({
   const disaring = daftar.cari !== "" || daftar.status !== "";
 
   return (
-    /*
-      Kepala halaman dirender di sini, bukan di Server Component-nya: aksi
-      utamanya dan tombol pada keadaan kosong membuka DIALOG YANG SAMA, jadi
-      keduanya perlu state yang sama. Pengambilan datanya tetap di server.
-    */
     <div className="space-y-5">
       <PageHeader
         title="Periode Kepengurusan"
@@ -348,7 +335,6 @@ export function PeriodManager({
   );
 }
 
-/** Dialog form, dipakai untuk membuat maupun mengubah periode. */
 function PeriodDialog({
   open,
   onClose,

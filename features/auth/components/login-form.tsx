@@ -20,12 +20,6 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "";
 
-  // Alasan dikirim /auth/konfirmasi ketika tautan pemulihan tidak dapat
-  // ditukar. Tanpa ditampilkan di sini, pemegang tautan kedaluwarsa mendarat
-  // di halaman masuk tanpa tahu apa pun tentang tautannya.
-  //
-  // Hanya alasan yang dikenali yang ditampilkan: isi query string datang dari
-  // url, jadi ia masukan, bukan teks yang boleh dipercaya.
   const alasan = ALASAN[searchParams.get("alasan") ?? ""];
 
   const [state, formAction, isPending] = useActionState<

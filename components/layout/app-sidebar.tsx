@@ -14,17 +14,6 @@ import { Button } from "@/components/ui/button";
 import type { AccessibleOrganization } from "@/lib/auth/context";
 import { cn } from "@/lib/utils";
 
-/**
- * Sidebar navigasi.
- *
- * Di bawah 1024px berubah menjadi drawer dengan backdrop; di atasnya menjadi
- * kolom sticky selebar 248px (docs/UI.md §23-§24).
- *
- * Menerima `permissions` sebagai array string, bukan konfigurasi navigasi
- * yang sudah tersaring: ikon adalah component sehingga tidak dapat
- * diserialisasi menyeberangi batas server→client. Penyaringannya sendiri
- * tetap satu function yang sama.
- */
 export function AppSidebar({
   permissions,
   organizations,
@@ -45,11 +34,6 @@ export function AppSidebar({
     [permissions],
   );
 
-  /**
-   * Satu sumber kebenaran: `usePathname()`, bukan state klik. Tombol
-   * maju-mundur peramban, alamat yang diketik langsung, dan muat ulang
-   * menghasilkan jawaban yang sama.
-   */
   const activeHref = useMemo(() => resolveActiveHref(pathname), [pathname]);
 
   return (
@@ -145,9 +129,6 @@ export function AppSidebar({
                             : "font-medium text-sidebar-foreground hover:bg-muted hover:text-foreground",
                         )}
                       >
-                        {/* Ikon menu aktif satu tingkat lebih terang daripada
-                            teksnya: penanda posisi terbaca lebih dulu tanpa
-                            menaikkan bobot teks (docs/UI.md §14). */}
                         <Icon
                           size={18}
                           strokeWidth={1.9}
@@ -164,9 +145,6 @@ export function AppSidebar({
           ))}
         </nav>
 
-        {/* Penutup sidebar. Menyebut platformnya, bukan perannya: komponen ini
-            dipakai setiap peran, dan menuliskan jabatan di sini akan salah
-            bagi sebagian besar yang melihatnya. */}
         <div className="shrink-0 border-t border-sidebar-border p-3">
           <div className="flex items-center gap-2.5 rounded-lg bg-muted px-3 py-2.5">
             <span

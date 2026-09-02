@@ -19,22 +19,16 @@ import { createClient } from "@/lib/supabase/server";
  */
 
 export type ActivityPoint = {
-  /** 'YYYY-MM' — kunci stabil untuk sumbu X. */
   month: string;
-  /** Label pendek untuk sumbu, mis. "Sep '26". */
   label: string;
   total: number;
 };
 
 export type ActivitySeries = {
   points: ActivityPoint[];
-  /** Jumlah seluruh kegiatan pada rentang. */
   total: number;
-  /** Sumber yang benar-benar ikut dihitung — dipakai untuk keterangan. */
   sources: string[];
-  /** Jumlah per sumber pada rentang yang sama dengan grafik. */
   bySource: { label: string; total: number }[];
-  /** Keterangan rentang, mis. "Mar 2026 – Feb 2027". */
   range: string;
 };
 
@@ -59,16 +53,6 @@ const BULAN = [
   "Des",
 ];
 
-/**
- * Jendela dua belas bulan yang MEMANDANG KE DUA ARAH: enam bulan ke belakang
- * (termasuk bulan berjalan) dan enam bulan ke depan.
- *
- * Alasannya ada pada isi tabelnya. Agenda, event, dan rapat adalah kegiatan
- * TERJADWAL — tanggalnya sering berada di masa depan. Jendela yang hanya
- * melihat ke belakang membuat organisasi dengan agenda bulan depan melihat
- * garis nol, sementara kartu di atasnya menyebut "Agenda Mendatang 1". Dua
- * pernyataan itu benar, tetapi berdampingan keduanya membingungkan.
- */
 const MUNDUR = 5;
 const MAJU = 6;
 
@@ -101,8 +85,6 @@ export async function getActivitySeries(
   const titik = kerangka();
   const indeks = new Map(titik.map((t, i) => [t.month, i]));
 
-  // Batas bawah dan atas mengikuti kerangka, sehingga baris di luar jendela
-  // tidak ikut terambil dari database sama sekali.
   const sejak = new Date();
   sejak.setMonth(sejak.getMonth() - MUNDUR);
   sejak.setDate(1);
@@ -119,9 +101,6 @@ export async function getActivitySeries(
   const perSumber: { label: string; total: number }[] = [];
   let total = 0;
 
-  // Tabelnya disebut satu per satu, bukan lewat nama dinamis: tipe PostgREST
-  // menolak nama tabel bertipe string, dan menyiasatinya dengan `as never`
-  // hanya akan mematikan pemeriksaan yang justru berguna di sini.
   const ambil = async (
     kunci: keyof ActivitySources,
     label: string,
@@ -153,8 +132,6 @@ export async function getActivitySeries(
       total += 1;
     }
 
-    // Jumlah per sumber dihitung dari baris yang sama, bukan lewat query
-    // tambahan: rentangnya sudah sama dan barisnya sudah di tangan.
     perSumber.push({ label, total: jumlah });
   };
 
@@ -208,21 +185,11 @@ export async function getActivitySeries(
   };
 }
 
-/* -------------------------------------------------- ringkasan pendamping */
-
 export type InsightSummary = {
   documents: number | null;
   announcements: number | null;
 };
 
-/**
- * Dua angka pendamping di bawah grafik.
- *
- * Keduanya dihitung pada rentang yang sama dengan grafik supaya "6 dokumen"
- * berarti enam dokumen pada periode yang sedang dilihat — bukan enam sejak
- * organisasi berdiri. NULL berarti pemanggil tidak berhak, dan angkanya tidak
- * ditampilkan sama sekali.
- */
 export async function getInsightSummary(
   organizationId: string,
   gates: { documents: boolean; announcements: boolean },

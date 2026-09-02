@@ -54,8 +54,6 @@ export type CategoryRow = {
   isActive: boolean;
 };
 
-/* ============================================================== akun kas */
-
 export function AccountManager({
   organizationId,
   accounts,
@@ -65,7 +63,6 @@ export function AccountManager({
   organizationId: string;
   accounts: AccountRow[];
   canManage: boolean;
-  /** Ada pencarian atau penyaring yang aktif — mengubah kalimat kosongnya. */
   disaring?: boolean;
 }) {
   const { showToast } = useToast();
@@ -91,9 +88,6 @@ export function AccountManager({
             <TableHead>
               <TableRow className="hover:bg-transparent">
                 <TableHeaderCell>Akun</TableHeaderCell>
-                {/* Nominal rata kanan, sama seperti kolom Nominal pada
-                    Transaksi. Angka uang yang berpindah perataan antarhalaman
-                    memaksa mata mencari titik desimalnya dua kali. */}
                 <TableHeaderCell className="hidden text-right md:table-cell">
                   Saldo Awal
                 </TableHeaderCell>
@@ -160,15 +154,6 @@ export function AccountManager({
         </TableScroll>
       )}
 
-      {/*
-        Penonaktifan lewat konfirmasi.
-
-        Akun kas tidak pernah dihapus — ia dinonaktifkan supaya transaksi lama
-        tetap terbaca. Tetapi menonaktifkan akun MENGELUARKANNYA dari pilihan
-        transaksi baru, dan sebelumnya itu terjadi pada klik pertama tanpa
-        pertanyaan apa pun. Semantiknya tidak berubah; yang ditambahkan hanya
-        langkah kedua sebelum aksinya dipanggil.
-      */}
       <ConfirmDialog
         open={Boolean(mengarsip)}
         onClose={() => setMengarsip(null)}
@@ -332,14 +317,6 @@ function AccountDialog({
   );
 }
 
-/* ============================================================== kategori */
-
-/**
- * Tombol "Tambah Akun Kas" beserta dialognya.
- *
- * Sama alasannya dengan `TransactionCreateDialog`: aksi primer berdiri di
- * kepala bagiannya, bukan melayang di atas tabel di dalam kartu.
- */
 export function AccountCreateDialog({
   organizationId,
 }: {
@@ -364,7 +341,6 @@ export function AccountCreateDialog({
   );
 }
 
-/** Tombol "Tambah Kategori" beserta dialognya. */
 export function CategoryCreateDialog({
   organizationId,
 }: {
@@ -398,7 +374,6 @@ export function CategoryManager({
   organizationId: string;
   categories: CategoryRow[];
   canManage: boolean;
-  /** Ada pencarian atau penyaring yang aktif — mengubah kalimat kosongnya. */
   disaring?: boolean;
 }) {
   const { showToast } = useToast();

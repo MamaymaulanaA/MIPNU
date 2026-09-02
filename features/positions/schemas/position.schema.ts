@@ -21,7 +21,6 @@ export const positionSchema = z.object({
     .transform((value) => (value.length === 0 ? null : value))
     .nullable(),
 
-  // Menentukan urutan tampil struktur, dari Ketua ke bawah.
   sortOrder: z.coerce
     .number()
     .int("Urutan harus bilangan bulat")

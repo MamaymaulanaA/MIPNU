@@ -2,15 +2,6 @@ import type { ZodError, ZodType } from "zod";
 
 import type { ActionResult } from "@/lib/errors";
 
-/**
- * Jembatan antara FormData, Zod, dan bentuk hasil Server Action.
- *
- * Dipisah karena pola ini berulang di setiap mutasi. Menyalinnya belasan kali
- * berarti belasan kesempatan untuk lupa memetakan error ke field yang benar,
- * dan form yang menolak diam-diam lebih buruk daripada form yang error.
- */
-
-/** Mengubah issue Zod menjadi peta field -> daftar pesan untuk render inline. */
 export function toFieldErrors(error: ZodError): Record<string, string[]> {
   const fieldErrors: Record<string, string[]> = {};
 
@@ -31,12 +22,6 @@ export function validationFailure(error: ZodError): ActionResult<never> {
   };
 }
 
-/**
- * Memvalidasi FormData terhadap sebuah skema.
- *
- * Mengembalikan discriminated union sehingga pemanggil tidak dapat memakai
- * data yang belum tervalidasi tanpa memeriksa `ok` lebih dulu.
- */
 export function parseForm<T>(
   schema: ZodType<T>,
   formData: FormData,
@@ -46,9 +31,6 @@ export function parseForm<T>(
 
   for (const field of fields) {
     const value = formData.get(field);
-    // FormData mengembalikan null untuk field yang tidak dikirim sama sekali
-    // (mis. checkbox tidak dicentang). Dinormalkan ke string kosong supaya
-    // transform "kosong -> null" di skema bekerja seragam.
     raw[field] = value === null ? "" : value;
   }
 
@@ -61,7 +43,6 @@ export function parseForm<T>(
   return { ok: true, data: parsed.data };
 }
 
-/** Mengambil seluruh nilai sebuah field multi-value (mis. daftar checkbox). */
 export function formValues(formData: FormData, field: string): string[] {
   return formData
     .getAll(field)
@@ -70,13 +51,6 @@ export function formValues(formData: FormData, field: string): string[] {
     .filter((value) => value.length > 0);
 }
 
-/**
- * Menerjemahkan error Postgres menjadi pesan yang aman dan berguna.
- *
- * Kode SQLSTATE dipakai, bukan mencocokkan teks pesan — teks dapat berubah
- * antarversi Postgres, kode tidak. Detail aslinya tidak pernah sampai ke
- * pengguna (SYSTEM.md §58).
- */
 export function databaseFailure(
   error: { code?: string; message: string },
   overrides: Partial<Record<string, ActionResult<never>>> = {},

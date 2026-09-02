@@ -14,12 +14,6 @@ import {
 } from "@/features/auth/actions/password-recovery";
 import type { ActionResult } from "@/lib/errors";
 
-/**
- * Permintaan tautan atur ulang.
- *
- * Konfirmasinya sengaja netral: pesan yang sama muncul entah email tersebut
- * terdaftar atau tidak.
- */
 export function ForgotPasswordForm() {
   const [state, formAction] = useActionState<
     ActionResult<void> | null,
@@ -87,12 +81,6 @@ export function ForgotPasswordForm() {
   );
 }
 
-/**
- * Penyetelan kata sandi baru.
- *
- * Bersandar pada recovery session yang sudah dibuat Supabase Auth dari
- * tautan email. Halaman ini tidak pernah memegang token apa pun sendiri.
- */
 export function ResetPasswordForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
@@ -104,7 +92,6 @@ export function ResetPasswordForm() {
 
   useEffect(() => {
     if (!state?.success) return;
-    // Sesi pemulihan sudah menjadi sesi biasa setelah sandi diganti.
     const timer = setTimeout(() => router.push("/dashboard"), 1200);
     return () => clearTimeout(timer);
   }, [state, router]);

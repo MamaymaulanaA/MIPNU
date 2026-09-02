@@ -28,13 +28,6 @@ const MEMBER_FIELDS = [
   "notes",
 ] as const;
 
-/**
- * Mengubah data anggota.
- *
- * Bila status ikut berubah, trigger database menuntut `members.manage_status`
- * dan sekaligus menuliskan riwayatnya. Jadi form ini tidak perlu — dan tidak
- * boleh — mengurus riwayat sendiri.
- */
 export async function updateMember(
   organizationId: string,
   memberId: string,
@@ -53,11 +46,6 @@ export async function updateMember(
     const input = parsed.data;
     const supabase = await createClient();
 
-    // Kolom pribadi hanya ikut diperbarui bila pemanggil memang boleh
-    // melihatnya. Tanpa penjagaan ini, penyunting tanpa
-    // `members.view_private` akan mengosongkan email/telepon/alamat hanya
-    // karena field-nya tidak dirender untuknya — data hilang tanpa ada yang
-    // pernah bermaksud menghapusnya.
     const canEditPrivate = context.permissions.has(
       PERMISSIONS.members.viewPrivate,
     );
@@ -129,13 +117,6 @@ const statusChangeSchema = z.object({
     .nullable(),
 });
 
-/**
- * Mengubah status keanggotaan.
- *
- * Dipisahkan dari penyuntingan biasa karena dampaknya berbeda: status
- * menentukan apakah seseorang masih anggota aktif organisasi, dan
- * perubahannya menjadi bagian riwayat permanen (docs/PERMISSIONS.md §14).
- */
 export async function changeMemberStatus(
   organizationId: string,
   memberId: string,
@@ -189,8 +170,6 @@ export async function changeMemberStatus(
 
     if (error) return databaseFailure(error);
 
-    // Trigger database sudah menulis baris riwayat. Alasannya disimpan
-    // menyusul pada baris terbaru, karena trigger tidak menerima argumen.
     if (parsed.data.reason) {
       const { data: latest } = await supabase
         .from("member_status_history")
@@ -227,13 +206,6 @@ export async function changeMemberStatus(
   }
 }
 
-/**
- * Menghapus anggota.
- *
- * Soft delete: `deleted_at` diisi, barisnya tetap ada. Riwayat kepengurusan,
- * presensi, dan kaderisasi menunjuk ke anggota ini — menghapusnya secara
- * fisik akan merusak semuanya (docs/DATABASE.md §140).
- */
 export async function deleteMember(
   organizationId: string,
   memberId: string,

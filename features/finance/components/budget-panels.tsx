@@ -54,13 +54,6 @@ export type BudgetPermissions = {
   canApprove: boolean;
 };
 
-/**
- * Tombol "Tambah Anggaran" beserta dialognya.
- *
- * Di kepala halaman, sebaris dengan judul. Sebelumnya ia berdiri sebagai blok
- * 44px tersendiri di antara kepala halaman dan kartu anggaran — bukan bagian
- * dari keduanya, dan satu-satunya hal yang menempati baris itu.
- */
 export function BudgetCreateDialog({
   organizationId,
   periodOptions,
@@ -137,15 +130,6 @@ export function BudgetManager({
                     </p>
                   </div>
 
-                  {/*
-                    Satu kontrol, bukan dua.
-
-                    Sebelumnya lencana status DAN daftar pilihan status berdiri
-                    berdampingan — keduanya menyebut hal yang sama, dan yang
-                    kedua terbaca sebagai kotak isian selebar 128px di sudut
-                    kepala kartu. Yang berhak mengubah status melihat daftarnya
-                    saja; yang tidak berhak melihat lencananya saja.
-                  */}
                   <div className="flex flex-wrap items-center gap-1.5">
                     {permissions.canApprove ? (
                       <Select
@@ -357,8 +341,6 @@ export function BudgetManager({
   );
 }
 
-/* ========================================================================== */
-
 function BudgetDialog({
   open,
   onClose,
@@ -476,8 +458,6 @@ function BudgetDialog({
     </Dialog>
   );
 }
-
-/* ========================================================================== */
 
 function BudgetItemDialog({
   open,

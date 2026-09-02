@@ -44,8 +44,6 @@ const optionalUuid = z
     "Pilihan tidak valid",
   );
 
-/* ---------------------------------------------------------- surat masuk -- */
-
 const incomingSchema = z
   .object({
     letterNumber: optionalText(120),
@@ -195,11 +193,7 @@ export async function updateIncomingLetter(
   }
 }
 
-/* --------------------------------------------------------- surat keluar -- */
-
 const outgoingSchema = z.object({
-  // Format penomoran ditentukan organisasi, bukan aplikasi (DATABASE.md §84).
-  // Yang divalidasi hanya keberadaannya dan keunikannya — bukan bentuknya.
   letterNumber: z
     .string()
     .trim()
@@ -241,13 +235,6 @@ const DUPLICATE_NUMBER = {
   kind: "CONFLICT" as const,
 };
 
-/**
- * Membuat surat keluar.
- *
- * Selalu lahir sebagai DRAFT: status hanya bergerak lewat approveOutgoingLetter(),
- * yang menuntut letters.approve. Membiarkan status dipilih di form akan
- * membuat penyusun surat dapat menyetujui suratnya sendiri.
- */
 export async function createOutgoingLetter(
   organizationId: string,
   _previousState: ActionResult<{ id: string }> | null,

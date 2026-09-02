@@ -15,14 +15,6 @@ const requestSchema = z.object({
     .transform((value) => value.toLowerCase()),
 });
 
-/**
- * Meminta tautan atur ulang kata sandi.
- *
- * Hasilnya SELALU sama, terdaftar atau tidak. Membedakan "email tidak
- * ditemukan" dari "tautan terkirim" akan mengubah form ini menjadi alat
- * memetakan siapa saja yang punya akun di sistem — dan daftar itu adalah
- * data anggota organisasi.
- */
 export async function requestPasswordReset(
   _previousState: ActionResult<void> | null,
   formData: FormData,
@@ -38,13 +30,9 @@ export async function requestPasswordReset(
 
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
-    // Menunjuk ke route penukar, bukan langsung ke formulir: token harus
-    // menjadi session cookie lebih dulu. Template email Supabase perlu
-    // memakai {{ .TokenHash }} agar tautannya sampai ke sini.
     { redirectTo: `${siteUrl}/auth/konfirmasi` },
   );
 
-  // Kegagalan dicatat untuk operator, tetapi tidak diteruskan ke pengguna.
   if (error) {
     console.error("[mipnu] gagal mengirim tautan reset", error.message);
   }
@@ -65,16 +53,6 @@ const resetSchema = z
     path: ["confirmPassword"],
   });
 
-/**
- * Menyetel kata sandi baru.
- *
- * Bersandar pada recovery session yang dibuat Supabase Auth dari tautan
- * email — bukan pada token yang dikirim form. Tanpa session itu, permintaan
- * ditolak.
- *
- * Kata sandi tidak pernah dicatat ke log, tidak pernah disimpan di
- * `profiles`, dan tidak pernah dikirim ke mana pun selain Supabase Auth.
- */
 export async function resetPassword(
   _previousState: ActionResult<void> | null,
   formData: FormData,
@@ -105,8 +83,6 @@ export async function resetPassword(
   });
 
   if (error) {
-    // Pesan Supabase di sini aman ditampilkan (mis. sandi terlalu lemah,
-    // sandi sama dengan sebelumnya) dan membantu pengguna memperbaikinya.
     return {
       success: false,
       error: error.message,

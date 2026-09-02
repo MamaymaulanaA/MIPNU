@@ -13,17 +13,6 @@ export const metadata: Metadata = {
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-/**
- * Halaman tujuan pemindaian QR.
- *
- * Berada di dalam area terautentikasi, sehingga pengunjung yang belum masuk
- * dialihkan proxy ke /login lebih dulu dan kembali ke sini setelahnya —
- * itulah yang membuat kehadiran selalu terikat pada akun sungguhan.
- *
- * Token TIDAK ditukar di sini. Ia diserahkan ke component client yang
- * memanggil server action, supaya penukaran terjadi sekali atas tindakan
- * pengguna, bukan pada setiap render ulang halaman.
- */
 export default async function QrCheckInPage({
   searchParams,
 }: {

@@ -54,9 +54,6 @@ export const agendaSchema = z
       .transform((value) => (value.length === 0 ? null : value))
       .nullable(),
 
-    // PUBLIC sengaja tidak ditawarkan: Public Portal adalah Phase 5, dan
-    // menandai sesuatu "publik" sebelum ada kanal publik hanya menciptakan
-    // data yang statusnya tidak berarti apa-apa.
     visibility: z.enum(AGENDA_VISIBILITIES, {
       error: "Visibilitas tidak valid",
     }),

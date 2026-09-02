@@ -5,26 +5,13 @@ import { MEMBER_STATUSES } from "@/features/members/schemas/member.schema";
 import { memberStatus } from "@/lib/status";
 
 /**
- * Field data anggota.
+ * Field data anggota, dipakai bersama dialog tambah dan sunting.
  *
- * Dipakai bersama oleh dialog penambahan dan dialog penyuntingan. Keduanya
- * menyunting kolom yang sama persis; menuliskannya dua kali adalah cara dua
- * form yang seharusnya kembar perlahan berbeda.
- *
- * Komponen ini tidak memegang `<form>`, action, maupun state — ia hanya
- * menggambar field. Yang menentukan ke mana datanya dikirim adalah
- * pemanggilnya.
- *
- * DUA PERMISSION MASIH BERLAKU DI SINI, dan keduanya bukan hiasan:
- *
- *   canEditPrivate   `members.view_private` — email, telepon, dan alamat
- *                    tidak digambar sama sekali bagi yang tidak berhak,
- *                    bukan digambar lalu disembunyikan
- *   canEditStatus    `members.manage_status` — selectnya dinonaktifkan, dan
- *                    nilai lamanya dikirim lewat input tersembunyi supaya
- *                    server menerima status yang tidak berubah, bukan kosong
- *
- * Keduanya tetap diperiksa ulang di server; ini lapisan tampilan saja.
+ * Dua permission berlaku di sini: `members.view_private` menentukan email,
+ * telepon, dan alamat TIDAK digambar sama sekali (bukan digambar lalu
+ * disembunyikan); `members.manage_status` menonaktifkan select status dan
+ * mengirim nilai lamanya lewat input tersembunyi agar server menerima status
+ * yang tidak berubah, bukan kosong. Keduanya diperiksa ulang di server.
  */
 
 export type MemberFieldValues = {
@@ -126,11 +113,6 @@ export function MemberFields({
             </option>
           ))}
         </Select>
-        {/*
-            Field yang disabled tidak ikut terkirim. Nilai lama dikirim
-            lewat hidden input supaya server menerima status yang tidak
-            berubah, bukan status kosong.
-          */}
         {canEditStatus ? null : (
           <input type="hidden" name="status" value={values.status} />
         )}

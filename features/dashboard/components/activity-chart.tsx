@@ -12,29 +12,6 @@ import {
 import { AKSEN } from "@/features/dashboard/components/accent";
 import type { ActivityPoint } from "@/features/dashboard/queries/activity-series";
 
-/**
- * Grafik kegiatan organisasi per bulan.
- *
- * Bentuknya sengaja sama dengan grafik pertumbuhan pada dashboard platform —
- * area biru dengan gradasi, sumbu tanpa garis, label kecil. Dua dashboard yang
- * berbeda isinya tetap satu aplikasi, dan dua gaya grafik yang berbeda pada
- * aplikasi yang sama terbaca sebagai dua produk.
- *
- * Tingginya MINIMAL 160px dan tumbuh mengikuti kartunya. Rincian per sumber
- * kini berdiri di sebelah kanannya, bukan di bawahnya, dan tiga baris itu
- * setinggi 160px — jadi batas bawah grafik disamakan dengan tetangganya dan
- * kartunya berakhir rata tanpa pita putih di salah satu kolom.
- *
- * Batas bawahnya 160px, bukan setinggi grafik platform. Deretnya dua belas titik
- * dari organisasi yang sebagian besar bulannya memang kosong; kotak yang lebih
- * tinggi tidak menambah satu pun informasi, ia hanya menambah ruang kosong.
- *
- * Angkanya dihitung dari baris yang memang ada — agenda, event, dan rapat yang
- * boleh dilihat pemanggil. Organisasi yang baru berjalan akan melihat garis
- * yang sebagian besar mendatar di nol, dan itu memang keadaannya; grafik ini
- * tidak dihaluskan, tidak diberi data contoh, dan tidak diberi tren buatan
- * supaya terlihat ramai.
- */
 export function ActivityChart({ points }: { points: ActivityPoint[] }) {
   const maksimum = Math.max(...points.map((p) => p.total), 0);
 
@@ -65,8 +42,6 @@ export function ActivityChart({ points }: { points: ActivityPoint[] }) {
             axisLine={false}
             width={34}
             allowDecimals={false}
-            // Tanpa data, sumbu tetap 0-1 supaya garis nol punya tempat berdiri
-            // alih-alih menempel pada tepi kotak.
             domain={[0, Math.max(1, maksimum)]}
             tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
           />

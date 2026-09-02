@@ -23,15 +23,6 @@ export const metadata: Metadata = {
   title: "Profil Saya",
 };
 
-/**
- * Batas pratinjau keanggotaan.
- *
- * Seorang super admin dapat mengakses SELURUH organisasi platform, dan
- * `listAccessibleOrganizations()` memang mengembalikan semuanya. Tanpa batas,
- * halaman profilnya memanjang sepanjang daftar organisasi — padahal yang
- * ditanyakan halaman ini adalah "saya siapa", bukan "ada organisasi apa saja".
- * Selebihnya cukup dihitung.
- */
 const BATAS_KEANGGOTAAN = 6;
 
 /**
@@ -56,8 +47,6 @@ export default async function ProfilePage() {
       getOwnGender(),
     ]);
 
-  // Data anggota milik pengguna pada organisasi aktif, bila akunnya memang
-  // sudah ditautkan.
   let ownMember: {
     id: string;
     fullName: string;
@@ -96,32 +85,7 @@ export default async function ProfilePage() {
         description="Data akun dan keanggotaan Anda."
       />
 
-      {/*
-        Dua kolom, 40/60 — bukan 50/50.
-
-        Kolom kiri memuat identitas dan data anggota: keduanya berupa beberapa
-        baris pendek yang lebarnya tidak bertambah berguna. Kolom kanan memuat
-        daftar keanggotaan, tempat nama organisasi panjang dan lencana peran
-        harus muat pada satu baris. Membaginya rata membuat sisi yang butuh
-        ruang justru yang paling sempit.
-
-        Menumpuk di bawah 1024px: pada 768px, 40% dari lebar isi tinggal
-        sekitar 260px, dan baris keanggotaan mulai membungkus.
-      */}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        {/*
-          `min-w-0` pada KEDUA anak kisi, dan itu bukan hiasan.
-
-          Anak kisi bawaannya `min-width: auto`, artinya ia menolak menyusut di
-          bawah lebar min-content isinya. Pada kolom tunggal di ponsel, isi
-          terlebar — kepala kartu berisi judul beserta tombol "Ubah Profil" —
-          menahan seluruh kolom di 387px. Diukur di dalam iframe selebar 320px:
-          halaman meluber 83px ke kanan dan lencana peran keluar layar,
-          sementara /dashboard dan /pengguna pada lebar yang sama nol.
-
-          `minmax(0,…)` pada `lg:grid-cols` hanya mengurus TRACK-nya, dan hanya
-          mulai 1024px. Yang menahan di bawah itu adalah itemnya.
-        */}
         <div className="min-w-0 space-y-5">
           <ProfileIdentityCard
             displayName={profile.display_name}
@@ -170,10 +134,6 @@ export default async function ProfilePage() {
                 </dl>
               </CardContent>
             ) : (
-              /* Keadaan kosong bersama, dipendekkan. Bawaannya `py-14` —
-                 dirancang untuk keadaan kosong selebar halaman, dan di dalam
-                 kartu sekecil ini ia menghasilkan lubang alih-alih penjelasan
-                 (docs/UI.md §31). */
               <EmptyState
                 icon={IdCard}
                 title="Belum terhubung ke data anggota"
@@ -223,8 +183,6 @@ export default async function ProfilePage() {
                           {isActive ? " · sedang aktif" : ""}
                         </p>
                       </div>
-                      {/* Lencana peran mengikuti lebar teksnya; `shrink-0`
-                          menjaganya utuh ketika nama organisasi panjang. */}
                       <Badge tone={role.tone} className="shrink-0">
                         {role.label}
                       </Badge>

@@ -29,7 +29,6 @@ export const metadata: Metadata = {
   title: "Audit Log",
 };
 
-/** Aksi diterjemahkan ke bahasa manusia; kode mentah hanya untuk fallback. */
 const ACTION_LABELS: Record<string, string> = {
   "member.created": "Menambah anggota",
   "member.updated": "Mengubah anggota",
@@ -162,8 +161,6 @@ export default async function AuditPage({
                         {ACTION_LABELS[log.action] ?? log.action}
                       </span>
                       <span className="block text-[13px] text-muted-foreground sm:hidden">
-                        {/* Pelaku bisa NULL bila akunnya sudah dihapus —
-                            jejaknya tetap disimpan. */}
                         {log.profiles?.display_name ?? "Sistem"}
                       </span>
                     </TableCell>

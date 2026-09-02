@@ -63,7 +63,6 @@ export type PositionPermissions = {
   canManagePermissions: boolean;
 };
 
-/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
 export type KeadaanDaftar = {
   cari: string;
   halaman: number;
@@ -124,10 +123,6 @@ export function PositionManager({
       />
 
       <Card>
-        {/* Tanpa penyaring: jabatan tidak punya kolom status maupun kategori
-            yang bermakna untuk disaring. Menambahkan dropdown hanya agar
-            toolbarnya terlihat sama dengan halaman lain akan menjadi kontrol
-            yang tidak melakukan apa pun. */}
         <TableToolbar
           searchValue={daftar.cari}
           searchPlaceholder="Cari jabatan…"

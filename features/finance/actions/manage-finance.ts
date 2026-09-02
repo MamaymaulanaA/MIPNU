@@ -22,12 +22,6 @@ import { databaseFailure, parseForm } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/**
- * Kesalahan relasi keuangan hampir selalu berarti satu hal: sesuatu yang
- * ditunjuk bukan milik organisasi ini, atau kategorinya bertipe salah.
- * Keduanya ditolak foreign key, dan keduanya pantas dijelaskan dengan
- * kalimat yang sama.
- */
 const RELATION_FAILURE = {
   "23503": {
     success: false as const,
@@ -45,8 +39,6 @@ function revalidateFinance() {
   revalidatePath("/keuangan/laporan");
   revalidatePath("/dashboard");
 }
-
-/* ============================================================== akun kas */
 
 export async function createFinancialAccount(
   organizationId: string,
@@ -150,8 +142,6 @@ export async function updateFinancialAccount(
       action: "financial_account.updated",
       resourceType: "financial_account",
       resourceId: accountId,
-      // Saldo awal menggeser SELURUH saldo akun. Perubahannya dicatat sebelum
-      // dan sesudah, supaya selisih yang muncul kelak dapat dijelaskan.
       metadata: {
         opening_balance_before: before?.opening_balance ?? null,
         opening_balance_after: parsed.data.openingBalance,
@@ -211,8 +201,6 @@ export async function setAccountActive(
   }
 }
 
-/* ============================================================== kategori */
-
 export async function createFinancialCategory(
   organizationId: string,
   _previousState: ActionResult<{ id: string }> | null,
@@ -268,14 +256,6 @@ export async function createFinancialCategory(
   }
 }
 
-/**
- * Mengubah kategori.
- *
- * `type` sengaja TIDAK ikut diubah. Kategori bertipe INCOME yang berubah
- * menjadi EXPENSE akan membuat transaksi yang sudah menunjuknya berpindah
- * arah — dan foreign key komposit memang akan menolaknya. Yang tersedia
- * adalah menonaktifkan kategori lama dan membuat yang baru.
- */
 export async function updateFinancialCategory(
   organizationId: string,
   categoryId: string,
@@ -357,8 +337,6 @@ export async function setCategoryActive(
     return fail(error);
   }
 }
-
-/* ============================================================= transaksi */
 
 export async function createTransaction(
   organizationId: string,
@@ -443,12 +421,6 @@ export async function updateDraftTransaction(
 
     const supabase = await createClient();
 
-    // `status = DRAFT` ikut menjadi syarat query, bukan diperiksa lebih dulu:
-    // dua langkah terpisah menyisakan celah di antaranya. Trigger di database
-    // menutupnya sekali lagi bagi jalur mana pun.
-    // Kolom bukti hanya ikut ditulis bila pemanggil memang berhak
-    // menyentuhnya. Menulisnya dengan nilai dari form akan membuat penyunting
-    // tanpa finance.view_proofs MENGHAPUS bukti yang tidak pernah ia lihat.
     const proofPatch = context.permissions.has(PERMISSIONS.finance.viewProofs)
       ? { proof_document_id: parsed.data.proofDocumentId }
       : {};
@@ -673,8 +645,6 @@ export async function deleteDraftTransaction(
   }
 }
 
-/* ============================================================== anggaran */
-
 export async function createBudget(
   organizationId: string,
   _previousState: ActionResult<{ id: string }> | null,
@@ -810,7 +780,6 @@ export async function removeBudgetItem(
   }
 }
 
-/** Menyetujui atau menutup anggaran. */
 export async function setBudgetStatus(
   organizationId: string,
   budgetId: string,
@@ -855,23 +824,6 @@ export async function setBudgetStatus(
   }
 }
 
-/* ================================================================== bukti */
-
-/**
- * Tautan bukti transaksi.
- *
- * Yang menentukan boleh-tidaknya adalah `finance.view_proofs` — SATU sumber,
- * bukan gabungan dengan documents.view (lihat migration 0037). Seorang
- * bendahara dapat membuka struk tanpa berhak menelusuri arsip organisasi, dan
- * pengelola arsip tidak otomatis dapat membaca bukti pengeluaran.
- *
- * Dokumennya diresolusi DARI TRANSAKSI, tidak pernah dari id yang dikirim
- * client: dengan begitu satu-satunya berkas yang dapat dibuka lewat jalur ini
- * adalah yang memang ditunjuk transaksi tersebut.
- *
- * Signed URL dibuat SETELAH authorization, bukan sebelumnya, dan berumur lima
- * menit.
- */
 export async function createProofUrl(
   organizationId: string,
   transactionId: string,

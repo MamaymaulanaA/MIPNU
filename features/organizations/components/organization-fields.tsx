@@ -2,26 +2,6 @@
 
 import { Field, Input, Textarea } from "@/components/ui/field";
 
-/**
- * Field profil organisasi yang dapat disunting.
- *
- * Dipakai bersama oleh TIGA dialog: pembuatan dan penyuntingan organisasi pada
- * daftar platform `/admin/organisasi`, serta penyuntingan profil organisasi
- * aktif di `/organisasi`. Ketiganya menyunting kolom yang sama persis, dan
- * sebelum berkas ini ada masing-masing menuliskan sepuluh field itu sendiri.
- *
- * Yang TIDAK ada di sini: slug, jenis, tingkat, dan induk. Keempatnya hanya
- * dapat ditentukan saat pembuatan — lihat `updateOrganizationSchema`, yang
- * memang tidak menerimanya. Dialog pembuatan menyisipkannya lewat
- * `identitySlot`, tepat setelah nama singkat, sehingga kedua dialog membaca
- * dengan urutan yang sama.
- *
- * Komponen ini sengaja tidak memegang `<form>`, action, maupun state: ia hanya
- * menggambar field. Pemanggilnya yang menentukan ke mana datanya dikirim, dan
- * itulah yang membuatnya dapat berdiri baik di dalam halaman maupun di dalam
- * dialog.
- */
-
 export type OrganizationFieldValues = {
   name: string;
   shortName: string;
@@ -54,9 +34,7 @@ export function OrganizationFields({
   identitySlot,
 }: {
   values: OrganizationFieldValues;
-  /** Hasil validasi Zod dari server, ditampilkan inline pada fieldnya. */
   fieldErrors?: Record<string, string[]>;
-  /** Field identitas yang hanya ada saat pembuatan. */
   identitySlot?: React.ReactNode;
 }) {
   return (

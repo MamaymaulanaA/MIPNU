@@ -11,15 +11,6 @@ import {
   type CheckInOutcome,
 } from "@/features/attendance/actions/manage-qr";
 
-/**
- * Pesan untuk setiap alasan penolakan.
- *
- * "Token tidak dikenali" dan "token kedaluwarsa" sengaja dibedakan bagi
- * pengguna — keduanya menuntut tindakan berbeda — tetapi tidak ada satu pun
- * yang membocorkan apakah sesi tertentu ada. Server mengembalikan
- * INVALID_TOKEN yang sama untuk token karangan maupun token milik organisasi
- * lain.
- */
 const OUTCOME_COPY: Record<
   CheckInOutcome["reason"],
   { title: string; description: string; tone: "success" | "error" | "warning" }

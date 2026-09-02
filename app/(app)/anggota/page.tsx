@@ -51,8 +51,6 @@ export default async function MembersPage({
 }) {
   const context = await requireAccessContext();
 
-  // Halaman memeriksa haknya sendiri. Menyembunyikan menu di sidebar adalah
-  // kenyamanan, bukan pengaman — URL tetap dapat diketik langsung.
   if (!context.organizationId || !can(context, PERMISSIONS.members.view)) {
     return <ForbiddenState />;
   }
@@ -214,9 +212,6 @@ async function MemberTable({
                 <TableRow key={member.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      {/* Avatar bawaan mengikuti members.gender bila memang
-                          terisi, dan netral bila tidak. Tidak pernah ditebak
-                          dari nama (docs/UI.md §33-§34). */}
                       <Avatar
                         gender={
                           member.gender === "L" || member.gender === "P"
@@ -233,8 +228,6 @@ async function MemberTable({
                         >
                           {member.fullName}
                         </Link>
-                        {/* Nomor anggota ikut di baris nama pada layar sempit,
-                            karena kolomnya sendiri disembunyikan di bawah sm. */}
                         <span className="block text-[13px] text-muted-foreground sm:hidden">
                           {orDash(member.memberNumber)}
                         </span>

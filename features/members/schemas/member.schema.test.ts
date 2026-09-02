@@ -23,9 +23,6 @@ describe("createMemberSchema", () => {
   it("mengubah field kosong menjadi null, bukan string kosong", () => {
     const parsed = createMemberSchema.parse(validInput);
 
-    // Penting untuk database: unique index nomor anggota mengabaikan NULL,
-    // tetapi string kosong akan dianggap nilai nyata dan bentrok pada
-    // anggota kedua yang belum bernomor.
     expect(parsed.memberNumber).toBeNull();
     expect(parsed.email).toBeNull();
     expect(parsed.birthDate).toBeNull();

@@ -2,19 +2,6 @@ import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Kartu statistik dashboard.
- *
- * Label, nilai, konteks opsional, ikon kecil. Tanpa ilustrasi besar, tanpa
- * gradient — kartu ini ada untuk dibaca sekilas, bukan untuk mengisi ruang
- * (docs/UI.md §58-§60).
- */
-/**
- * Nada ikon. Default netral, dan itu disengaja: memberi warna pada setiap
- * kartu membuat tidak ada satu pun yang menonjol. Nada non-netral hanya
- * dipakai ketika angkanya MEMANG bermakna arah — pemasukan, pengeluaran,
- * peringatan (docs/UI.md §84).
- */
 const TONES = {
   neutral: "bg-muted text-muted-foreground",
   primary: "bg-primary-soft text-primary",

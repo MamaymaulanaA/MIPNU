@@ -6,12 +6,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatNumber } from "@/lib/format";
 
-/**
- * Kontrol pagination berbasis URL.
- *
- * Halaman disimpan di query string supaya tautan dapat dibagikan dan refresh
- * tidak melempar pengguna kembali ke halaman 1 (ARCHITECTURE.md §79).
- */
 export function Pagination({
   page,
   pageCount,
@@ -37,7 +31,6 @@ export function Pagination({
    * meninggalkan nomor halaman daftar lain pada nilai lamanya.
    */
   pageKey?: string;
-  /** Kata benda pada "… dari N ____". */
   label?: string;
 }) {
   const router = useRouter();

@@ -13,13 +13,6 @@ import { databaseFailure, parseForm } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/**
- * Riwayat kaderisasi.
- *
- * Tiap penempuhan adalah BARIS BARU, bukan pembaruan satu kolom jenjang pada
- * anggota. Seorang kader yang mengulang LAKMUD punya dua baris, dan yang
- * pertama tetap terbaca — termasuk ketika hasilnya tidak lulus.
- */
 export async function createCadreshipRecord(
   organizationId: string,
   _previousState: ActionResult<{ id: string }> | null,
@@ -195,8 +188,6 @@ export async function deleteCadreshipRecord(
 
     const supabase = await createClient();
 
-    // Soft delete: riwayat kaderisasi adalah bukti, dan bukti yang dapat
-    // dihapus permanen oleh satu klik bukan bukti.
     const { error } = await supabase
       .from("cadreship_records")
       .update({ deleted_at: new Date().toISOString() })

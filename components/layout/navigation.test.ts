@@ -20,7 +20,6 @@ describe("filterNavigation", () => {
   });
 
   it("membuang grup yang seluruh itemnya tersaring", () => {
-    // Baseline ANGGOTA: hanya boleh melihat dashboard dan agenda.
     const anggota = new Set<string>([
       PERMISSIONS.organization.view,
       PERMISSIONS.agenda.view,
@@ -131,7 +130,6 @@ describe("resolveActiveHref", () => {
   });
 
   it("awalan yang mirip tidak dianggap cocok", () => {
-    // `/anggotaan` bukan bagian dari `/anggota`.
     expect(resolveActiveHref("/anggotaan")).toBeNull();
     expect(resolveActiveHref("/keuangan-lain")).toBeNull();
   });

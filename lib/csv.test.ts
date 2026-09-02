@@ -16,7 +16,6 @@ describe("parseCsv", () => {
   });
 
   it("menghormati koma di dalam field berkutip", () => {
-    // Alamat Indonesia hampir selalu memuat koma.
     expect(parseCsv('nama,alamat\n"Ahmad","Jl. Merdeka No. 1, Bogor"')).toEqual(
       [
         ["nama", "alamat"],
@@ -47,7 +46,6 @@ describe("parseCsv", () => {
   });
 
   it("membuang BOM di awal berkas", () => {
-    // Tanpa ini, nama kolom pertama dari Excel tidak pernah cocok.
     expect(parseCsv("﻿nama\nAhmad")).toEqual([["nama"], ["Ahmad"]]);
   });
 
@@ -88,7 +86,6 @@ describe("parseCsvWithHeader", () => {
 
   it("tidak menebak tipe — nomor tetap string", () => {
     const { rows } = parseCsvWithHeader("telepon\n081234567890\n");
-    // Menebak tipe akan menghapus nol di depan nomor telepon.
     expect(rows[0]!.telepon).toBe("081234567890");
   });
 
@@ -156,7 +153,6 @@ describe("perlindungan formula spreadsheet", () => {
       [{ key: "nilai", label: "Nilai" }],
     );
 
-    // Yang diperiksa adalah TEKS MENTAH-nya, karena itulah yang dibaca Excel.
     const barisMentah = csv
       .replace(/^﻿/, "")
       .split("\r\n")
@@ -171,8 +167,6 @@ describe("perlindungan formula spreadsheet", () => {
   });
 
   it("ekspor lalu impor menghasilkan nilai yang sama persis", () => {
-    // Perlindungan yang mengubah data bukan perlindungan yang dapat dipakai:
-    // organisasi mengekspor lalu mengimpor kembali berkasnya sendiri.
     const csv = toCsv(
       berbahaya.map((nilai) => ({ nilai })),
       [{ key: "nilai", label: "Nilai" }],
@@ -192,8 +186,6 @@ describe("perlindungan formula spreadsheet", () => {
   });
 
   it("petik pelindung tidak dilepas dari teks yang memang diawali petik", () => {
-    // `'biasa` bukan hasil pelindungan — huruf b bukan pemicu rumus — jadi
-    // petiknya adalah bagian dari datanya dan harus bertahan.
     expect(
       isiBaris(toCsv([{ n: "'biasa" }], [{ key: "n", label: "N" }]))[0]![0],
     ).toBe("'biasa");

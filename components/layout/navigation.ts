@@ -37,7 +37,6 @@ export type NavItem = {
 };
 
 export type NavGroup = {
-  /** NULL untuk grup teratas yang tidak butuh judul. */
   label: string | null;
   items: NavItem[];
 };
@@ -107,8 +106,6 @@ export const NAVIGATION: NavGroup[] = [
         href: "/kaderisasi",
         label: "Kaderisasi",
         icon: GraduationCap,
-        // view_own, bukan view: setiap anggota berhak melihat riwayat
-        // kaderisasinya sendiri, dan halaman ini menyesuaikan isinya.
         permission: PERMISSIONS.cadreship.viewOwn,
       },
     ],
@@ -207,9 +204,6 @@ export const NAVIGATION: NavGroup[] = [
     ],
   },
   {
-    // Satu pintu masuk saja. Kandidat, DPT, panitia, partisipasi, hasil, dan
-    // audit adalah tab DI DALAM satu pemilihan — bukan enam menu sejajar yang
-    // memaksa pengguna mengingat pemilihan mana yang sedang ia buka.
     label: "Pemilihan",
     items: [
       {
@@ -253,26 +247,13 @@ export const NAVIGATION: NavGroup[] = [
 ];
 
 /**
- * Menu mana yang sedang aktif untuk sebuah alamat.
+ * Menu aktif = prefiks terpanjang di SELURUH katalog rute, bukan hanya menu
+ * yang terlihat.
  *
- * Pemenangnya adalah PREFIKS TERPANJANG di seluruh katalog rute — dan
- * "seluruh katalog" itu penting, bukan hanya menu yang terlihat pengguna.
- *
- * Dua kekeliruan yang dihindari sekaligus:
- *
- *   1. Mencocokkan tiap item sendiri-sendiri dengan `startsWith` membuat
- *      `/organisasi/periode` menyalakan "Profil Organisasi" (`/organisasi`)
- *      DAN "Periode" bersamaan. Seluruh menu Keuangan punya masalah yang
- *      sama, karena `/keuangan` adalah awalan empat menu di bawahnya.
- *
- *   2. Menghitung pemenang hanya dari menu yang TERLIHAT membuat induknya
- *      menyala ketika anaknya disembunyikan permission — seorang pengurus
- *      yang membuka `/organisasi/periode` tanpa hak `periods.view` akan
- *      melihat "Profil Organisasi" menyala, yang salah menyebutkan posisinya.
- *      Bila pemenangnya tidak terlihat, jawabannya TIDAK ADA yang aktif.
- *
- * Halaman rincian tetap ikut induknya: `/anggota/{id}/edit` tidak dimiliki
- * item mana pun selain `/anggota`, jadi "Data Anggota" tetap menyala.
+ * Mencocokkan per item membuat `/organisasi/periode` menyalakan dua menu
+ * sekaligus. Menghitung hanya dari menu terlihat membuat induk menyala ketika
+ * anaknya disembunyikan permission; bila pemenangnya tidak terlihat, tidak ada
+ * yang aktif.
  */
 export function resolveActiveHref(pathname: string): string | null {
   let terbaik: string | null = null;

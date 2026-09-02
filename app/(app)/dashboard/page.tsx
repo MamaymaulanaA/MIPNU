@@ -51,18 +51,8 @@ export const metadata: Metadata = {
  * Tidak ada satu pun angka hardcoded di halaman ini (PRD §64).
  */
 
-/**
- * Sisa masa periode, dihitung dari tanggal akhir yang MEMANG tersimpan.
- *
- * Tidak ada nilai yang dikarang: bila tanggalnya tidak terbaca, jawabannya
- * NULL dan lencananya tidak muncul sama sekali. Satuannya menyesuaikan supaya
- * "0 tahun tersisa" tidak pernah terjadi pada periode yang tinggal beberapa
- * bulan.
- */
 type SisaPeriode = {
-  /** Kalimat penuh untuk lencana di kepala halaman. */
   text: string;
-  /** Dua bagian pendek untuk sudut kartu metrik. */
   short: string;
   caption: string;
 };
@@ -117,11 +107,6 @@ export default async function DashboardPage() {
     ? await getPlatformStats()
     : null;
 
-  // Administrator platform mendapat dashboardnya SENDIRI, bukan varian
-  // dashboard organisasi. Peran ini membaca organizations/profiles/audit_logs
-  // sementara members, announcements, dan meetings mengembalikan nol baris
-  // untuknya — satu dashboard universal hanya akan menampilkan angka nol yang
-  // salah artinya.
   if (platformStats) {
     const [growth, system, quickInfo, activity, accounts] = await Promise.all([
       getPlatformGrowth(),
@@ -168,9 +153,6 @@ export default async function DashboardPage() {
               }
               action={
                 can(context, PERMISSIONS.organization.create) ? (
-                  /* Menuju daftarnya, tempat dialog pembuatan berada.
-                     Halaman `/admin/organisasi/baru` sudah tidak ada sejak
-                     pembuatan pindah ke dialog. */
                   <Button size="sm" asChild>
                     <Link href="/admin/organisasi">Buat Organisasi</Link>
                   </Button>
@@ -183,8 +165,6 @@ export default async function DashboardPage() {
     );
   }
 
-  // Setiap bagian diambil HANYA bila haknya ada. Tanpa hak, query-nya tidak
-  // pernah berjalan — jadi tidak ada baris yang perlu disembunyikan kemudian.
   const bolehLihatAudit = can(context, PERMISSIONS.audit.view);
   const bolehLihatPemilihan = can(context, PERMISSIONS.elections.view);
 
@@ -236,10 +216,6 @@ export default async function DashboardPage() {
     operasional,
   ] = await Promise.all([
     getOrganizationStats(context.organizationId),
-    // Satu daftar jadwal, digabung dari sumber yang memang boleh dilihat.
-    // Satu batas pratinjau untuk seluruh dashboard, dan batas itu juga yang
-    // menentukan tinggi slot kartunya. Daftar penuhnya ada di modul masing-
-    // masing lewat "Lihat semua".
     getUpcomingSchedule(
       context.organizationId,
       sumberKegiatan,
@@ -250,9 +226,6 @@ export default async function DashboardPage() {
       : null,
     getActivitySeries(context.organizationId, sumberKegiatan),
     getInsightSummary(context.organizationId, sumberAdministrasi),
-    // Ringkasan pemilihan TIDAK PERNAH memuat perolehan kandidat — lihat
-    // catatan pada `getElectionSummary`. Yang dibacanya hanya status dan
-    // partisipasi.
     bolehLihatPemilihan ? getElectionSummary(context.organizationId) : null,
     getLatestAdministration(
       context.organizationId,
@@ -262,8 +235,6 @@ export default async function DashboardPage() {
     getOperationalSummary(context.organizationId, gerbangOperasional),
   ]);
 
-  // Dijalankan setelah agregatnya ada: jumlah anggota tanpa akun dihitung dari
-  // selisih terhadap jumlah anggota, dan angka itu datang dari `stats`.
   const tindakLanjut = await getOperationalAttention(
     context.organizationId,
     gerbangTindakLanjut,

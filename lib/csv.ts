@@ -1,24 +1,4 @@
-/**
- * Baca-tulis CSV.
- *
- * Ditulis sendiri alih-alih menambah dependency: yang dibutuhkan MIPNU adalah
- * RFC 4180 apa adanya, dan bagian yang benar-benar berbahaya — field berkutip
- * yang memuat koma, baris baru, dan kutip ganda — hanya beberapa baris kode
- * yang dapat diuji langsung (SYSTEM.md §115).
- *
- * Yang ditangani: BOM, CRLF, field berkutip, kutip ganda di dalam kutip,
- * baris kosong, dan baris terakhir tanpa newline.
- */
-
-/**
- * Mengurai CSV menjadi larik baris berupa larik sel.
- *
- * Tidak menebak tipe apa pun: semua sel tetap string. Menebak tipe pada
- * tahap ini akan mengubah "0812…" menjadi angka dan menghapus nol di depan
- * nomor telepon.
- */
 export function parseCsv(input: string): string[][] {
-  // BOM dari Excel akan menempel pada nama kolom pertama bila tidak dibuang.
   const text = input.replace(/^﻿/, "");
 
   const rows: string[][] = [];
@@ -34,8 +14,6 @@ export function parseCsv(input: string): string[][] {
 
   function endRow() {
     endField();
-    // Baris yang seluruhnya kosong dibuang — biasanya sisa newline di akhir
-    // berkas, bukan data.
     if (row.some((cell) => cell.trim() !== "")) rows.push(row);
     row = [];
   }
@@ -72,7 +50,6 @@ export function parseCsv(input: string): string[][] {
     }
 
     if (char === "\r") {
-      // CRLF maupun CR sendirian diperlakukan sebagai satu akhir baris.
       if (text[index + 1] === "\n") index += 1;
       endRow();
       index += 1;
@@ -89,19 +66,11 @@ export function parseCsv(input: string): string[][] {
     index += 1;
   }
 
-  // Baris terakhir sering tidak diakhiri newline.
   if (field !== "" || row.length > 0) endRow();
 
   return rows;
 }
 
-/**
- * Mengurai CSV berheader menjadi larik objek.
- *
- * Nama kolom dinormalkan (huruf kecil, spasi/garis bawah dirapikan) supaya
- * "Nama Lengkap", "nama_lengkap", dan "NAMA LENGKAP" sama-sama dikenali —
- * berkas dari orang berbeda tidak pernah seragam.
- */
 export function parseCsvWithHeader(input: string): {
   headers: string[];
   rows: Record<string, string>[];
@@ -130,15 +99,6 @@ export function normalizeHeader(header: string): string {
     .replace(/[^a-z0-9_]/g, "");
 }
 
-/** Meloloskan satu sel agar aman ditulis ke CSV. */
-/**
- * Karakter yang membuat spreadsheet memperlakukan sebuah sel sebagai RUMUS.
- *
- * Excel, LibreOffice, dan Google Sheets mengeksekusi sel yang diawali salah
- * satunya. Sebuah keterangan transaksi yang ditulis
- * `=HYPERLINK("http://…","klik")` akan menjadi tautan hidup pada berkas yang
- * dibuka bendahara — dan penulisnya adalah siapa pun yang boleh mengisi form.
- */
 const FORMULA_TRIGGERS = /^[=+\-@\t\r]/;
 
 function escapeCell(value: unknown): string {
@@ -146,9 +106,6 @@ function escapeCell(value: unknown): string {
 
   let text = String(value);
 
-  // Petik tunggal di depan membuat spreadsheet membacanya sebagai teks biasa.
-  // Ia dilepas kembali oleh parseCsv(), sehingga ekspor lalu impor tetap
-  // menghasilkan nilai yang sama persis.
   if (FORMULA_TRIGGERS.test(text)) {
     text = `'${text}`;
   }
@@ -162,19 +119,12 @@ function escapeCell(value: unknown): string {
   return text;
 }
 
-/** Melepas petik pelindung yang dipasang escapeCell(). */
 function unescapeCell(value: string): string {
   return value.startsWith("'") && FORMULA_TRIGGERS.test(value.slice(1))
     ? value.slice(1)
     : value;
 }
 
-/**
- * Menyusun CSV dari daftar objek.
- *
- * Menulis BOM UTF-8 supaya Excel di Windows membaca huruf beraksen dan nama
- * berbahasa Indonesia dengan benar, bukan sebagai karakter rusak.
- */
 export function toCsv<T extends Record<string, unknown>>(
   rows: T[],
   columns: { key: keyof T & string; label: string }[],

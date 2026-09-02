@@ -147,7 +147,6 @@ export default async function AttendanceSessionPage({
             canManage={canManage}
           />
         ) : (
-          // Anggota tanpa `attendance.view` hanya melihat catatannya sendiri.
           <AttendanceRoster
             organizationId={context.organizationId}
             sessionId={session.id}

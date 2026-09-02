@@ -25,13 +25,6 @@ import { candidateStatus } from "@/lib/status";
 
 export type MemberOption = { id: string; label: string };
 
-/**
- * Daftar kandidat.
- *
- * Terkunci begitu pemilihan dibuka. `locked` hanya menyembunyikan tombolnya;
- * trigger `candidates_guard` di database yang benar-benar menolak, sehingga
- * permintaan langsung ke API pun berakhir sama.
- */
 export function CandidatePanel({
   organizationId,
   electionId,
@@ -85,7 +78,6 @@ export function CandidatePanel({
           }
         />
       ) : (
-        // Tanpa padding sendiri: badan kartu permukaan tab yang memberinya.
         <ul className="grid gap-3 sm:grid-cols-2">
           {candidates.map((candidate) => {
             const status = candidateStatus(candidate.status);

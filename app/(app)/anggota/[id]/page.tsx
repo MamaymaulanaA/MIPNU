@@ -35,8 +35,6 @@ export default async function MemberDetailPage({
   const includePrivate = can(context, PERMISSIONS.members.viewPrivate);
   const isOwnRecord = context.memberId === id;
 
-  // Anggota biasa boleh membuka halaman ini untuk dirinya sendiri walaupun
-  // tidak memiliki `members.view` (docs/PERMISSIONS.md §60).
   if (!can(context, PERMISSIONS.members.view) && !isOwnRecord) {
     return <ForbiddenState />;
   }
@@ -75,12 +73,6 @@ export default async function MemberDetailPage({
               />
             ) : null}
             {canEdit ? (
-              /* Penyuntingan terjadi di sini, di halaman yang datanya memang
-                 sudah lengkap. Daftar anggota sengaja TIDAK membawa aksi ini:
-                 query daftarnya ramping — tanpa tempat lahir, tanggal lahir,
-                 alamat, dan catatan — dan menambahkannya hanya demi mengisi
-                 dialog berarti setiap pemuatan daftar membayar untuk satu
-                 baris yang mungkin disunting (AGENTS.md §64). */
               <MemberEditDialog
                 organizationId={context.organizationId}
                 memberId={member.id}
@@ -110,9 +102,6 @@ export default async function MemberDetailPage({
       <div className="grid gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            {/* Avatar bawaan, bukan foto: anggota belum tentu punya akun,
-                sehingga tidak ada unggahan yang bisa menang di sini. Namanya
-                sudah tertulis di sebelahnya, jadi gambarnya dekoratif. */}
             <Avatar
               gender={
                 member.gender === "L" || member.gender === "P"

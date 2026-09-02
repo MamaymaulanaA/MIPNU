@@ -39,14 +39,6 @@ export type PlatformStats = {
   members_total: number;
 };
 
-/**
- * Agregat organisasi.
- *
- * Satu panggilan RPC, dihitung seluruhnya di database. Sebelumnya ini enam
- * query `count` terpisah; menggabungkannya berarti satu perjalanan jaringan
- * dan satu tempat yang memutuskan bagian mana boleh dilihat siapa
- * (SYSTEM.md §69).
- */
 export async function getOrganizationStats(
   organizationId: string,
 ): Promise<OrganizationStats | null> {
@@ -64,22 +56,12 @@ export async function getOrganizationStats(
   return data as unknown as OrganizationStats;
 }
 
-/**
- * Agregat platform.
- *
- * Hanya untuk pemegang `reports.view_global`. Mengembalikan NULL — bukan
- * melempar — bila tidak berhak, supaya dashboard cukup tidak merender
- * bagiannya.
- */
 export async function getPlatformStats(): Promise<PlatformStats | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase.rpc("mipnu_platform_stats");
 
   if (error) {
-    // insufficient_privilege di sini bukan kondisi luar biasa: banyak
-    // pengguna memang tidak berhak, dan dashboard mereka hanya tidak
-    // menampilkan bagian platform.
     if (error.code !== "42501") {
       console.error("[mipnu] gagal memuat statistik platform", error.message);
     }

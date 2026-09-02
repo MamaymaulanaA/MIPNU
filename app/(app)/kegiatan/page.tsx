@@ -43,10 +43,6 @@ export default async function EventsPage({
 
   const supabase = await createClient();
 
-  // Jumlah peserta dihitung database-side lewat agregat relasi, bukan dengan
-  // mengambil seluruh baris peserta lalu menghitungnya di aplikasi.
-  // Pencarian dan penyaringan di database, dengan `.range()` — bukan
-  // `.limit(50)` yang menyembunyikan event lama tanpa cara menjangkaunya.
   let eventQuery = supabase
     .from("events")
     .select(
@@ -129,8 +125,6 @@ export default async function EventsPage({
             }
           />
         ) : (
-          /* Daftar ikut aturan data panjang: dibatasi tingginya dan menggulir
-             di dalam kartunya, memakai `.scroll-area` yang sama dengan tabel. */
           <ul className="scroll-area max-h-[calc(100dvh-20rem)] min-h-[220px] divide-y divide-border">
             {events.map((event) => {
               const status = eventStatus(event.status);

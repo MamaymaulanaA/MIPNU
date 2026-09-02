@@ -2,16 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { getAvatarPresentation } from "@/lib/avatar";
 
-/**
- * Uji avatar bawaan.
- *
- * Yang dikunci di sini adalah janji-janji yang mudah rusak diam-diam saat
- * konfigurasi library diutak-atik: avatar yang berubah setiap render, palet
- * yang kembali memuat hijau, atau unggahan pengguna yang kalah oleh gambar
- * bawaan.
- */
-
-/** Membongkar data URI menjadi SVG agar warnanya dapat diperiksa. */
 function svgDari(src: string) {
   expect(src.startsWith("data:image/svg+xml")).toBe(true);
   return decodeURIComponent(src.slice(src.indexOf(",") + 1));
@@ -23,7 +13,6 @@ function warnaDari(src: string) {
   );
 }
 
-/** Kehijauan: komponen hijau jelas mengungguli merah DAN biru. */
 function kehijauan(hex: string) {
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
@@ -60,8 +49,6 @@ describe("Avatar bawaan", () => {
   });
 
   it("identitas berbeda menghasilkan avatar berbeda", () => {
-    // Dua puluh identitas: kalau hanya satu wajah yang keluar per jenis
-    // kelamin, daftar anggota akan tampak seperti kesalahan.
     const berbeda = new Set(
       Array.from(
         { length: 20 },
@@ -125,10 +112,6 @@ describe("Avatar bawaan", () => {
       "667085",
     ]);
 
-    // Warna kulit, rambut, mata, dan mulut memang di luar palet biru — wajah
-    // manusia tidak berwarna biru. Yang diperiksa adalah tidak munculnya
-    // aksesori beraksen di luar keluarga (topi oranye, kupluk merah, ikat
-    // rambut merah muda) yang dibuang dari kurasi.
     const AKSEN_TERLARANG = ["f29c65", "e15c66", "f55d81", "5a45ff", "dc5c7a"];
 
     const ditemukan = new Set<string>();
@@ -146,8 +129,6 @@ describe("Avatar bawaan", () => {
           if (AKSEN_TERLARANG.includes(w)) ditemukan.add(w);
         }
 
-        // Setiap avatar harus benar-benar memakai palet MIPNU, bukan sekadar
-        // tidak memakai warna terlarang.
         if (!warna.some((w) => KELUARGA.has(w))) tanpaBiru += 1;
       }
     }

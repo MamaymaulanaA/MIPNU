@@ -51,7 +51,6 @@ export type AssignmentRow = {
 
 export type Option = { id: string; label: string };
 
-/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
 export type KeadaanDaftar = {
   cari: string;
   periode: string;
@@ -97,9 +96,6 @@ export function ManagementManager({
   const [ending, setEnding] = useState<AssignmentRow | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Menugaskan pengurus mensyaratkan ketiganya sudah ada. Tanpa ini tombol
-  // akan membuka form yang pasti gagal — lebih jujur menjelaskan apa yang
-  // kurang (AGENTS.md §88).
   const missing: string[] = [];
   if (periods.length === 0) missing.push("periode");
   if (positions.length === 0) missing.push("jabatan");
@@ -125,13 +121,6 @@ export function ManagementManager({
   const disaring =
     daftar.cari !== "" || daftar.periode !== "" || daftar.jabatan !== "";
 
-  /*
-    Penyaring hanya dirender bila pilihannya memang ada. Daftar periode dan
-    jabatan dimuat halaman ini untuk FORM penugasan, dan form itu hanya dimuat
-    bagi pemegang `management.assign` — jadi pemanggil tanpa hak itu menerima
-    daftar kosong, dan menampilkan dropdown kosong hanya akan menjadi kontrol
-    yang tidak dapat dipakai.
-  */
   const filterKepengurusan: TableFilter[] = [];
 
   if (daftar.periodeOptions.length > 0) {

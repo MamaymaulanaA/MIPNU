@@ -35,8 +35,6 @@ export default async function PeriodsPage({
 
   const supabase = await createClient();
 
-  // Pencarian dan penyaringan di database, bukan menarik seluruh periode lalu
-  // menyaringnya di browser (AGENTS.md §57).
   let query = supabase
     .from("organization_periods")
     .select("id, name, start_date, end_date, status", { count: "exact" })

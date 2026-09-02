@@ -41,14 +41,6 @@ export type VoterMemberOption = {
   memberNumber: string | null;
 };
 
-/**
- * Daftar Pemilih Tetap.
- *
- * Terkunci begitu pemungutan suara dibuka (EVOTING §43): menambah, menghapus,
- * atau mencabut hak pilih di tengah pemilihan adalah cara paling langsung
- * mengubah hasilnya. Trigger database yang menolaknya; di sini tombolnya hanya
- * disembunyikan agar tidak menawarkan yang mustahil.
- */
 export function VoterPanel({
   organizationId,
   electionId,

@@ -134,12 +134,6 @@ export async function updateAssignment(
   }
 }
 
-/**
- * Mengakhiri penugasan.
- *
- * Bukan DELETE: riwayat kepengurusan harus tetap terbaca setelah periode
- * berganti (docs/DATABASE.md §50). Statusnya berubah, barisnya tetap.
- */
 export async function endAssignment(
   organizationId: string,
   assignmentId: string,

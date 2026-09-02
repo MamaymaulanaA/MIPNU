@@ -5,13 +5,6 @@ import { AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-/**
- * Error boundary global.
- *
- * Pengguna menerima pesan aman; detail teknis hanya masuk ke console.
- * `digest` ditampilkan karena berguna saat pengguna melaporkan masalah, dan
- * ia memang hanya sebuah id — bukan stack trace (SYSTEM.md §58).
- */
 export default function GlobalError({
   error,
   reset,

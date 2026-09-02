@@ -83,8 +83,6 @@ export async function createMember(
       .single();
 
     if (error) {
-      // 23505 = unique_violation. Satu-satunya unique yang dapat dilanggar
-      // dari form ini adalah nomor anggota per organisasi.
       if (error.code === "23505") {
         return {
           success: false,
@@ -104,8 +102,6 @@ export async function createMember(
       action: "member.created",
       resourceType: "member",
       resourceId: data.id,
-      // Metadata sengaja minimal: cukup untuk menelusuri, tanpa menyalin
-      // data pribadi ke tabel audit (docs/DATABASE.md §130).
       metadata: { member_number: input.memberNumber },
     });
 

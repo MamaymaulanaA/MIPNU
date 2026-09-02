@@ -1,48 +1,15 @@
 import { cn } from "@/lib/utils";
 
-/**
- * Tabel data.
- *
- * `TableScroll` membungkus tabel dengan container yang menggulir sendiri.
- * Ini yang menjaga janji "tidak ada horizontal overflow di level halaman":
- * tabel lebar menggulir di dalam kotaknya, bukan mendorong seluruh halaman
- * (docs/UI.md §67, §103).
- *
- * `bounded` menambahkan batas tinggi. Tanpa itu, seratus baris membuat kartu
- * setinggi enam ribu piksel dan pagination di kaki tabel terdorong jauh di
- * bawah layar — pengguna harus menggulir seluruh halaman hanya untuk mencapai
- * tombol "Berikutnya".
- *
- * Batasnya MENGIKUTI TINGGI LAYAR, bukan angka mati: `calc(100dvh-20rem)`
- * menyisakan ruang untuk kepala halaman, toolbar, dan kaki tabel. Karena yang
- * dipakai `max-height` dan `overflow-y: auto`, tabel berisi tiga baris tetap
- * setinggi tiga baris — batas ini hanya bekerja ketika memang dilampaui.
- *
- * TIDAK ADA `min-height`. Sebelumnya ada, 220px, dan itu membatalkan kalimat
- * di atas: diukur di peramban pada halaman Kepengurusan, tabel berisi dua
- * baris setinggi 134px duduk di dalam kotak 220px — 86px kosong yang tidak
- * pernah diminta siapa pun, pada setiap tabel yang datanya sedikit. Batas
- * bawah adalah cara membuat kekosongan, bukan cara mencegahnya.
- *
- * Gulirannya memakai `.scroll-area`, utilitas yang SAMA dengan sidebar dan
- * dialog: batang gulir 4px, jalur transparan, thumb yang menggelap saat
- * ditunjuk. Tidak ada CSS scrollbar kedua di project ini.
- */
 export function TableScroll({
   className,
   bounded = false,
   ...props
 }: React.ComponentProps<"div"> & {
-  /** Membatasi tinggi dan menyalakan guliran vertikal di dalam tabel. */
   bounded?: boolean;
 }) {
   return (
     <div
       className={cn(
-        // `scroll-area` SELALU, bukan hanya ketika dibatasi tingginya. Tabel
-        // lebar menggulir mendatar pada layar sempit, dan tanpa kelas ini
-        // batang gulirnya adalah batang bawaan sistem — 15px berlatar abu
-        // dengan tombol panah, di dalam kartu yang rapi.
         "scroll-area w-full overflow-x-auto",
         bounded && "max-h-[calc(100dvh-20rem)]",
         className,
@@ -61,14 +28,6 @@ export function Table({ className, ...props }: React.ComponentProps<"table">) {
   );
 }
 
-/**
- * Kepala tabel, MENEMPEL di atas ketika badannya menggulir.
- *
- * Latarnya solid, bukan `bg-muted/60` seperti dulu: latar tembus pandang
- * membuat baris yang lewat di bawahnya terbaca menembus nama kolom. Pada
- * tabel yang tidak menggulir, `sticky` tidak melakukan apa pun — jadi ini
- * aman dipasang di semua tabel sekaligus.
- */
 export function TableHead({
   className,
   ...props

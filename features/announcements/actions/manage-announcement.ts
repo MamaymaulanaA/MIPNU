@@ -72,8 +72,6 @@ export async function createAnnouncement(
     const parsed = parseForm(announcementSchema, formData, ANNOUNCEMENT_FIELDS);
     if (!parsed.ok) return parsed.result;
 
-    // Sasaran hanya boleh ditentukan oleh yang berhak mengaturnya; sisanya
-    // mendapat ALL_MEMBERS, yang paling tidak mengejutkan.
     const audience = context.permissions.has(
       PERMISSIONS.announcements.manageAudience,
     )
@@ -146,9 +144,6 @@ export async function updateAnnouncement(
         expires_at: parsed.data.expiresAt
           ? new Date(parsed.data.expiresAt).toISOString()
           : null,
-        // Kolom audience hanya ikut dikirim bila memang berhak diubah;
-        // mengirimnya dengan nilai lama pun akan lolos trigger, tetapi tidak
-        // mengirimnya lebih jujur terhadap maksudnya.
         ...(canSetAudience ? { audience_type: parsed.data.audienceType } : {}),
       })
       .eq("id", announcementId)
@@ -197,9 +192,6 @@ export async function setAnnouncementStatus(
       .from("announcements")
       .update({
         status,
-        // Constraint menuntut PUBLISHED selalu punya waktu terbit. Kembali ke
-        // draf mengosongkannya lagi supaya urutan terbit tidak menyimpan
-        // waktu dari penerbitan yang dibatalkan.
         published_at: status === "PUBLISHED" ? new Date().toISOString() : null,
       })
       .eq("id", announcementId)

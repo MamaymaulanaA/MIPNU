@@ -22,26 +22,6 @@ import type {
   GrowthPoint,
 } from "@/features/dashboard/queries/platform-insight";
 
-/**
- * Grafik dashboard platform.
- *
- * Biru tetap warna utamanya. Aksen lain dipakai untuk satu tugas saja:
- * MEMBEDAKAN kategori yang berdampingan. Donat enam irisan dengan enam
- * kedalaman biru menuntut pembacanya membandingkan kepekatan; enam hue yang
- * berbeda terbaca sekali lihat. Karena itu urutannya tetap: biru primer lebih
- * dulu, selalu, sehingga irisan terbesar tetap berwarna merek.
- *
- * Aksen ini BUKAN status. Merah mawar di sini berarti "kategori keenam", bukan
- * "gagal" — token semantik destructive/warning tidak dipakai di grafik supaya
- * artinya tidak tergerus.
- *
- * Setiap pembungkus grafik diberi `min-w-0 overflow-hidden`. Recharts menulis
- * lebar terukur sebagai gaya sebaris pada pembungkusnya sendiri, dan lebar itu
- * tertinggal sesaat ketika jendela dikecilkan — cukup untuk mendorong lebar
- * halaman sebelum pengukuran berikutnya tiba. Kliping di sini membuat sisa
- * sesaat itu tidak pernah sampai ke tata letak.
- */
-
 const TOOLTIP = {
   borderRadius: 8,
   border: "1px solid hsl(var(--border))",
@@ -50,16 +30,12 @@ const TOOLTIP = {
   boxShadow: "none",
 };
 
-/* ------------------------------------------------------- pertumbuhan */
-
 export function GrowthChart({ points }: { points: GrowthPoint[] }) {
   return (
     <div className="h-[212px] w-full min-w-0 overflow-hidden">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={points}
-          // Marginnya tidak ditarik ke kiri: label sumbu Y di sini bisa dua
-          // angka, dan margin negatif memotong digit pertamanya.
           margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
         >
           <defs>
@@ -106,8 +82,6 @@ export function GrowthChart({ points }: { points: GrowthPoint[] }) {
             dot={{ r: 3, fill: AKSEN.blue, strokeWidth: 0 }}
             activeDot={{ r: 5 }}
           />
-          {/* Deret kedua ungu, bukan biru tua: dua biru berdampingan pada
-              grafik yang sama menuntut legenda dibaca lebih dulu. */}
           <Area
             type="monotone"
             dataKey="accounts"
@@ -124,8 +98,6 @@ export function GrowthChart({ points }: { points: GrowthPoint[] }) {
     </div>
   );
 }
-
-/* ------------------------------------------------------------- donat */
 
 export function DonutChart({
   slices,
@@ -164,7 +136,6 @@ export function DonutChart({
         </PieChart>
       </ResponsiveContainer>
 
-      {/* Angka di tengah donat: yang dicari orang lebih dulu adalah totalnya. */}
       <div className="pointer-events-none absolute inset-0 grid place-items-center">
         <div className="text-center">
           <p className="text-[22px] leading-none font-semibold text-foreground">
@@ -213,16 +184,6 @@ export function DonutLegend({
   );
 }
 
-/* --------------------------------------------------------- sparkline */
-
-/**
- * Garis mini pada kartu metrik.
- *
- * HANYA dipanggil ketika deret bulanannya benar-benar ada. Kartu yang tidak
- * punya riwayat — misalnya jumlah anggota lintas organisasi, yang datang
- * sebagai satu angka agregat — tidak memanggil komponen ini sama sekali, dan
- * ruangnya diisi keterangan nyata, bukan garis karangan.
- */
 export function Sparkline({
   values,
   tone = "blue",

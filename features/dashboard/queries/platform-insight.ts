@@ -47,8 +47,6 @@ function kerangka(months: number) {
   return titik;
 }
 
-/* ------------------------------------------------------- pertumbuhan */
-
 export type GrowthPoint = {
   label: string;
   organizations: number;
@@ -58,25 +56,12 @@ export type GrowthPoint = {
 export type PlatformGrowth = {
   points: GrowthPoint[];
   range: string;
-  /** Deret bulanan BARU (bukan kumulatif) untuk sparkline kartu. */
   newOrganizations: number[];
   newAccounts: number[];
-  /** Selisih bulan ini terhadap bulan lalu. NULL bila tidak dapat dihitung. */
   organizationDelta: number | null;
   accountDelta: number | null;
 };
 
-/**
- * Pertumbuhan platform: organisasi dan akun, kumulatif per bulan.
- *
- * Angkanya KUMULATIF karena itulah arti "pertumbuhan" di sini — berapa banyak
- * organisasi yang sudah ada pada akhir tiap bulan, bukan berapa yang lahir di
- * bulan itu. Deret bulanan yang baru lahir tetap dikembalikan terpisah untuk
- * sparkline, supaya kartu dan grafik tidak menceritakan hal yang berbeda.
- *
- * Basis data yang baru berumur beberapa hari akan menghasilkan garis datar
- * lalu melonjak. Itu memang keadaannya, dan tidak dihaluskan.
- */
 export async function getPlatformGrowth(
   months = 6,
 ): Promise<PlatformGrowth | null> {
@@ -100,8 +85,6 @@ export async function getPlatformGrowth(
   const baruOrg = new Array(months).fill(0) as number[];
   const baruAkun = new Array(months).fill(0) as number[];
 
-  // Baris yang lebih tua dari jendela tetap dihitung sebagai saldo awal,
-  // sehingga garis kumulatifnya tidak berangkat dari nol secara keliru.
   let awalOrg = 0;
   let awalAkun = 0;
   const batas = titik[0]!.month;
@@ -152,8 +135,6 @@ export async function getPlatformGrowth(
   };
 }
 
-/* --------------------------------------------------- aktivitas sistem */
-
 export type ActivitySlice = {
   label: string;
   total: number;
@@ -166,17 +147,6 @@ export type SystemActivity = {
   days: number;
 };
 
-/**
- * Peristiwa audit tiga puluh hari terakhir, dikelompokkan menurut domain.
- *
- * `audit_logs` menyimpan dua puluh lebih `resource_type`; menampilkannya satu
- * per satu menghasilkan donat dengan dua puluh irisan yang tidak terbaca.
- * Pengelompokan di bawah menyatukannya menjadi domain yang dikenali pengurus.
- *
- * Yang dihitung hanya JUMLAH peristiwa per domain. Tidak ada pelaku, tidak ada
- * metadata, dan karena itu tidak ada jalan bagi rincian pemilihan maupun
- * keuangan untuk ikut terbaca dari sini.
- */
 const DOMAIN: Record<string, string> = {
   election: "Pemilihan",
   financial_account: "Keuangan",
@@ -243,20 +213,12 @@ export async function getSystemActivity(
   return { slices, total, days };
 }
 
-/* ----------------------------------------------------- informasi cepat */
-
 export type QuickInfo = {
   label: string;
   value: number;
   context: string;
 };
 
-/**
- * Angka pendamping di kolom kanan.
- *
- * Sengaja BUKAN pengulangan kartu utama: yang di atas menjawab "berapa
- * banyak", yang di sini menjawab "apa yang bergerak belakangan ini".
- */
 export async function getPlatformQuickInfo(days = 30): Promise<QuickInfo[]> {
   const supabase = await createClient();
   const sejak = new Date(Date.now() - days * 86_400_000).toISOString();
@@ -303,8 +265,6 @@ export async function getPlatformQuickInfo(days = 30): Promise<QuickInfo[]> {
     },
   ];
 }
-
-/* ------------------------------------------------------ akun platform */
 
 export type AccountPreview = {
   id: string;

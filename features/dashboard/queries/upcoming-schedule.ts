@@ -2,25 +2,6 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Jadwal terdekat organisasi.
- *
- * Menggabungkan agenda, event, dan rapat menjadi SATU daftar berurut waktu.
- * Alasannya bukan penghematan tempat: seorang pengurus tidak bertanya "apa
- * agenda saya" lalu "apa event saya" lalu "apa rapat saya" — ia bertanya apa
- * yang akan terjadi lebih dulu. Tiga kartu terpisah memaksanya menggabungkan
- * tiga urutan waktu di kepalanya sendiri.
- *
- * Setiap sumber hanya ikut bila pemanggil memang berhak melihatnya. Yang tidak
- * berhak tidak menyumbang satu baris pun — dan karena penggabungan terjadi
- * setelah penyaringan, tidak ada jadwal yang bocor lewat sebuah daftar
- * gabungan.
- *
- * Kolomnya berbeda antar-tabel: `events` menyimpan judul pada `name`,
- * sementara `agenda_items` dan `meetings` pada `title`. Perbedaan itu
- * diselesaikan di sini, bukan di komponen.
- */
-
 export type ScheduleKind = "agenda" | "event" | "meeting";
 
 export type ScheduleItem = {
@@ -47,9 +28,6 @@ export async function getUpcomingSchedule(
   const supabase = await createClient();
   const sejak = new Date().toISOString();
 
-  // Tabelnya disebut satu per satu, bukan lewat nama dinamis: tipe PostgREST
-  // menolak nama tabel bertipe string, dan menyiasatinya dengan `as never`
-  // hanya akan mematikan pemeriksaan yang justru berguna di sini.
   const [agenda, events, meetings] = await Promise.all([
     sources.agenda
       ? supabase

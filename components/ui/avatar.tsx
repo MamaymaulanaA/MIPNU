@@ -2,19 +2,13 @@ import { getAvatarPresentation, type StoredGender } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
 
 /**
- * Avatar.
+ * Avatar: satu-satunya tempat aturan "unggahan menang, lalu jenis kelamin
+ * tersimpan, lalu netral" digambar.
  *
- * Satu-satunya tempat avatar digambar. Tanpa ini, aturan "unggahan menang,
- * lalu jenis kelamin tersimpan, lalu netral" akan ditulis ulang di setiap
- * daftar — dan cepat atau lambat salah satunya berbeda.
- *
- * Soal pembaca layar (docs/UI.md §47): gambarnya DEKORATIF. Nama orangnya
- * selalu sudah tertulis di sebelahnya, jadi `alt` dikosongkan agar tidak
- * dibacakan dua kali. Avatar bawaan juga tidak boleh membacakan "pengguna
- * laki-laki" — itu menyuarakan dugaan sistem, bukan fakta tentang orangnya.
- *
- * Bila avatar berdiri SENDIRI tanpa nama di dekatnya, pemanggil wajib
- * mengisi `label`.
+ * Gambarnya DEKORATIF (docs/UI.md §47): nama orangnya selalu sudah tertulis di
+ * sebelahnya, jadi `alt` dikosongkan. Avatar bawaan juga tidak boleh membacakan
+ * jenis kelamin — itu dugaan sistem, bukan fakta. Bila avatar berdiri sendiri
+ * tanpa nama, pemanggil wajib mengisi `label`.
  */
 const SIZES = {
   sm: "size-8", // 32px — header, baris padat
@@ -38,7 +32,6 @@ export function Avatar({
   gender?: StoredGender;
   identity?: string | null;
   size?: AvatarSize;
-  /** Isi HANYA bila tidak ada nama tertulis di dekat avatar ini. */
   label?: string;
   className?: string;
 }) {

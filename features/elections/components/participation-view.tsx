@@ -11,19 +11,6 @@ import type { Participation } from "@/features/elections/queries/get-election";
 import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-/**
- * Partisipasi langsung.
- *
- * Empat angka, dan hanya empat: DPT, sudah memilih, sisa, persentase
- * (EVOTING §80/§82). Tidak ada perolehan kandidat, tidak ada tren, tidak ada
- * daftar siapa yang baru saja memilih — bukan karena disembunyikan di sini,
- * melainkan karena fungsi database yang memasoknya memang tidak
- * mengembalikannya.
- *
- * Penyegaran memakai `router.refresh()`, bukan langganan realtime ke tabel:
- * server merender ulang dan mengambil angkanya lewat jalur yang sama, sehingga
- * tidak ada satu pun baris tabel yang disiarkan ke peramban.
- */
 export function ParticipationView({
   electionId,
   participation,
@@ -32,7 +19,6 @@ export function ParticipationView({
 }: {
   electionId: string;
   participation: Participation;
-  /** Menyegarkan sendiri hanya ketika pemungutan suara sedang berlangsung. */
   live: boolean;
   fullscreen?: boolean;
 }) {

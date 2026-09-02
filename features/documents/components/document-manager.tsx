@@ -76,7 +76,6 @@ function formatSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
 export type KeadaanDaftar = {
   cari: string;
   kategori: string;
@@ -124,7 +123,6 @@ export function DocumentManager({
         }
       />
 
-      {/* Toolbar, tabel, dan kaki tabel dalam SATU kartu (§14). */}
       <Card>
         <TableToolbar
           searchValue={daftar.cari}
@@ -345,8 +343,6 @@ export function DocumentManager({
     </div>
   );
 }
-
-/* ========================================================================== */
 
 function UploadDialog({
   open,

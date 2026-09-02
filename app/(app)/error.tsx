@@ -6,13 +6,6 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-/**
- * Error boundary area aplikasi.
- *
- * Berbeda dari `app/error.tsx` yang menggantikan seluruh layar: yang ini
- * berada di dalam shell, sehingga sidebar dan header tetap ada dan pengguna
- * dapat berpindah ke halaman lain alih-alih menemui layar kosong.
- */
 export default function AppError({
   error,
   reset,

@@ -20,7 +20,6 @@ import type { ActionResult } from "@/lib/errors";
 
 export type CommitteeMemberOption = { id: string; label: string };
 
-/** Nama manusiawi untuk kode hak panitia. */
 const PERMISSION_LABEL: Record<string, string> = {
   "elections.view": "Melihat pemilihan",
   "elections.manage_candidates": "Mengelola kandidat",
@@ -31,22 +30,6 @@ const PERMISSION_LABEL: Record<string, string> = {
   "elections.close": "Menutup pemungutan suara",
 };
 
-/**
- * Panitia pemilihan.
- *
- * Penugasan, bukan role: haknya berlaku pada pemilihan INI saja dan berakhir
- * bersama penugasannya. Karena itu daftar hak yang dapat dilekatkan sengaja
- * tidak memuat publikasi hasil — itu keputusan organisasi, bukan panitia
- * teknis (PERMISSIONS.md §57).
- */
-/**
- * Tombol "Tugaskan Panitia" beserta dialognya.
- *
- * Di kepala halaman, sebaris dengan tombol ekspor tab lain. Sebelumnya ia
- * melayang rata kanan di atas daftar panitia — dan karena tombol ekspor di tab
- * tetangganya memakai `size="sm"`, halaman yang sama menampilkan aksi primer
- * setinggi 44px di satu tab dan 36px di tab lain.
- */
 export function CommitteeAssignDialog({
   organizationId,
   electionId,
@@ -101,9 +84,6 @@ export function CommitteePanel({
   const [removing, setRemoving] = useState<CommitteeRow | null>(null);
 
   return (
-    // Tanpa pembungkus sendiri: seluruh isi tab sudah berada di dalam kartu
-    // permukaan tab, dan kepala kartu itu adalah deretan tabnya. Aksinya ada
-    // di kepala halaman.
     <>
       {committee.length === 0 ? (
         <EmptyState

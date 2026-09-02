@@ -16,14 +16,6 @@ import { PERMISSIONS } from "@/lib/auth/permissions";
 import { AGENDA_TYPES } from "@/features/agenda/schemas/agenda.schema";
 import { bacaParamDaftar, polaCari } from "@/lib/list-params";
 
-/**
- * Ukuran halaman, sama untuk kedua bagian.
- *
- * Sepuluh, bukan lima puluh: bagian "Mendatang" dibaca untuk direncanakan —
- * yang berguna adalah beberapa agenda terdekat, bukan seluruh kuartal — dan
- * dua bagian setinggi lima puluh baris membuat halamannya lebih panjang
- * daripada yang pernah dibaca siapa pun sekaligus.
- */
 const UKURAN_HALAMAN = 10;
 import { agendaType } from "@/lib/status";
 import { createClient } from "@/lib/supabase/server";
@@ -59,7 +51,6 @@ function toRow(row: AgendaQueryRow): AgendaRow {
   };
 }
 
-/** `YYYY-MM` yang tervalidasi; nilai aneh dari URL jatuh ke bulan berjalan. */
 function resolveMonthKey(raw: string | undefined): string {
   const now = new Date();
   const fallback = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -110,8 +101,6 @@ export default async function AgendaPage({
   );
 
   if (view === "kalender") {
-    // Hanya bulan yang sedang dilihat yang diambil — bukan seluruh agenda
-    // organisasi lalu disaring di browser (SYSTEM.md §63).
     const [year, month] = monthKey.split("-").map(Number);
     const from = new Date(year!, month! - 1, 1);
     const to = new Date(year!, month!, 1);
@@ -138,16 +127,6 @@ export default async function AgendaPage({
     );
   }
 
-  /*
-   * Dua daftar, dua nomor halaman.
-   *
-   * `bacaParamDaftar` membaca `page` untuk bagian "Mendatang"; bagian "Sudah
-   * Berlalu" memakai `pageLampau` dan dibaca terpisah. Sebelumnya berkas ini
-   * memanggil `bacaParamDaftar` dengan `ukuranHalaman: 1` sebagai penampal
-   * lalu membuang hasilnya, dan kedua query dipotong `.limit(50)` dan
-   * `.limit(20)` tanpa `count` — agenda ke-51 tidak dapat dijangkau dari URL
-   * mana pun.
-   */
   const daftar = bacaParamDaftar(params, {
     ukuranHalaman: UKURAN_HALAMAN,
     kunciSaring: ["jenis"],
@@ -164,12 +143,6 @@ export default async function AgendaPage({
 
   const nowIso = new Date().toISOString();
 
-  // Dua query terpisah, bukan satu daftar panjang: agenda mendatang dan
-  // agenda lampau dibaca dengan cara berbeda — yang satu untuk direncanakan,
-  // yang lain untuk ditelusuri.
-  // Pencarian dan penyaringan diterapkan pada KEDUANYA — bukan sekali pada
-  // gabungannya. Menggabungkan dua bacaan itu hanya demi satu penyaring akan
-  // menghapus perbedaan yang justru berguna.
   let mendatangQuery = supabase
     .from("agenda_items")
     .select(AGENDA_COLUMNS, { count: "exact" })

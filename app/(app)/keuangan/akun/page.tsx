@@ -26,26 +26,6 @@ type Balance = {
   balance: number;
 };
 
-/**
- * Akun kas dan kategori dalam satu halaman.
- *
- * Keduanya adalah data acuan yang jarang berubah dan hampir selalu disiapkan
- * bersamaan sebelum transaksi pertama dicatat. Memisahkannya menjadi dua menu
- * hanya menambah tempat tanpa menambah kejelasan.
- *
- * DUA KARTU, DUA TOOLBAR. Halaman manajemen lain punya satu daftar, jadi satu
- * kartu berisi toolbar + tabel + kaki halaman. Di sini daftarnya dua, dan
- * keduanya disaring dengan pertanyaan yang berbeda — akun menurut status,
- * kategori menurut jenis. Satu toolbar untuk dua tabel akan berbohong tentang
- * apa yang sedang disaringnya, jadi tiap bagian membawa toolbarnya sendiri,
- * lengkap dengan kunci URL sendiri.
- *
- * TIDAK ADA PAGINATION, dan itu disengaja. Akun kas dan kategori adalah data
- * acuan: sebuah organisasi punya belasan, bukan ribuan. Yang menjaga kartunya
- * tidak memanjang tanpa batas adalah `TableScroll bounded` di dalam tabelnya,
- * bukan pemenggalan halaman yang justru menyembunyikan setengah daftar acuan
- * di halaman kedua.
- */
 export default async function FinanceAccountsPage({
   searchParams,
 }: {
@@ -77,9 +57,6 @@ export default async function FinanceAccountsPage({
     .eq("organization_id", context.organizationId);
 
   if (cariAkun) queryAkun = queryAkun.ilike("name", polaCari(cariAkun));
-  // Hanya dua nilai yang berarti. Tanpa pembatasan ini, `?statusAkun=xyz`
-  // yang diketik tangan akan jatuh ke `is_active = false` dan memperlihatkan
-  // daftar nonaktif seolah itu hasil penyaringan yang diminta.
   if (statusAkun === "aktif" || statusAkun === "nonaktif") {
     queryAkun = queryAkun.eq("is_active", statusAkun === "aktif");
   }
@@ -144,9 +121,6 @@ export default async function FinanceAccountsPage({
       />
 
       <Card>
-        {/* Kepala bagian: judul di kiri, aksi primernya di kanan — bentuk yang
-            sama dengan `PageHeader`, hanya satu tingkat lebih dalam karena
-            halaman ini memang berisi dua daftar. */}
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-5">
           <h2 className="text-[15px] font-semibold text-foreground">
             Akun Kas

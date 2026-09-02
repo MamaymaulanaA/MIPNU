@@ -50,7 +50,6 @@ export function ExportButton({
       anchor.click();
       anchor.remove();
 
-      // Melepas URL objek; tanpa ini blob-nya menetap di memori tab.
       URL.revokeObjectURL(url);
 
       showToast(`Berkas ${result.data.filename} diunduh.`);

@@ -1,10 +1,3 @@
-/**
- * Loading state untuk seluruh area aplikasi.
- *
- * Meniru struktur halaman — judul, baris aksi, lalu kartu konten — bukan
- * spinner layar penuh, supaya perpindahan halaman tidak terasa seperti
- * memuat ulang aplikasi (SYSTEM.md §80).
- */
 export default function AppLoading() {
   return (
     <div className="space-y-5" aria-busy="true">

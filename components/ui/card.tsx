@@ -1,22 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/**
- * Card MIPNU: border 1px, radius 8px, bayangan `raised`.
- *
- * Dulu tanpa bayangan sama sekali, dan itu benar selama latar halaman masih
- * cukup gelap untuk memisahkan sendiri. Sejak latar naik ke 99% — tiga
- * tingkat rgb dari kartu, ΔL* 1,01 — pemisahan lewat warna permukaan
- * berhenti bekerja, dan border 1px ditinggal memikulnya sendirian.
- *
- * Mata jauh lebih peka pada gradien di tepi daripada pada beda datar satu
- * tingkat, jadi bayangan setipis `raised` (0 1px 2px, 4% hitam) mengembalikan
- * hierarki tanpa menurunkan latar. UI.md §37 memang bersyarat: kartu tidak
- * harus memakai bayangan JIKA border sudah cukup.
- *
- * Nilainya bukan nilai baru. Kartu dashboard sudah memakai `shadow-raised`
- * sejak awal; yang berubah di sini justru 39 berkas lain berhenti menjadi
- * pengecualian.
- */
 export function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

@@ -34,8 +34,6 @@ export async function createEvent(
     const input = parsed.data;
     const supabase = await createClient();
 
-    // Event ditautkan ke periode kepengurusan yang sedang aktif, sehingga
-    // laporan per periode tetap utuh ketika kepengurusan berganti.
     const { data: activePeriod } = await supabase
       .from("organization_periods")
       .select("id")
@@ -166,7 +164,6 @@ export async function updateEvent(
   }
 }
 
-/** Soft delete — event yang sudah berjalan tetap menjadi riwayat organisasi. */
 export async function deleteEvent(
   organizationId: string,
   eventId: string,

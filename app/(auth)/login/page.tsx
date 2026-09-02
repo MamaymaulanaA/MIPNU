@@ -15,7 +15,6 @@ export default function LoginPage() {
       title="Masuk"
       description="Gunakan akun yang terdaftar pada organisasi Anda."
     >
-      {/* useSearchParams() menuntut Suspense boundary saat prerender. */}
       <Suspense fallback={<div className="h-64" />}>
         <LoginForm />
       </Suspense>

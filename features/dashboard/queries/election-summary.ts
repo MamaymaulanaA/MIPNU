@@ -3,23 +3,12 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Ringkasan pemilihan untuk dashboard organisasi.
+ * Ringkasan pemilihan untuk dashboard.
  *
- * BATAS YANG TIDAK BOLEH DILANGGAR. Berkas ini tidak pernah membaca perolehan
- * kandidat, dalam status apa pun. Yang diambilnya hanya dua hal: jumlah
- * pemilihan menurut statusnya, dan angka partisipasi dari
- * `mipnu_election_participation()` — satu-satunya fungsi yang memang dirancang
- * aman ditampilkan selagi pemungutan suara berlangsung (EVOTING §82). Fungsi
- * itu mengembalikan DPT, sudah memilih, sisa, dan persentase; tidak ada nama,
- * tidak ada pilihan, tidak ada kandidat.
- *
- * `mipnu_election_result()` sengaja TIDAK dipanggil di sini. Hasil resmi punya
- * halamannya sendiri dengan gerbangnya sendiri; sebuah dashboard bukan tempat
- * perolehan suara muncul sambil lalu.
- *
- * Barisnya sendiri tunduk pada RLS `elections`. Pemanggil tetap memeriksa
- * `elections.view` lebih dulu supaya query-nya tidak berjalan sama sekali bagi
- * yang tidak berhak.
+ * TIDAK PERNAH membaca perolehan kandidat, dalam status apa pun. Hanya jumlah
+ * pemilihan per status dan `mipnu_election_participation()` — satu-satunya yang
+ * aman ditampilkan selagi pemungutan berlangsung (EVOTING §82).
+ * `mipnu_election_result()` sengaja tidak dipanggil di sini.
  */
 
 export type ElectionParticipation = {
@@ -39,41 +28,20 @@ export type ElectionPreview = {
 
 export type ElectionSummary = {
   total: number;
-  /** Hanya status yang benar-benar ada barisnya. */
   byStatus: { status: string; total: number }[];
-  /**
-   * Beberapa pemilihan teratas menurut urutan perhatian, bukan hanya satu.
-   *
-   * Panelnya sebelumnya hanya menampilkan `focus`, sehingga organisasi dengan
-   * empat pemilihan tetap terbaca seolah hanya punya satu — dan panelnya
-   * berdiri hampir kosong di sebelah panel yang berisi tiga baris.
-   *
-   * Isinya persis kolom yang sudah diambil query ini: nama, status, dan
-   * jadwal. Tidak ada tambahan pembacaan, dan tidak ada perolehan kandidat.
-   */
   recent: ElectionPreview[];
-  /** Pemilihan yang paling perlu diperhatikan, bila ada. */
   focus: {
     id: string;
     name: string;
     status: string;
     startAt: string;
     endAt: string;
-    /** NULL bila statusnya belum punya DPT yang berarti. */
     participation: ElectionParticipation | null;
   } | null;
 };
 
-/**
- * Status yang partisipasinya berarti untuk ditampilkan.
- *
- * DRAFT dan REGISTRATION belum tentu punya DPT; menampilkan "0 dari 0 pemilih"
- * di sana hanya menyatakan bahwa daftarnya belum disusun, dan itu sudah
- * terbaca dari statusnya sendiri.
- */
 const PUNYA_DPT = ["SCHEDULED", "OPEN", "CLOSED", "PUBLISHED", "ARCHIVED"];
 
-/** Urutan perhatian: yang sedang berlangsung selalu lebih dulu. */
 const PRIORITAS: Record<string, number> = {
   OPEN: 0,
   SCHEDULED: 1,
@@ -114,8 +82,6 @@ export async function getElectionSummary(
     .map(([status, total]) => ({ status, total }))
     .sort((a, b) => (PRIORITAS[a.status] ?? 99) - (PRIORITAS[b.status] ?? 99));
 
-  // Barisnya sudah terurut tanggal menurun; stabilkan menurut prioritas status
-  // supaya pemilihan yang sedang berlangsung selalu menang atas yang selesai.
   const terurut = [...rows].sort(
     (a, b) => (PRIORITAS[a.status] ?? 99) - (PRIORITAS[b.status] ?? 99),
   );

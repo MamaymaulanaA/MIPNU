@@ -12,13 +12,6 @@ import { signOut } from "@/features/auth/actions/sign-out";
 import type { AccessibleOrganization } from "@/lib/auth/context";
 import { cn } from "@/lib/utils";
 
-/**
- * Kerangka aplikasi: sidebar + header + area konten.
- *
- * Client component karena memegang state drawer mobile. Seluruh pemuatan data
- * dan pemeriksaan authorization tetap terjadi di Server Component pemanggil
- * (SYSTEM.md §11-§12).
- */
 export function AppShell({
   permissions,
   organizations,
@@ -42,11 +35,6 @@ export function AppShell({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Drawer ditutup oleh tautan navigasi itu sendiri (AppSidebar memanggil
-  // onClose saat item diklik), bukan lewat effect yang memantau pathname —
-  // setState di dalam effect memicu render berantai tanpa perlu.
-
-  // Kunci scroll body selama drawer terbuka.
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
     return () => {
@@ -65,7 +53,6 @@ export function AppShell({
           onClose={() => setSidebarOpen(false)}
         />
 
-        {/* min-w-0 mencegah konten lebar (tabel) mendorong lebar layout. */}
         <div className="flex min-w-0 flex-1 flex-col">
           <header
             className={cn(
@@ -97,8 +84,6 @@ export function AppShell({
 
           <main className="flex-1 p-4 sm:p-5 lg:p-6">{children}</main>
 
-          {/* Penutup halaman. Tahunnya dihitung, bukan dituliskan, supaya
-              tidak menjadi angka basi yang harus diingat setiap Januari. */}
           <footer className="border-t border-border px-4 py-3.5 text-center text-[11.5px] text-muted-foreground sm:px-5 lg:px-6">
             © {new Date().getFullYear()} MIPNU · Manajemen Informasi Pelajar
             Nahdlatul Ulama
@@ -154,8 +139,6 @@ function UserMenu({
         onClick={() => setOpen((value) => !value)}
         className="flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors duration-150 hover:bg-muted"
       >
-        {/* Nama pengguna tertulis tepat di sebelahnya, jadi avatar di sini
-            dekoratif — lihat catatan aksesibilitas pada component Avatar. */}
         <Avatar
           customUrl={avatarUrl}
           gender={gender}

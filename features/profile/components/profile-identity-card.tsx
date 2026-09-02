@@ -23,25 +23,6 @@ import {
 import { updateOwnProfile } from "@/features/profile/actions/update-profile";
 import type { ActionResult } from "@/lib/errors";
 
-/**
- * Kartu identitas: foto, nama tampilan, dan email dalam satu blok.
- *
- * Sebelumnya ketiganya terpecah menjadi DUA kartu — "Foto Profil" berdiri
- * sendiri hanya untuk memuat satu gambar dan dua tombol, lalu kartu kedua
- * berisi form nama. Keduanya menjelaskan orang yang sama, dan memisahkannya
- * membuat halaman memanjang tanpa menambah satu informasi pun.
- *
- * NAMA DAN EMAIL DITAMPILKAN, BUKAN DIJADIKAN FIELD PERMANEN. Halaman ini
- * dulu memuat `<input>` nama yang selalu terbuka beserta tombol "Simpan
- * Profil" — satu-satunya penyuntingan di MIPNU yang bekerja begitu, sementara
- * seluruh modul lain membaca dulu lalu menyunting lewat dialog. Sekarang ia
- * ikut pola yang sama.
- *
- * Email tidak diulang sebagai baris berlabel: ia sudah terbaca di blok
- * identitas, dan menuliskannya dua kali di kartu setinggi ini hanya menambah
- * baris tanpa menambah arti. Yang perlu dikatakan hanyalah bahwa ia tidak
- * dapat diubah dari sini.
- */
 export function ProfileIdentityCard({
   displayName,
   email,
@@ -71,10 +52,6 @@ export function ProfileIdentityCard({
     if (state?.success) showToast("Avatar diperbarui.");
   }, [state, showToast]);
 
-  // Pratinjau sengaja TIDAK dibersihkan setelah unggah berhasil: gambar yang
-  // ditampilkannya sama persis dengan avatar baru, sehingga membuangnya hanya
-  // menghasilkan kedipan ketika signed URL menyusul.
-
   const failed = state && !state.success ? state : null;
   const shown = preview ?? avatarUrl;
 
@@ -92,9 +69,6 @@ export function ProfileIdentityCard({
         <FormAlert message={failed?.error} />
 
         <div className="flex items-center gap-4">
-          {/* Pratinjau unggahan menang atas apa pun, lalu avatar tersimpan,
-              lalu gambar bawaan. Nama tertulis tepat di sebelahnya, jadi
-              gambarnya dekoratif. */}
           <Avatar
             customUrl={shown}
             gender={gender}
@@ -113,14 +87,6 @@ export function ProfileIdentityCard({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {/*
-            Avatar terkirim BEGITU berkas dipilih — tidak ada tombol simpan
-            terpisah, dan itu disengaja: memilih gambar lalu lupa menyimpannya
-            adalah kegagalan yang paling mudah terjadi pada pola dua langkah,
-            dan tidak ada yang perlu dipertimbangkan ulang di antara keduanya.
-            Karena itu ia tetap di kartu, bukan dipindah ke dalam dialog yang
-            justru menambah satu langkah tanpa menambah kendali.
-          */}
           <form ref={formRef} action={avatarAction}>
             <input
               ref={inputRef}
@@ -184,13 +150,6 @@ export function ProfileIdentityCard({
         </div>
       </CardContent>
 
-      {/*
-        `key` mengikuti keadaan terbuka supaya dialog yang pernah gagal
-        validasi tidak dibuka kembali lengkap dengan pesan error lamanya.
-
-        `size="sm"` karena isinya satu field. Lebar form manajemen (672px)
-        untuk sebuah kolom nama akan terbaca sebagai dialog yang lupa diisi.
-      */}
       <FormDialog
         key={editOpen ? "ubah-terbuka" : "ubah-tertutup"}
         open={editOpen}

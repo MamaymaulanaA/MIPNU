@@ -4,16 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import type { ElectionResult } from "@/features/elections/queries/get-election";
 import { formatDateTime, formatNumber } from "@/lib/format";
 
-/**
- * Hasil pemilihan.
- *
- * Komponen ini tidak pernah memutuskan sendiri apakah hasil boleh tampil. Ia
- * hanya menampilkan apa yang dikembalikan `mipnu_election_result` — dan fungsi
- * itu tidak mengembalikan perolehan apa pun selama pemungutan suara
- * berlangsung, bagi siapa pun. Jika `result` bernilai null, yang dirender
- * adalah alasannya.
- */
-
 type ReasonText = { title: string; description: string };
 
 const DEFAULT_REASON: ReasonText = {

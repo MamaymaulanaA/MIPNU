@@ -11,7 +11,6 @@ import { parseCsvWithHeader } from "@/lib/csv";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/** 2 MB. Cukup untuk puluhan ribu baris, jauh di bawah batas payload. */
 const MAX_CSV_BYTES = 2 * 1024 * 1024;
 
 /**
@@ -68,7 +67,6 @@ type NormalizedRow = {
 function normalizeRows(csvText: string) {
   const { headers, rows } = parseCsvWithHeader(csvText);
 
-  // Peta alias -> nama field kanonik.
   const headerMap = new Map<string, string>();
   for (const [field, aliases] of Object.entries(COLUMN_ALIASES)) {
     for (const alias of aliases) headerMap.set(alias, field);
@@ -92,7 +90,6 @@ function normalizeRows(csvText: string) {
   return { normalized, unrecognizedColumns };
 }
 
-/** Menormalkan variasi penulisan jenis kelamin dan status yang lazim. */
 function coerce(values: Record<string, string>) {
   const gender = (values.gender ?? "").trim().toUpperCase();
   const normalizedGender =
@@ -119,12 +116,6 @@ function coerce(values: Record<string, string>) {
   };
 }
 
-/**
- * Memvalidasi berkas TANPA menulis apa pun.
- *
- * Impor tidak pernah langsung menyentuh database: pengguna harus melihat apa
- * yang akan terjadi lebih dulu (SYSTEM.md §66).
- */
 export async function previewMemberImport(
   organizationId: string,
   _previousState: ActionResult<ImportPreview> | null,
@@ -164,7 +155,6 @@ export async function previewMemberImport(
 
     const supabase = await createClient();
 
-    // Nomor anggota yang sudah dipakai — dibaca sekali, bukan sekali per baris.
     const { data: existing } = await supabase
       .from("members")
       .select("member_number")
@@ -234,7 +224,6 @@ export async function previewMemberImport(
       invalidRows: rows.length - validRows,
       duplicateRows: rows.filter((row) => row.duplicate !== "NONE").length,
       unrecognizedColumns,
-      // Batasi daftar isu supaya payload tidak meledak pada berkas yang kacau.
       issues: issues.slice(0, 200),
       rows: rows.slice(0, 200),
     });
@@ -248,16 +237,6 @@ export type ImportSummary = {
   skipped: number;
 };
 
-/**
- * Menjalankan impor.
- *
- * CSV diurai dan divalidasi ULANG di sini — hasil pratinjau tidak dipercaya.
- * Pratinjau berjalan di sisi yang sama, tetapi payload-nya melewati browser,
- * dan apa pun yang melewati browser bukan lagi sumber kebenaran.
- *
- * Setiap baris ditulis dengan `organization_id` dari access context, bukan
- * dari berkas.
- */
 export async function confirmMemberImport(
   organizationId: string,
   _previousState: ActionResult<ImportSummary> | null,
@@ -293,8 +272,6 @@ export async function confirmMemberImport(
     );
 
     const seenInFile = new Set<string>();
-    // Tipe insert hasil generate, bukan Record<string, unknown>: kolom yang
-    // salah nama tertangkap saat compile, bukan saat impor berjalan.
     const payload: TablesInsert<"members">[] = [];
     let skipped = 0;
 
@@ -339,8 +316,6 @@ export async function confirmMemberImport(
       };
     }
 
-    // Disisipkan bertahap: satu INSERT raksasa lebih sulit dipulihkan bila
-    // gagal, dan lebih mudah menabrak batas payload.
     let inserted = 0;
     const CHUNK = 200;
 

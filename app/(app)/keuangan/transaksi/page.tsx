@@ -42,16 +42,6 @@ export default async function FinanceTransactionsPage({
     return <ForbiddenState />;
   }
 
-  /*
-   * Parameter daftar dibaca pembaca bersama, sama seperti sembilan halaman
-   * manajemen lain — termasuk nama kuncinya: `search` dan `page`, bukan `cari`
-   * dan `hal`. Bukan soal selera penamaan: `TableToolbar` mengosongkan `page`
-   * setiap kali penyaringnya berubah, dan halaman yang memakai nama lain akan
-   * meninggalkan nomor halaman lama lalu memperlihatkan tabel kosong.
-   *
-   * `mulai` dan `sampai` ikut sebagai kunci saring biasa; keduanya tanggal,
-   * dan `bacaParamDaftar` hanya membersihkan nilainya tanpa menafsirkan.
-   */
   const daftar = bacaParamDaftar(await searchParams, {
     ukuranHalaman: UKURAN_HALAMAN,
     kunciSaring: ["jenis", "akun", "kategori", "status", "mulai", "sampai"],
@@ -83,9 +73,6 @@ export default async function FinanceTransactionsPage({
   if (saring.mulai) query = query.gte("transaction_date", saring.mulai);
   if (saring.sampai) query = query.lte("transaction_date", saring.sampai);
   if (daftar.cari) {
-    // `polaCariOr`, bukan escaping tersendiri: koma dan kurung diurai
-    // PostgREST sebelum SQL melihatnya, jadi keduanya harus DIBUANG dan bukan
-    // di-escape. Aturan itu tinggal di satu tempat sekarang.
     const pola = polaCariOr(daftar.cari);
     query = query.or(
       `description.ilike.%${pola}%,reference_number.ilike.%${pola}%`,
@@ -100,8 +87,6 @@ export default async function FinanceTransactionsPage({
     documentsResult,
   ] = await Promise.all([
     query
-      // Urutan deterministik: tanggal bisnis lebih dulu, lalu waktu
-      // pencatatan sebagai pemecah seri.
       .order("transaction_date", { ascending: false })
       .order("created_at", { ascending: false })
       .range(daftar.dari, daftar.sampai),
@@ -124,10 +109,6 @@ export default async function FinanceTransactionsPage({
       .eq("organization_id", context.organizationId)
       .order("start_date", { ascending: false }),
 
-    // Daftar dokumen hanya diambil bila pemanggil berhak menyentuh bukti.
-    // Tanpa pagar ini, judul dan id seluruh dokumen organisasi ikut terkirim
-    // ke browser sebagai pilihan yang tidak akan pernah ditampilkan — dan
-    // "tidak ditampilkan" bukan "tidak terkirim".
     canViewProofs
       ? supabase
           .from("documents")
@@ -171,7 +152,6 @@ export default async function FinanceTransactionsPage({
     referenceNumber: row.reference_number,
     periodId: row.organization_period_id,
     hasProof: row.proof_document_id !== null,
-    // Id dokumennya hanya dikirim kepada yang memang berhak menyentuh bukti.
     proofDocumentId: canViewProofs ? row.proof_document_id : null,
     status: row.status,
     voidReason: row.void_reason,
@@ -239,12 +219,6 @@ export default async function FinanceTransactionsPage({
         }
       />
 
-      {/*
-        Satu kartu: toolbar, tabel, kaki halaman. Sebelumnya ketiganya tiga
-        blok terpisah — form penyaring telanjang, tabel, lalu kartu pagination
-        tersendiri — dan halaman Transaksi menjadi satu-satunya halaman daftar
-        yang tidak terbaca sebagai satu benda.
-      */}
       <Card>
         <TableToolbar
           searchValue={daftar.cari}

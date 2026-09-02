@@ -63,8 +63,6 @@ export type MinutesValues = {
   followUp: string | null;
 } | null;
 
-/* ========================================================================== */
-
 export function MeetingFormDialog({
   organizationId,
   meeting,
@@ -244,8 +242,6 @@ function MeetingDialog({
   );
 }
 
-/* ========================================================================== */
-
 export function DeleteMeetingButton({
   organizationId,
   meetingId,
@@ -288,8 +284,6 @@ export function DeleteMeetingButton({
     </>
   );
 }
-
-/* ========================================================================== */
 
 export function MeetingParticipants({
   organizationId,
@@ -495,8 +489,6 @@ export function MeetingParticipants({
     </div>
   );
 }
-
-/* ========================================================================== */
 
 export function MeetingMinutes({
   organizationId,

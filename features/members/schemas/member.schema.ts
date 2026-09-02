@@ -11,7 +11,6 @@ export const MEMBER_STATUSES = [
 
 export const MEMBER_GENDERS = ["L", "P"] as const;
 
-/** Mengubah field kosong dari FormData menjadi null, bukan string kosong. */
 const optionalText = (max: number) =>
   z
     .string()

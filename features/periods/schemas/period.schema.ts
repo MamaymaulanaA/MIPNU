@@ -23,8 +23,6 @@ export const periodSchema = z
     startDate: requiredDate,
     endDate: requiredDate,
   })
-  // Dicek di sini juga, bukan hanya oleh CHECK constraint database, supaya
-  // pengguna melihat pesannya di bawah field yang tepat.
   .refine((value) => Date.parse(value.endDate) > Date.parse(value.startDate), {
     message: "Tanggal selesai harus setelah tanggal mulai",
     path: ["endDate"],

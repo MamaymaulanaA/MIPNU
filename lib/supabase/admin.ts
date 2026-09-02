@@ -6,22 +6,13 @@ import { publicEnv, serverEnv } from "@/lib/env";
 import type { Database } from "@/types/database.types";
 
 /**
- * Supabase client dengan service role. MELEWATI SELURUH RLS.
+ * Supabase client service role. MELEWATI SELURUH RLS.
  *
- * `import "server-only"` membuat build gagal bila berkas ini pernah masuk ke
- * client bundle — pagar paling awal terhadap kebocoran service role.
- *
- * Penggunaan yang dibenarkan SANGAT sempit:
- *
- *   1. Menulis `audit_logs`. Tabel audit sengaja tidak punya INSERT policy
- *      supaya browser tidak dapat mengarang event palsu (docs/RLS.md §117),
- *      jadi penulisannya memang harus lewat jalur sistem.
- *   2. Agregat lintas organisasi untuk dashboard platform, yang menurut
- *      desain tidak diberikan sebagai hak baca kepada siapa pun
- *      (docs/PERMISSIONS.md §47).
- *
- * Yang DILARANG: memakai client ini untuk menembus policy yang gagal. Policy
- * yang salah diperbaiki, bukan dilangkahi (AGENTS.md §19-§20).
+ * `import "server-only"` menggagalkan build bila berkas ini masuk client bundle.
+ * Dibenarkan hanya untuk dua hal: menulis `audit_logs` (tabelnya sengaja tanpa
+ * INSERT policy, docs/RLS.md §117) dan agregat lintas organisasi dashboard
+ * platform (docs/PERMISSIONS.md §47). BUKAN untuk menembus policy yang gagal —
+ * policy yang salah diperbaiki (AGENTS.md §19-§20).
  */
 export function createAdminClient() {
   const { SUPABASE_SERVICE_ROLE_KEY } = serverEnv();

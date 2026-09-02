@@ -99,7 +99,6 @@ import { cn } from "@/lib/utils";
  * dilihat tidak pernah masuk payload, bukan dirender lalu disembunyikan.
  */
 
-/** Bulan singkat untuk kotak tanggal agenda. */
 const BULAN_SINGKAT = [
   "Jan",
   "Feb",
@@ -121,12 +120,9 @@ type Kandidat = {
   icon: LucideIcon;
   tone: Aksen;
   href: React.ComponentProps<typeof Link>["href"];
-  /** Keterangan di bawah angka ketika kandidat ini menjadi kartu metrik. */
   description?: string;
-  /** Pembanding di sudut kanan kartu metrik. */
   noteValue?: string;
   noteLabel?: string;
-  /** Keterangan ketika kandidat ini turun menjadi sel modul. */
   caption: string;
 };
 
@@ -143,9 +139,7 @@ function susunKandidat(
   summary: InsightSummary,
   periodName?: string,
   sisa?: { short: string; caption: string } | null,
-  /** Tanggal terdekat per jenis jadwal, untuk sudut kanan kartunya. */
   terdekat?: Partial<Record<ScheduleKind, string>>,
-  /** NULL berarti pemanggil tidak berhak melihat pemilihan sama sekali. */
   election?: ElectionSummary | null,
 ) {
   const kandidat: Kandidat[] = [];
@@ -172,8 +166,6 @@ function susunKandidat(
       icon: Network,
       tone: "cyan",
       href: "/organisasi/kepengurusan",
-      // Sudut kanan kartu diisi sisa masa periode — dihitung dari tanggal
-      // akhir yang memang tersimpan, bukan pembanding yang dikarang.
       noteValue: sisa?.short,
       noteLabel: sisa?.caption,
       caption: periodName ?? "Tanpa periode aktif",
@@ -231,8 +223,6 @@ function susunKandidat(
       icon: CalendarDays,
       tone: "blue",
       href: "/agenda",
-      // Sudut kanan diisi tanggal terdekatnya — diambil dari daftar jadwal
-      // yang sudah dimuat, bukan dari query tambahan.
       noteValue: terdekat?.agenda,
       noteLabel: terdekat?.agenda ? "terdekat" : undefined,
       caption: "Mendatang",
@@ -303,9 +293,6 @@ function susunKandidat(
       icon: FileText,
       tone: "slate",
       href: "/surat",
-      // Nol tetap ditampilkan. Kartu lain pada baris yang sama menampilkan
-      // "0 alumni" dan "0 selesai"; menyembunyikan nol di sini membuat satu
-      // kartu berakhir tanpa sudut kanan sementara tiga tetangganya punya.
       noteValue: formatNumber(stats.letters.outgoing_draft),
       noteLabel: "draf keluar",
       caption:
@@ -379,29 +366,12 @@ function susunKandidat(
   return kandidat;
 }
 
-/**
- * Ikon dan aksen per sumber kegiatan.
- *
- * Kuncinya adalah label yang dipakai lapisan query ("Agenda", "Event",
- * "Rapat"); sumber yang tidak dikenali tetap tergambar, hanya dengan ikon
- * kalender netral.
- */
 const SUMBER_RUPA: Record<string, { icon: LucideIcon; tone: Aksen }> = {
   Agenda: { icon: CalendarDays, tone: "blue" },
   Event: { icon: CalendarRange, tone: "rose" },
   Rapat: { icon: Presentation, tone: "cyan" },
 };
 
-/* -------------------------------------------------- jadwal terdekat */
-
-/**
- * Subjudul panel jadwal, disusun dari sumber yang MEMANG boleh dilihat.
- *
- * Sebelumnya tertulis tetap "Agenda, event, dan rapat". Seorang anggota tidak
- * berhak melihat rapat, jadi kalimat itu menjanjikan sesuatu yang tidak akan
- * pernah muncul di daftarnya — dan ketiadaannya lalu terbaca sebagai
- * organisasi yang tidak pernah rapat, bukan sebagai hak yang tidak dimiliki.
- */
 function subjudulJadwal(sources: ScheduleSources) {
   const bagian = [
     sources.agenda ? "agenda" : null,
@@ -411,8 +381,6 @@ function subjudulJadwal(sources: ScheduleSources) {
 
   if (bagian.length === 0) return "Belum ada sumber jadwal";
 
-  // Koma hanya muncul mulai tiga bagian: dua bagian dirangkai "agenda dan
-  // event", bukan "agenda, dan event".
   const kalimat =
     bagian.length === 1
       ? bagian[0]!
@@ -423,63 +391,12 @@ function subjudulJadwal(sources: ScheduleSources) {
   return kalimat.charAt(0).toUpperCase() + kalimat.slice(1);
 }
 
-/** Label dan nada per jenis jadwal. Bukan status, jadi nadanya tenang. */
 const JADWAL_RUPA: Record<ScheduleKind, { label: string; tone: BadgeTone }> = {
   agenda: { label: "Agenda", tone: "info" },
   event: { label: "Event", tone: "primary" },
   meeting: { label: "Rapat", tone: "neutral" },
 };
 
-/**
- * Jadwal terdekat.
- *
- * Satu daftar berurut waktu untuk agenda, event, dan rapat sekaligus —
- * penggabungannya sudah terjadi di lapisan query, lengkap dengan penyaringan
- * haknya. Yang tersisa di sini hanya menggambarnya.
- */
-/**
- * Kotak tanggal.
- *
- * Sudutnya 6px, sama dengan wadah ikon pada panel Administrasi di sebelahnya —
- * bukan 10px. Lengkung besar pada kotak sekecil ini membuatnya terbaca sebagai
- * kapsul yang gagal alih-alih sebagai penanggalan.
- *
- * Tiga baris, bukan dua: bulan menjawab "kapan", tanggal menjawab "kapan
- * tepatnya", dan tahun menjaga agar jadwal yang jatuh tahun depan tidak
- * terbaca seperti minggu ini.
- *
- * PERSEGI PANJANG (40 × 42), bukan persegi, dan bukan pula seukuran `IconBox`.
- * Tiga baris teks bertumpuk memang lebih tinggi daripada lebar; memaksanya
- * masuk ke bujur sangkar adalah asal mula seluruh riwayat di bawah ini.
- *
- * FLEX, BUKAN GRID — dan inilah inti perbaikannya.
- *
- * Kotak ini pernah `grid ... place-items-center`. Pada kisi, `align-content`
- * bawaan berperilaku `stretch`: sisa ruang TIDAK jatuh ke atas dan ke bawah
- * isinya, melainkan dibagi rata ke dalam ketiga barisnya. Diukur di peramban
- * pada 1440px, kotak 36px berisi 29px teks:
- *
- *   baris kisi              9,66 / 14,67 / 9,67   (bukan 8 / 13 / 8)
- *   border atas → "SEP"     0,83px
- *   "2026" → border bawah   1,84px
- *   tinta hari → tinta tahun  -0,33px  (bertumpang tindih)
- *
- * Jadi sisa 7px itu ada — ia hanya diletakkan di tempat yang persis salah:
- * merenggangkan huruf ke arah border, sambil menyisakan kurang dari dua
- * piksel di luar. Menambah padding pada kisi tidak akan menolong; padding
- * hanya memperbesar kotaknya, lalu stretch membagi tambahannya ke dalam lagi.
- *
- * `flex flex-col justify-center` membalik arah itu: baris memakai tinggi
- * alaminya, dan seluruh sisa ruang menjadi jarak di LUAR isi — yang memang
- * arti padding. Dengan `leading` eksplisit (9 / 14 / 9 = 32px) di dalam kotak
- * berpadding 4px, hasilnya 4px di atas "SEP" dan 4px di bawah "2026",
- * seimbang, dan tidak ada lagi tinta yang bersinggungan.
- *
- * `overflow-hidden` DIHAPUS sejak perbaikan sebelumnya, bukan dipertahankan
- * sebagai jaring pengaman. Justru itu yang membuat cacat pertama tidak
- * terlihat: isi yang tidak muat lebih baik menonjol keluar dan segera
- * diperbaiki daripada dipotong rapi lalu lolos berbulan-bulan.
- */
 function DateTile({ date }: { date: Date }) {
   return (
     <span
@@ -510,8 +427,6 @@ function ScheduleList({ items }: { items: ScheduleItem[] }) {
             key={item.id}
             leading={<DateTile date={new Date(item.startAt)} />}
             title={item.title}
-            // Tanggalnya sudah terbaca pada kotak di sebelah kiri; baris ini
-            // menjawab yang belum terjawab — jam dan tempatnya.
             meta={`${formatTime(item.startAt)} WIB${
               item.location ? ` · ${item.location}` : ""
             }`}
@@ -527,8 +442,6 @@ function ScheduleList({ items }: { items: ScheduleItem[] }) {
   );
 }
 
-/* --------------------------------------------- struktur organisasi */
-
 const OPERASIONAL_RUPA: Record<
   OperationalRow["key"],
   { icon: LucideIcon; tone: Aksen }
@@ -538,7 +451,6 @@ const OPERASIONAL_RUPA: Record<
   akun: { icon: KeyRound, tone: "cyan" },
 };
 
-/** Menerjemahkan angka struktur menjadi baris ringkasan yang sama bentuknya. */
 function barisOperasional(rows: OperationalRow[]): SummaryRow[] {
   return rows.map((row) => ({
     label: row.label,
@@ -549,8 +461,6 @@ function barisOperasional(rows: OperationalRow[]): SummaryRow[] {
   }));
 }
 
-/* ------------------------------------------------ administrasi terbaru */
-
 const ADMIN_RUPA: Record<
   AdministrationKind,
   { icon: LucideIcon; tone: Aksen; label: string }
@@ -559,30 +469,13 @@ const ADMIN_RUPA: Record<
   announcement: { icon: Megaphone, tone: "rose", label: "Pengumuman" },
 };
 
-/**
- * Berkas dan pengumuman terbaru.
- *
- * Pelengkap kartu metrik yang hanya menyebut jumlah: di sini terlihat yang
- * mana dan kapan. Judul dan waktu saja — isi dokumennya punya modulnya
- * sendiri, dan dashboard tidak perlu ikut membukanya.
- */
 function AdministrationPanel({
   items,
   sources,
 }: {
   items: AdministrationItem[];
-  /** Sumber yang MEMANG boleh dilihat pemanggil — bukan yang kebetulan ada. */
   sources: AdministrationSources;
 }) {
-  /*
-   * Judulnya mengikuti HAK, bukan isi yang kebetulan termuat.
-   *
-   * Seorang anggota tidak berhak atas dokumen administratif; menyebut
-   * panelnya "Administrasi Terbaru" menjanjikan sesuatu yang tidak akan
-   * pernah muncul di sana. Menurunkan judul dari kind baris yang terbaca juga
-   * salah: satu bulan tanpa dokumen akan mengganti judul panel seorang
-   * pengurus, lalu mengembalikannya bulan berikutnya.
-   */
   const rupa =
     sources.documents && sources.announcements
       ? {
@@ -637,9 +530,6 @@ function AdministrationPanel({
   );
 }
 
-/* ------------------------------------------------- perlu ditindaklanjuti */
-
-/** Ikon, aksen, dan tujuan per jenis tindak lanjut. */
 const TINDAK_RUPA: Record<
   AttentionKey,
   {
@@ -664,7 +554,6 @@ const TINDAK_RUPA: Record<
   "event-draf": { icon: Send, tone: "rose", href: "/kegiatan" },
 };
 
-/** Kolom yang menyisakan sel kosong paling sedikit. */
 function kolomTindak(jumlah: number) {
   if (jumlah <= 2) return "sm:grid-cols-2";
   if (jumlah === 3) return "sm:grid-cols-2 lg:grid-cols-3";
@@ -673,25 +562,11 @@ function kolomTindak(jumlah: number) {
   return "sm:grid-cols-2 lg:grid-cols-4";
 }
 
-/**
- * Daftar tindak lanjut.
- *
- * Barisnya sudah disaring di lapisan query: hanya yang bernilai lebih dari nol
- * dan hanya yang memang dapat ditangani pemanggil. Yang tersisa di sini adalah
- * menggambarnya, dan menyediakan jalan ke modul tempat pekerjaannya
- * diselesaikan — bukan menyelesaikannya di dashboard.
- */
 function AttentionPanel({
   items,
   columns,
 }: {
   items: AttentionItem[];
-  /**
-   * Dipaksa satu kolom ketika panelnya berbagi baris dengan kartu lain. Tiga
-   * sel berjajar mendatar membuat kartunya jauh lebih pendek daripada
-   * tetangganya, dan sisa tingginya menjadi pita putih; bertumpuk, tingginya
-   * sepadan dan tiap barisnya punya ruang untuk keterangannya.
-   */
   columns?: 1;
 }) {
   return (
@@ -727,26 +602,6 @@ function AttentionPanel({
   );
 }
 
-/* ---------------------------------------------------------- pemilihan */
-
-/**
- * Ringkasan pemilihan.
- *
- * Yang ditampilkan hanya dua hal: pemilihan mana yang perlu diperhatikan, dan
- * berapa yang sudah memilih. TIDAK ADA perolehan kandidat — tidak selagi
- * berlangsung, tidak setelah ditutup, tidak setelah dipublikasikan. Angka
- * partisipasinya datang dari fungsi yang memang dirancang aman ditampilkan
- * selama pemungutan suara, dan hasil resmi tetap punya halamannya sendiri.
- */
-/**
- * Rentang tanggal pemilihan.
- *
- * Tahun ditulis sekali ketika keduanya jatuh pada tahun yang sama. Bukan
- * penghematan huruf demi keringkasan: diukur di peramban pada 320px, bentuk
- * lengkapnya menuntut 140px sementara barisnya hanya menyisakan 120px, dan
- * separuh rentangnya hilang. Tahun yang ditulis dua kali tidak menjawab satu
- * pertanyaan pun yang belum dijawab oleh tahun yang ditulis sekali.
- */
 function rentangPemilihan(mulai: string, selesai: string) {
   const awal = new Date(mulai);
   const akhir = new Date(selesai);
@@ -778,35 +633,13 @@ function ElectionPanel({ summary }: { summary: ElectionSummary }) {
       action={<SeeAll href="/pemilihan" />}
       bodyClassName={SLOT_KONTEN}
     >
-      {/*
-        Susunannya sama dengan panel daftar di sebelahnya: satu baris identitas
-        beserta lencana statusnya, lalu satu batang progres. Cincin yang
-        sebelumnya dipakai memberi panel ini anatomi dan jarak sendiri —
-        selebar 132px dan dipusatkan — sehingga tiga kartu yang berdiri
-        berdampingan terbaca sebagai dua sistem yang berbeda.
-      */}
       <div className="grid content-start gap-2">
-        {/*
-          Tanpa satu pun pemilihan, panelnya tetap berdiri di slot yang sama
-          dengan tetangganya — kartu yang menghilang ketika tabelnya kosong
-          adalah cara tata letak ikut berubah mengikuti isi basis data.
-        */}
         {summary.total === 0 ? (
           <EmptyNote icon={Vote}>
             Belum ada pemilihan yang tercatat pada organisasi ini.
           </EmptyNote>
         ) : null}
 
-        {/*
-          DAFTAR, bukan satu sorotan.
-
-          Sebelumnya hanya `focus` yang tampil, jadi organisasi dengan empat
-          pemilihan terbaca seolah punya satu — panelnya berisi satu baris
-          sementara tetangganya berisi tiga, dan barisnya terlihat timpang.
-
-          Batasnya sama dengan seluruh dashboard (3), dan kelebihannya
-          diserahkan ke "Lihat semua" yang sudah ada di kepala panel.
-        */}
         {/*
           `ItemList`, BUKAN baris telanjang di dalam `div` pembungkus di atas.
 
@@ -844,16 +677,6 @@ function ElectionPanel({ summary }: { summary: ElectionSummary }) {
           </ItemList>
         ) : null}
 
-        {/*
-          Partisipasi saja — pembilang dan penyebutnya keduanya nyata, dan
-          keduanya aman ditampilkan selama pemungutan suara. TIDAK ADA
-          perolehan kandidat di sini, apa pun statusnya.
-
-          Hanya muncul ketika daftarnya BELUM penuh. Dengan tiga baris —
-          batas pratinjau seluruh dashboard — panel ini sudah setinggi
-          tetangganya; menambahkan batang progres di bawahnya membuatnya
-          menjulang justru pada keadaan yang paling sering terjadi.
-        */}
         {partisipasi && daftar.length < BATAS_PRATINJAU ? (
           <ProgressRow
             label="Partisipasi"
@@ -867,8 +690,6 @@ function ElectionPanel({ summary }: { summary: ElectionSummary }) {
     </Panel>
   );
 }
-
-/* -------------------------------------------------------- komposisi */
 
 export function OrganizationDashboard({
   displayName,
@@ -887,28 +708,20 @@ export function OrganizationDashboard({
   operational,
 }: {
   displayName: string;
-  /** NULL bila agregatnya gagal dibaca; komposisinya menyusut dengan sendirinya. */
   stats: OrganizationStats | null;
   period: { name: string; start_date: string; end_date: string } | null;
   remaining: { text: string; short: string; caption: string } | null;
   series: ActivitySeries | null;
   summary: InsightSummary;
-  /** NULL berarti tidak berhak — panelnya tidak dirender sama sekali. */
   schedule: ScheduleItem[] | null;
   activity: ActivityItem[] | null;
   election: ElectionSummary | null;
-  /** Sudah disaring: hanya baris > 0 yang dapat ditangani pemanggil. */
   attention: AttentionItem[];
-  /** NULL berarti tidak berhak atas satu pun sumbernya. */
   administration: AdministrationItem[] | null;
-  /** Sumber administrasi yang boleh dilihat — menentukan judul panelnya. */
   administrationSources: AdministrationSources;
-  /** Sumber jadwal yang boleh dilihat — menentukan subjudul panelnya. */
   scheduleSources: ScheduleSources;
-  /** Angka struktur yang dipelihara operator. Kosong bila bukan pemeliharanya. */
   operational: OperationalRow[];
 }) {
-  // Tanggal terdekat per jenis, dari daftar jadwal yang sudah terurut waktu.
   const terdekat: Partial<Record<ScheduleKind, string>> = {};
   for (const item of schedule ?? []) {
     if (!terdekat[item.kind]) {
@@ -919,24 +732,10 @@ export function OrganizationDashboard({
   const kandidat = stats
     ? susunKandidat(stats, summary, period?.name, remaining, terdekat, election)
     : [];
-  /*
-   * Berapa kandidat yang naik menjadi kartu metrik.
-   *
-   * Barisnya empat kolom, jadi ambil kelipatan empat yang muat: delapan
-   * kandidat menjadi dua baris penuh, tujuh tetap empat supaya baris kedua
-   * tidak berakhir dengan sel menganga. Sisanya turun menjadi kartu kecil di
-   * kolom Informasi Cepat, yang memang bentuknya untuk angka sekunder.
-   */
   const jumlahUtama =
     kandidat.length >= 8 ? 8 : kandidat.length >= 4 ? 4 : kandidat.length;
   const utama = kandidat.slice(0, jumlahUtama);
 
-  /*
-   * Pemilihan boleh menjadi kartu utama, tidak pernah menjadi baris sekunder:
-   * peran yang kandidatnya melimpah sudah mendapat panel Pemilihan sendiri,
-   * dan mengulangnya sebagai baris di Informasi Cepat hanya menyebut angka
-   * yang sama dua kali pada satu layar.
-   */
   const cepat: SummaryRow[] = kandidat
     .slice(jumlahUtama)
     .filter((row) => row.label !== "Pemilihan")
@@ -958,12 +757,6 @@ export function OrganizationDashboard({
       }
     : null;
 
-  /*
-   * Alumni ikut ke kolom struktur ketika kolom itu memang ada: ia angka
-   * keanggotaan yang tidak berubah harian, sekelompok dengan jabatan dan
-   * periode. Tanpa kolom itu ia tetap di Informasi Cepat, tempatnya selama
-   * ini.
-   */
   const strukturRows: SummaryRow[] = barisOperasional(operational);
 
   if (barisAlumni) {
@@ -971,17 +764,6 @@ export function OrganizationDashboard({
     else cepat.push(barisAlumni);
   }
 
-  /*
-   * Bagian bawah, berpasangan dua kolom; yang terakhir melebar penuh ketika
-   * jumlahnya ganjil.
-   *
-   * Urutannya dipilih supaya pasangannya seimbang, bukan sekadar tersusun:
-   * jadwal dan pemilihan sama-sama berisi daftar sehingga tingginya sepadan,
-   * sementara pratinjau anggota selalu terakhir. Strip wajah memang pendek —
-   * satu baris avatar — dan menaruhnya di samping kartu berisi daftar hanya
-   * menghasilkan setengah kolom kosong. Selebar halaman ia terbaca sebagai
-   * penutup, bukan sebagai kartu yang gagal terisi.
-   */
   const panelJadwal = schedule ? (
     <Panel
       title="Jadwal Terdekat"
@@ -1034,20 +816,6 @@ export function OrganizationDashboard({
       </Panel>
     ) : null;
 
-  /*
-   * Rincian di sisi kanan grafik.
-   *
-   * Barisnya adalah sumber grafiknya sendiri — agenda, event, rapat sejauh
-   * yang boleh dilihat — dihitung pada rentang yang sama dengan garisnya.
-   *
-   * Pengumuman ikut HANYA ketika tidak ada kolom Informasi Cepat yang sudah
-   * memuatnya, dan hanya karena `getInsightSummary` menghitungnya pada
-   * rentang dua belas bulan yang sama; angka dengan dasar berbeda tidak
-   * berhak berdiri dalam satu daftar.
-   *
-   * Tidak ada baris yang ditambahkan untuk menggenapkan tampilan. Organisasi
-   * tanpa event akan melihat dua baris, dan itu memang keadaannya.
-   */
   const rincianKegiatan: SummaryRow[] = (series?.bySource ?? []).map((row) => {
     const rupa = SUMBER_RUPA[row.label] ?? {
       icon: CalendarDays,
@@ -1071,12 +839,6 @@ export function OrganizationDashboard({
     });
   }
 
-  /*
-    Kepala halaman memakai `PageHeader` yang sama dengan seluruh aplikasi.
-    Sebelumnya dashboard menuliskan kepalanya sendiri dengan h1 21px dan
-    keterangan 12,5px, sehingga ia menjadi satu-satunya halaman dengan ukuran
-    judul tersendiri (AGENTS.md §54).
-  */
   const sapaan = (
     <PageHeader
       title={`Selamat datang, ${displayName}`}
@@ -1095,9 +857,6 @@ export function OrganizationDashboard({
     utama.length > 0 ? (
       <div
         className={cn(
-          // `auto-rows-fr`: dua baris kartu dengan tinggi berbeda terbaca
-          // sebagai dua kelompok yang tak berhubungan. Baris tertinggi
-          // menentukan tinggi seluruhnya.
           "grid auto-rows-fr gap-4",
           utama.length >= 4
             ? "sm:grid-cols-2 xl:grid-cols-4"
@@ -1134,26 +893,8 @@ export function OrganizationDashboard({
     </Panel>
   ) : null;
 
-  /*
-   * SUSUNAN OPERATOR.
-   *
-   * Dipakai ketika ada pekerjaan yang menunggu DAN ada angka struktur yang
-   * dipelihara — dua hal yang hanya dimiliki pemegang wewenang operasional.
-   * Seluruh barisnya berpasangan: tidak ada kartu berdiri sendiri selebar
-   * halaman, dan grafiknya berbagi baris dengan angka yang maknanya memang
-   * berdampingan alih-alih memanjang sendirian.
-   */
   const susunanOperator = attention.length > 0 && operational.length > 0;
 
-  /*
-   * Isi panel Ringkasan Organisasi pada susunan operator.
-   *
-   * Tiga angka sengaja TIDAK ikut. "Periode" hampir tidak pernah berubah dan
-   * periode aktifnya sudah tertulis di kepala halaman; "Alumni" sudah menjadi
-   * pembanding di kartu Total Anggota; "Presensi" naik menjadi batang progres
-   * di bawah kisi, karena ia satu-satunya angka di sini yang memang punya
-   * pembilang dan penyebut.
-   */
   const selStat = [
     ...cepat.filter(
       (row) => row.label !== "Presensi" && row.label !== "Alumni",
@@ -1168,14 +909,6 @@ export function OrganizationDashboard({
       ? stats.attendance
       : null;
 
-  /**
-   * Aktivitas versi kolom sempit.
-   *
-   * Satu-satunya "Aktivitas Terbaru" pada susunan operator: ia menempati
-   * kolom yang dulu diisi pratinjau anggota, dan panel selebar halaman di
-   * bawah dihapus supaya tidak ada dua panel dengan judul yang sama pada satu
-   * halaman.
-   */
   const panelAktivitasSempit = activity ? (
     <Panel
       title="Aktivitas Terbaru"
@@ -1197,12 +930,6 @@ export function OrganizationDashboard({
         {sapaan}
         {kisiMetrik}
 
-        {/*
-          Panelnya menjadi anak langsung kisi, tanpa pembungkus: `Panel` sudah
-          membawa `min-w-0`, dan sebagai anak langsung ia meregang mengikuti
-          tinggi baris — pembungkuslah yang tadinya meregang sementara kartunya
-          tetap pendek.
-        */}
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
           <AttentionPanel items={attention} columns={1} />
 
@@ -1236,16 +963,6 @@ export function OrganizationDashboard({
   }
 
   /*
-   * Bagian bawah, berpasangan dua kolom; yang terakhir melebar penuh ketika
-   * jumlahnya ganjil.
-   *
-   * Urutannya dipilih dari tinggi TERUKUR di peramban, bukan dari dugaan.
-   * Jadwal adalah kartu tertinggi karena kotak tanggalnya (320px), jadi ia
-   * berpasangan dengan Administrasi yang juga berisi daftar (275px);
-   * Pemilihan (270px) dan pratinjau anggota (275px) yang sama-sama pendek
-   * berpasangan sesudahnya.
-   */
-  /*
    * Pemilihan naik ke baris grafik ketika tidak ada kolom Informasi Cepat.
    *
    * Bukan pemeriksaan role — `AccessContext` memang tidak menyimpannya — tapi
@@ -1273,30 +990,14 @@ export function OrganizationDashboard({
       {sapaan}
       {kisiMetrik}
 
-      {/* --------------------------------------- perlu ditindaklanjuti */}
       {attention.length > 0 ? <AttentionPanel items={attention} /> : null}
 
-      {/* ---------------------------------- grafik + informasi cepat */}
       {series || sampingGrafik ? (
         <div
-          /*
-            Meregang, bukan mengikuti isi masing-masing.
-
-            Sebelumnya baris ini `items-start` supaya panel pendek tidak
-            diregang menjadi ruang kosong. Yang berubah adalah sebabnya: kini
-            setiap badan panel berdiri di atas `SLOT_KONTEN` yang sama dengan
-            batas bawah grafik, jadi kekosongannya sudah TERBATAS sebelum
-            peregangan dimulai — dan tepi bawah yang rata lebih berharga
-            daripada selisih beberapa puluh piksel yang tersisa.
-          */
           className={cn(
             "grid gap-4",
             series &&
               sampingGrafik &&
-              // Informasi Cepat adalah kolom angka sempit dan cukup dengan
-              // lebar tetap; panel Pemilihan berisi baris judul dan batang
-              // progres, dan pada 320px keduanya berdesakan — jadi ia mendapat
-              // sepertiga baris, bukan sebuah bilah samping.
               (pemilihanDiSamping
                 ? "xl:grid-cols-[minmax(0,1.9fr)_minmax(0,1fr)]"
                 : "xl:grid-cols-[minmax(0,1fr)_320px]"),
@@ -1311,23 +1012,9 @@ export function OrganizationDashboard({
                   {series.range}
                 </span>
               }
-              /*
-                Rincian per sumber pindah ke SAMPING grafik, bukan di bawahnya.
-                Di bawah, ia menambah 90px pada kartu yang sudah paling tinggi
-                di halaman; di samping, ia mengisi ruang yang memang menganggur
-                dan kartunya memendek tanpa kehilangan satu angka pun.
-
-                Menumpuk kembali di bawah 640px: tiga baris selebar sepertiga
-                layar ponsel tidak memuat wadah ikon beserta labelnya.
-              */
               bodyClassName={cn(
                 "grid gap-3",
                 rincianKegiatan.length > 0 &&
-                  // Batas bawah 180px, bukan nisbah murni: diukur di peramban
-                  // pada 1280px, nisbah 0.34 menyusutkan kolom ini ke 150px
-                  // dan label "Pengumuman" — teks tetap, bukan isi buatan
-                  // pengguna — ikut terpotong; pada 160px ia masih kurang 5px.
-                  // Label terpanjang di sinilah yang menentukan batasnya.
                   "sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.34fr)]",
               )}
             >
@@ -1352,23 +1039,8 @@ export function OrganizationDashboard({
         </div>
       ) : null}
 
-      {/* ------------------------------------------------ bagian bawah */}
-      {/*
-        Tiga panel sejajar pada desktop. Kolomnya mengikuti jumlah panel yang
-        memang dirender, bukan angka tetap: peran dengan dua panel mendapat dua
-        kolom penuh, bukan dua kolom dan satu sel menganga.
-      */}
       {bawah.length > 0 ? (
-        <div
-          className={cn(
-            // Meregang: setiap panel di baris ini sudah punya lantai
-            // `SLOT_KONTEN` yang sama, jadi kartu berisi satu item tidak lagi
-            // 96px lebih pendek daripada kartu berisi tiga — dan tepi
-            // bawahnya boleh dirapikan tanpa membuat lubang.
-            "grid gap-4",
-            KOLOM_BAWAH[bawah.length] ?? "",
-          )}
-        >
+        <div className={cn("grid gap-4", KOLOM_BAWAH[bawah.length] ?? "")}>
           {bawah.map((section, index) => (
             <div
               key={section.key}
@@ -1380,10 +1052,6 @@ export function OrganizationDashboard({
                 // 1440px, sel selebar 366px berisi panel 366/353/320 dan tepi
                 // kanan barisnya bergerigi.
                 "grid min-w-0",
-                // Panel ganjil terakhir melebar sepenuh baris pada kisi dua
-                // kolom. Diukur di peramban pada 1024px: tanpa ini panel
-                // ketiga duduk sendiri dan menyisakan satu sel kosong selebar
-                // 349px di sebelahnya.
                 bawah.length === 3 &&
                   index === 2 &&
                   "md:col-span-2 xl:col-span-1",
@@ -1398,12 +1066,6 @@ export function OrganizationDashboard({
   );
 }
 
-/**
- * Kolom baris bawah menurut jumlah panelnya.
- *
- * Tablet berhenti di dua kolom: tiga panel selebar sepertiga layar 768px tidak
- * lagi memuat kotak tanggal beserta judulnya.
- */
 const KOLOM_BAWAH: Record<number, string> = {
   1: "",
   2: "md:grid-cols-2",
@@ -1411,14 +1073,6 @@ const KOLOM_BAWAH: Record<number, string> = {
   4: "md:grid-cols-2 xl:grid-cols-4",
 };
 
-/**
- * Kelas kisi kartu metrik, dipilih menurut jumlah kartunya.
- *
- * Lebarnya ikut dibatasi, bukan hanya jumlah kolomnya. Seorang anggota yang
- * hanya berhak melihat dua metrik akan melihat dua kartu selebar kartu pada
- * peran lain — bukan dua kartu yang melar setengah layar, dan bukan pula kisi
- * empat kolom dengan dua sel menganga di ujung kanan.
- */
 const KOLOM_METRIK: Record<1 | 2 | 3, string> = {
   1: "xl:max-w-[25%]",
   2: "sm:grid-cols-2 xl:max-w-[50%]",

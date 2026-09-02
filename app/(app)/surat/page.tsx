@@ -21,16 +21,6 @@ export const metadata: Metadata = {
 
 const UKURAN_HALAMAN = 20;
 
-/**
- * Status surat MASUK dan KELUAR memakai himpunan yang berbeda.
- *
- * Karena itu penyaringnya mengikuti tab yang sedang dibuka, dan hanya
- * diterapkan pada arsip tab itu. Satu penyaring untuk keduanya akan diam-diam
- * mengosongkan tab sebelah: "Diterima" tidak pernah ada pada surat keluar.
- *
- * Tautan tab sendiri sudah membuang seluruh parameter (`/surat?tab=…`), jadi
- * berpindah tab mengembalikan penyaring ke keadaan semula.
- */
 const STATUS_MASUK = [
   { value: "RECEIVED", label: "Diterima" },
   { value: "PROCESSED", label: "Diproses" },
@@ -65,9 +55,6 @@ export default async function LettersPage({
 
   const supabase = await createClient();
 
-  // Pencarian dan penyaringan berlaku untuk KEDUA arsip. Keduanya memang
-  // dimuat bersama supaya berpindah tab tidak menunggu query baru; yang
-  // membedakan hanya tab mana yang sedang digambar.
   let masukQuery = supabase
     .from("incoming_letters")
     .select(
@@ -189,9 +176,6 @@ export default async function LettersPage({
         actions={
           <>
             {can(context, PERMISSIONS.letters.export) ? (
-              // Ekspor mengikuti tab yang sedang dibuka: berkas "surat" yang
-              // mencampur surat masuk dan keluar dalam satu tabel tidak dapat
-              // dibaca sebagai arsip mana pun.
               <ExportButton
                 label={
                   activeTab === "keluar"

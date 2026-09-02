@@ -5,19 +5,6 @@ import { useState } from "react";
 import { Input } from "@/components/ui/field";
 import { formatRupiah, parseRupiah } from "@/lib/format";
 
-/**
- * Input nominal rupiah.
- *
- * Yang dikirim ke server tetap teks apa adanya — server yang memanggil
- * parseRupiah() dan menolak yang tidak terbaca. Komponen ini hanya
- * menampilkan hasil pembacaan di bawah kotaknya, sehingga pengetik "150.000"
- * dapat melihat sendiri bahwa sistem membacanya seratus lima puluh ribu, bukan
- * seratus lima puluh.
- *
- * Sengaja TIDAK memformat isi kotaknya sambil diketik: kursor yang meloncat
- * setiap kali titik disisipkan adalah gangguan yang lebih besar daripada
- * masalah yang dipecahkannya.
- */
 export function MoneyInput({
   id,
   name,

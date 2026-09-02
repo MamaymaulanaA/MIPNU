@@ -116,8 +116,6 @@ export const PERMISSIONS = {
     viewGlobal: "reports.view_global",
   },
 
-  /* ------------------------------------------------------------- Phase 2 */
-
   cadreship: {
     view: "cadreship.view",
     viewOwn: "cadreship.view_own",
@@ -186,8 +184,6 @@ export const PERMISSIONS = {
     manageAudience: "announcements.manage_audience",
   },
 
-  /* ------------------------------------------------------------- Phase 4 */
-
   elections: {
     view: "elections.view",
     create: "elections.create",
@@ -219,7 +215,6 @@ export type Permission = {
   ]: (typeof PERMISSIONS)[Group][keyof (typeof PERMISSIONS)[Group]];
 }[keyof typeof PERMISSIONS];
 
-/** Empat role inti. Jabatan organisasi BUKAN role (PRD §11). */
 export const ROLES = {
   superAdmin: "SUPER_ADMIN",
   operator: "OPERATOR_ORGANISASI",

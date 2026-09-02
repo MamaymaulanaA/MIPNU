@@ -20,21 +20,6 @@ import { databaseFailure, formValues, parseForm } from "@/lib/form";
 import { createClient } from "@/lib/supabase/server";
 import { recordAudit } from "@/services/audit/record";
 
-/**
- * Aksi pemilihan.
- *
- * Dua hal membuat berkas ini berbeda dari modul lain:
- *
- * 1. Perubahan tahapan TIDAK dilakukan di sini. Membuka, menutup,
- *    mempublikasikan, mengarsipkan, dan membatalkan seluruhnya memanggil RPC —
- *    karena trigger database menolak perubahan status dari jalur biasa. Fungsi
- *    di bawah hanya meneruskan permintaan dan menerjemahkan alasannya.
- *
- * 2. Tidak ada satu pun fungsi yang menghitung suara. Perolehan kandidat hanya
- *    keluar dari `mipnu_election_result`, yang menolak selama pemungutan suara
- *    berlangsung.
- */
-
 const RELATION_FAILURE = {
   "23503": {
     success: false as const,
@@ -48,14 +33,6 @@ const RELATION_FAILURE = {
   },
 };
 
-/**
- * Kegagalan yang datang dari trigger integritas.
- *
- * `check_violation` di domain ini praktis selalu berarti satu hal: sesuatu
- * dikunci karena tahapan pemilihannya sudah lewat. Pesannya diambil apa adanya
- * dari database supaya pengguna membaca alasan yang sebenarnya, bukan
- * terjemahan yang menghilangkan konteksnya.
- */
 function guardFailure(message: string) {
   return {
     success: false as const,
@@ -70,7 +47,6 @@ function revalidateElections(electionId?: string) {
   revalidatePath("/dashboard");
 }
 
-/** Alasan penolakan RPC tahapan, diterjemahkan. */
 const STAGE_FAILURE: Record<string, string> = {
   FORBIDDEN: "Anda tidak memiliki izin untuk tindakan ini.",
   ELECTION_NOT_FOUND: "Pemilihan tidak ditemukan.",
@@ -87,8 +63,6 @@ const STAGE_FAILURE: Record<string, string> = {
 };
 
 type StageResult = { ok?: boolean; reason?: string; status?: string };
-
-/* ============================================================== pemilihan */
 
 export async function createElection(
   organizationId: string,
@@ -230,8 +204,6 @@ export async function deleteElection(
   }
 }
 
-/* ================================================================ tahapan */
-
 /**
  * Satu pembungkus untuk seluruh RPC tahapan.
  *
@@ -243,9 +215,6 @@ export async function deleteElection(
 async function runStage(
   organizationId: string,
   electionId: string,
-  // PromiseLike, bukan Promise: builder PostgREST adalah thenable yang baru
-  // dieksekusi saat di-await, dan menuntutnya menjadi Promise penuh hanya
-  // memaksa pemanggilnya menulis `await` di tempat yang salah.
   call: (
     supabase: Awaited<ReturnType<typeof createClient>>,
   ) => PromiseLike<{ data: unknown; error: { message: string } | null }>,
@@ -274,10 +243,6 @@ async function runStage(
       };
     }
 
-    // TIDAK ada recordAudit di sini. Fungsi database sudah menulis jejaknya di
-    // dalam transaksi yang sama, lengkap dengan status sebelum dan sesudah —
-    // menulisnya lagi dari sini hanya menghasilkan dua baris untuk satu
-    // peristiwa, dan yang kedua justru lebih miskin isinya.
     revalidateElections(electionId);
     return ok({ status: result.status ?? "" });
   } catch (error) {
@@ -352,8 +317,6 @@ export async function cancelElection(
     }),
   );
 }
-
-/* =============================================================== kandidat */
 
 export async function createCandidate(
   organizationId: string,
@@ -504,8 +467,6 @@ export async function deleteCandidate(
   }
 }
 
-/* ==================================================================== DPT */
-
 export async function addVoters(
   organizationId: string,
   electionId: string,
@@ -655,8 +616,6 @@ export async function setVoterEligibility(
   }
 }
 
-/* ================================================================ panitia */
-
 export async function assignCommittee(
   organizationId: string,
   electionId: string,
@@ -669,9 +628,6 @@ export async function assignCommittee(
       PERMISSIONS.elections.assignCommittee,
     );
 
-    // Daftar hak datang sebagai checkbox berulang; parseForm hanya membaca
-    // nilai tunggal, jadi bagian itu diambil terpisah dan disaring terhadap
-    // daftar yang memang boleh dilekatkan.
     const requested = new Set(formValues(formData, "permissions"));
     const permissions = ASSIGNABLE_COMMITTEE_PERMISSIONS.filter((code) =>
       requested.has(code),
@@ -776,18 +732,6 @@ export async function removeCommittee(
   }
 }
 
-/* ================================================================ memilih */
-
-/**
- * Memberikan suara.
- *
- * Yang dikirim ke database hanya pemilihan dan kandidat. Identitas pemilih
- * diselesaikan `auth.uid()` di dalam fungsi (EVOTING §55), sehingga tidak ada
- * parameter yang dapat dipalsukan untuk memilih atas nama orang lain.
- *
- * Tanda terima yang kembali TIDAK dicatat di audit dan tidak disimpan di
- * server mana pun — ia hanya ditampilkan sekali kepada pemiliknya.
- */
 export async function castVote(
   organizationId: string,
   electionId: string,

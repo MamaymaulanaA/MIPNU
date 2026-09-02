@@ -58,8 +58,6 @@ export async function listMembers(
   }
 
   if (params.search) {
-    // Pencarian dilakukan database-side. Menarik seluruh baris lalu memfilter
-    // di aplikasi tidak akan bertahan saat data tumbuh (SYSTEM.md §63).
     const escaped = escapeLikePattern(params.search);
     query = query.or(
       `full_name.ilike.%${escaped}%,member_number.ilike.%${escaped}%`,
@@ -71,8 +69,6 @@ export async function listMembers(
       ascending: params.direction === "asc",
       nullsFirst: false,
     })
-    // Pengurutan sekunder yang stabil: tanpa ini, baris dengan nilai sort
-    // sama dapat berpindah halaman antar-request dan tampak hilang.
     .order("id", { ascending: true })
     .range(from, to);
 
@@ -100,12 +96,6 @@ export async function listMembers(
   };
 }
 
-/**
- * Meloloskan wildcard PostgREST.
- *
- * Tanpa ini, mengetik `%` di kotak pencarian berubah menjadi wildcard, dan
- * koma memecah ekspresi `or()` menjadi kondisi tambahan.
- */
 function escapeLikePattern(value: string) {
   return value.replace(/[%_,()\\]/g, (match) => `\\${match}`);
 }

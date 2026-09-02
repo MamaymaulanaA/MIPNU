@@ -60,7 +60,6 @@ export type CadreshipPermissions = {
   canDelete: boolean;
 };
 
-/** Keadaan toolbar dan pagination — seluruhnya dari URL, diproses di server. */
 export type KeadaanDaftar = {
   cari: string;
   jenjang: string;
@@ -87,7 +86,6 @@ export function CadreshipManager({
   memberOptions: CadreshipOption[];
   typeOptions: CadreshipOption[];
   permissions: CadreshipPermissions;
-  /** Halaman sedang menampilkan riwayat milik pengguna sendiri. */
   ownOnly: boolean;
   daftar: KeadaanDaftar;
   /** Tombol Ekspor, dibangun di server beserta pemeriksaan permission-nya. */
@@ -370,8 +368,6 @@ export function CadreshipManager({
     </div>
   );
 }
-
-/* ========================================================================== */
 
 function CadreshipDialog({
   open,

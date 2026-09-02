@@ -14,14 +14,6 @@ import {
 } from "@/features/attendance/actions/manage-qr";
 import { formatDateTime } from "@/lib/format";
 
-/**
- * Panel QR presensi.
- *
- * QR hanya ada di layar selama sesi berlangsung — tidak disimpan sebagai
- * berkas dan tidak dikirim ke mana pun. Menerbitkan ulang otomatis
- * membatalkan QR sebelumnya, karena database hanya menyimpan satu hash per
- * sesi.
- */
 export function QrPanel({
   organizationId,
   sessionId,
@@ -94,11 +86,6 @@ export function QrPanel({
       <CardContent className="space-y-4">
         {issued ? (
           <div className="flex flex-col items-center gap-3">
-            {/*
-              SVG dirender di server dan disisipkan apa adanya. Isinya berasal
-              dari pustaka QR atas URL yang kita bentuk sendiri — bukan input
-              pengguna.
-            */}
             <div
               className="rounded-md border border-border bg-white p-3"
               dangerouslySetInnerHTML={{ __html: issued.svg }}

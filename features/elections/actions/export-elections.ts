@@ -55,8 +55,6 @@ async function loadElection(electionId: string, organizationId: string) {
   return data;
 }
 
-/* ------------------------------------------------------------------- DPT */
-
 export async function exportVoters(
   organizationId: string,
   electionId: string,
@@ -141,8 +139,6 @@ export async function exportVoters(
   }
 }
 
-/* ----------------------------------------------------------- partisipasi */
-
 export async function exportParticipation(
   organizationId: string,
   electionId: string,
@@ -222,16 +218,6 @@ export async function exportParticipation(
   }
 }
 
-/* ------------------------------------------------------------ hasil resmi */
-
-/**
- * Hasil pemilihan.
- *
- * Gerbangnya sama persis dengan layar: `mipnu_election_result`. Selama
- * pemungutan suara berlangsung fungsi itu menolak, sehingga tidak ada berkas
- * untuk disusun — bukan berkas kosong, melainkan penolakan yang menyebut
- * alasannya.
- */
 export async function exportResult(
   organizationId: string,
   electionId: string,

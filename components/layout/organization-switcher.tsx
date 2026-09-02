@@ -7,16 +7,6 @@ import { switchOrganization } from "@/features/organizations/actions/switch-orga
 import type { AccessibleOrganization } from "@/lib/auth/context";
 import { cn } from "@/lib/utils";
 
-/**
- * Pemilih organisasi aktif.
- *
- * Hanya memuat organisasi yang benar-benar boleh diakses — daftarnya berasal
- * dari membership di server. Aksi pindahnya pun divalidasi ulang server-side
- * (docs/AUTHORIZATION.md §68).
- *
- * Aksen IPNU/IPPNU dipakai sebagai penanda identitas kecil saja; sidebar dan
- * state aktif tetap memakai primary MIPNU (docs/UI.md §87).
- */
 export function OrganizationSwitcher({
   organizations,
   currentOrganizationId,
