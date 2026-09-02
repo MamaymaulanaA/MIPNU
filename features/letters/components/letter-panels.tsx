@@ -12,6 +12,8 @@ import { FormAlert, SubmitButton } from "@/components/forms/form-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
+import { TINGGI_KONTROL_RINGKAS } from "@/components/ui/control";
+import { cn } from "@/lib/utils";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import {
   Table,
@@ -697,7 +699,16 @@ function OutgoingPanel({
                             aria-label={`Status surat ${row.letterNumber}`}
                             value={row.status}
                             disabled={isPending}
-                            className="h-8 w-auto min-w-32 text-[13px]"
+                            className={cn(
+                              TINGGI_KONTROL_RINGKAS,
+                              // Memeluk nilai yang sedang tampil.
+                              // `min-w-32` yang lama membatalkan hal itu:
+                              // lantai 128px membuat status sependek
+                              // "Draf" tetap duduk di kotak selebar itu.
+                              // `w-auto` tetap ada sebagai jaring pengaman
+                              // untuk peramban tanpa `field-sizing`.
+                              "field-sizing-content w-auto text-[13px]",
+                            )}
                             onChange={(event) => {
                               const next = event.target.value as OutgoingStatus;
 

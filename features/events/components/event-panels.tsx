@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
+import { TINGGI_KONTROL_RINGKAS } from "@/components/ui/control";
+import { cn } from "@/lib/utils";
 import { Field, Input, Select } from "@/components/ui/field";
 import {
   Table,
@@ -255,7 +257,16 @@ export function ParticipantPanel({
                             aria-label={`Status ${participant.memberName}`}
                             value={participant.status}
                             disabled={isPending}
-                            className="h-8 w-auto min-w-36 text-[13px]"
+                            className={cn(
+                              TINGGI_KONTROL_RINGKAS,
+                              // Memeluk nilai yang sedang tampil.
+                              // `min-w-32` yang lama membatalkan hal itu:
+                              // lantai 128px membuat status sependek
+                              // "Terdaftar" tetap duduk di kotak selebar itu.
+                              // `w-auto` tetap ada sebagai jaring pengaman
+                              // untuk peramban tanpa `field-sizing`.
+                              "field-sizing-content w-auto text-[13px]",
+                            )}
                             onChange={(event) => {
                               const next = event.target
                                 .value as (typeof PARTICIPANT_STATUSES)[number];
