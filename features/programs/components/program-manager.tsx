@@ -353,7 +353,24 @@ function ProgramCard({
               aria-label={`Status ${program.name}`}
               value={program.status}
               disabled={isPending}
-              className={cn(TINGGI_KONTROL_RINGKAS, "w-auto text-[13px]")}
+              className={cn(
+                TINGGI_KONTROL_RINGKAS,
+                // Memeluk nilai yang SEDANG tampil, bukan opsi terpanjang.
+                // `w-auto` pada select native selalu selebar opsi
+                // terpanjang, jadi "Berjalan" duduk di kotak selebar
+                // "Direncanakan" dengan 40px kosong sebelum panahnya.
+                //
+                // Aman DI SINI karena grup aksinya rata kanan: yang bergerak
+                // hanya tepi kiri select, sementara tombol Ubah tetap
+                // terpaku dan tetap sejajar antar kartu. Di toolbar hal ini
+                // TIDAK dilakukan — penyaring di sana berjajar setelah
+                // kolom cari `flex-1`, sehingga satu yang menyusut menggeser
+                // tetangganya setiap kali nilainya berganti.
+                //
+                // `w-auto` tetap ditulis sebagai jaring pengaman untuk
+                // peramban yang belum mengenal `field-sizing`.
+                "field-sizing-content w-auto text-[13px]",
+              )}
               onChange={(event) => {
                 const next = event.target.value as ProgramStatus;
 

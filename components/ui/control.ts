@@ -38,10 +38,13 @@ export const TINGGI_KONTROL_IKON = "size-11 min-[480px]:size-10";
  * setinggi 36px; kontrol standar 44px, dan berdampingan keduanya terbaca
  * sebagai dua komponen dari sistem berbeda, bukan satu kelompok aksi.
  *
- * `min-[480px]:h-9` BUKAN pengulangan yang bisa dibuang. Menulis `h-9` saja
+ * Di ponsel ia TIDAK diringkas — 44px, sama seperti tombol `sm` di
+ * sebelahnya — karena aksi sekecil apa pun tetap harus dapat disentuh jari.
+ *
+ * Variannya BUKAN pengulangan yang bisa dibuang. Menulis `h-9` saja
  * hanya menimpa `h-[46px]` dari `TINGGI_KONTROL`; varian `min-[480px]:h-11`
  * miliknya selamat dan kembali berlaku begitu layar >= 480px. Itulah sebabnya
  * pemilih status terukur 44px di desktop padahal kodenya menulis `h-9` —
  * kelasnya ada, tetapi kalah oleh varian yang lebih spesifik.
  */
-export const TINGGI_KONTROL_RINGKAS = "h-9 min-[480px]:h-9";
+export const TINGGI_KONTROL_RINGKAS = "h-11 min-[480px]:h-9";

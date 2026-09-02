@@ -154,7 +154,13 @@ export function BudgetManager({
                         disabled={isPending}
                         className={cn(
                           TINGGI_KONTROL_RINGKAS,
-                          "w-auto text-[13px]",
+                          // Memeluk nilai yang SEDANG tampil, bukan opsi
+                          // terpanjang. Aman di sini karena kepala kartunya
+                          // `justify-between`: kelompok ini terpaku ke tepi
+                          // kanan, jadi hanya sisi kirinya yang bergerak.
+                          // `w-auto` tetap ada sebagai jaring pengaman untuk
+                          // peramban yang belum mengenal `field-sizing`.
+                          "field-sizing-content w-auto text-[13px]",
                         )}
                         onChange={(event) => {
                           const next = event.target.value as
