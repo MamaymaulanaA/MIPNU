@@ -104,6 +104,17 @@ export default async function ElectionDetailPage({
     new Date(election.startAt) <= new Date() &&
     new Date(election.endAt) >= new Date();
 
+  // Sebabnya dihitung di sini, bukan di komponen pemilih, supaya pesan yang
+  // muncul menyebut alasan sebenarnya dan tidak bertentangan dengan badge
+  // status di layar yang sama.
+  const alasanTutup = votingOpen
+    ? null
+    : election.status !== "OPEN"
+      ? ("belum-dibuka" as const)
+      : new Date() < new Date(election.startAt)
+        ? ("belum-waktunya" as const)
+        : ("sudah-berakhir" as const);
+
   const visibleTabs: ElectionTab[] = ["ringkasan", "kandidat"];
   if (canManageVoters) visibleTabs.push("dpt");
   if (canAssignCommittee) visibleTabs.push("panitia");
@@ -207,6 +218,7 @@ export default async function ElectionDetailPage({
               organizationId={organizationId}
               election={election}
               votingOpen={votingOpen}
+              alasanTutup={alasanTutup}
               canVote={canVote}
               permissions={{
                 canEdit,
@@ -291,6 +303,7 @@ async function SummaryTab({
   organizationId,
   election,
   votingOpen,
+  alasanTutup,
   canVote,
   permissions,
   memberId,
@@ -298,6 +311,7 @@ async function SummaryTab({
   organizationId: string;
   election: Awaited<ReturnType<typeof getElection>> & object;
   votingOpen: boolean;
+  alasanTutup: "belum-dibuka" | "belum-waktunya" | "sudah-berakhir" | null;
   canVote: boolean;
   permissions: React.ComponentProps<typeof LifecycleActions>["permissions"];
   memberId: string | null;
@@ -330,6 +344,11 @@ async function SummaryTab({
               candidates={candidates}
               voterState={voterState}
               votingOpen={votingOpen}
+              jadwal={{
+                alasan: alasanTutup,
+                startAt: election.startAt,
+                endAt: election.endAt,
+              }}
               canVote={canVote}
             />
           </CardContent>

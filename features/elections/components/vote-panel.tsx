@@ -20,6 +20,7 @@ export function VotePanel({
   candidates,
   voterState,
   votingOpen,
+  jadwal,
   canVote,
 }: {
   organizationId: string;
@@ -27,6 +28,11 @@ export function VotePanel({
   candidates: CandidateRow[];
   voterState: OwnVoterState;
   votingOpen: boolean;
+  jadwal: {
+    alasan: "belum-dibuka" | "belum-waktunya" | "sudah-berakhir" | null;
+    startAt: string;
+    endAt: string;
+  };
   canVote: boolean;
 }) {
   const { showToast } = useToast();
@@ -107,10 +113,31 @@ export function VotePanel({
   }
 
   if (!votingOpen) {
+    // `votingOpen` menggabungkan tiga sebab yang berbeda. Tanpa dipisah,
+    // pemilih membaca "belum dibuka" pada pemilihan yang badge-nya justru
+    // "Berlangsung" — dua pernyataan yang bertentangan di satu layar.
+    if (jadwal.alasan === "belum-waktunya") {
+      return (
+        <Notice
+          title={`Pemungutan suara dibuka ${formatDateTime(jadwal.startAt)}`}
+          description="Anda berhak memilih pada pemilihan ini. Kembali lagi ketika waktunya tiba."
+        />
+      );
+    }
+
+    if (jadwal.alasan === "sudah-berakhir") {
+      return (
+        <Notice
+          title="Waktu pemungutan suara sudah berakhir"
+          description={`Jadwal pemungutan berakhir ${formatDateTime(jadwal.endAt)}, sehingga suara tidak dapat lagi dikirim.`}
+        />
+      );
+    }
+
     return (
       <Notice
         title="Pemungutan suara belum dibuka"
-        description="Anda berhak memilih pada pemilihan ini. Kembali lagi setelah pemungutan suara dibuka sesuai jadwal."
+        description="Anda berhak memilih pada pemilihan ini. Kembali lagi setelah panitia membuka pemungutan suara."
       />
     );
   }
